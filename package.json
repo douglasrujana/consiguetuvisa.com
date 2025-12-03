@@ -9,6 +9,18 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.16.4"
+    "@apollo/server": "^5.2.0",
+    "@astrojs/node": "^9.5.1",
+    "@prisma/client": "^7.1.0",
+    "astro": "^5.16.4",
+    "express": "^5.2.1",
+    "prisma": "^7.1.0",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@astrojs/ts-plugin": "^1.10.6",
+    "@playwright/test": "^1.57.0",
+    "playwright": "^1.57.0",
+    "vitest": "^4.0.15"
   }
 }
