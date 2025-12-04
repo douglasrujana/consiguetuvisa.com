@@ -3,12 +3,11 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "start": "vercel dev",
     "dev": "vercel dev",
+    "start": "astro start",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "vercel-dev": "vercel dev",
     "k6": "k6 run tests-performance/load_test_graphql.js",
     "test:performance": "k6 run --config k6-ci-thresholds.json tests-performance/load_test_graphql.js",
     "format": "prettier --write .",
