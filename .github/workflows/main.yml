@@ -1,0 +1,111 @@
+name: CI/CD Pipeline (Astro/Vercel)
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  # ----------------------------------------------------
+  # JOB 1: INSTALACIÓN, LINTING Y ANÁLISIS ESTÁTICO
+  # ----------------------------------------------------
+  install_and_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js and pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Code Quality (Linting)
+        # Asume que tienes un script 'pnpm run lint'
+        run: pnpm run lint
+      
+      - name: Security Audit (Vulnerabilities)
+        # Analiza dependencias en busca de vulnerabilidades
+        run: pnpm audit
+        
+  # ----------------------------------------------------
+  # JOB 2: PRUEBAS DE LÓGICA (UNITARIAS Y DE INTEGRACIÓN)
+  # ----------------------------------------------------
+  unit_integration_test:
+    needs: install_and_lint # Debe esperar a que el job 1 pase
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js and pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      # Aquí se usaría una Base de Datos de prueba (PostgreSQL/Supabase)
+      # que requiere variables de entorno (DATABASE_URL_TEST)
+      - name: Run Unit & Integration Tests (Vitest)
+        # Asume que tienes un script 'pnpm run test' que ejecuta Vitest
+        run: pnpm run test 
+  
+  # ----------------------------------------------------
+  # JOB 3: PRUEBAS DE PERFORMANCE Y END-TO-END (REQUIERE SERVIDOR ACTIVO)
+  # ----------------------------------------------------
+  e2e_performance_test:
+    needs: unit_integration_test # Debe esperar a que el job 2 pase
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js and pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 1. Iniciar el servidor Vercel local (simulando Serverless)
+      - name: Start Vercel Dev Server
+        # El '&' corre el proceso en segundo plano.
+        run: pnpm run dev & 
+        
+      - name: Wait for server (5s)
+        run: sleep 5
+
+      - name: Run Playwright E2E Tests
+        # Asume que tienes un script 'pnpm run test:e2e'
+        run: pnpm run test:e2e
+
+      # 2. PRUEBAS DE CARGA K6 (TU CONFIGURACIÓN)
+      - name: Run K6 Performance Tests (Threshold Check)
+        uses: grafana/k6-action@v0.2.0
+        with:
+          script: tests-performance/load_test_graphql.js
+          flags: --config k6-ci-thresholds.json
+          
+  # ----------------------------------------------------
+  # JOB 4: DEPLOYMENT (Solo si todo lo anterior es exitoso)
+  # ----------------------------------------------------
+  deploy:
+    # Solo despliega si la rama es 'main' o si es un PR a 'main', y si los tests pasaron
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    needs: e2e_performance_test 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Vercel
+        # Esto asume que has configurado Vercel CLI y secretos de VERCEL_TOKEN
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          # El 'vercel-dev' no es necesario aquí, Vercel usa 'pnpm run build'

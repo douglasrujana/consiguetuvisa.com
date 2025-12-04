@@ -1,0 +1,12 @@
+HTTP/1.1 500 Internal Server Error
+cache-control: public, max-age=0, must-revalidate
+server: Vercel
+x-vercel-id: dev1::a0c5p-1764828990963-af4c3c434487
+x-vercel-cache: MISS
+vary: Origin
+content-type: text/html
+content-length: 95
+date: Thu, 04 Dec 2025 06:16:30 GMT
+connection: close
+
+<title>EndpointDidNotReturnAResponse</title><script type="module" src="/@vite/client"></script>

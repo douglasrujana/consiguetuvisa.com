@@ -3,17 +3,22 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
+    "start": "vercel dev",
+    "dev": "vercel dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "vercel-dev": "vercel dev",
+    "k6": "k6 run tests-performance/load_test_graphql.js",
+    "test:performance": "k6 run --config k6-ci-thresholds.json tests-performance/load_test_graphql.js",
+    "format": "prettier --write .",
+    "lint": "eslint --fix src"
   },
   "dependencies": {
-    "@apollo/server": "^5.2.0",
-    "@astrojs/node": "^9.5.1",
+    "@astrojs/vercel": "^9.0.2",
     "@prisma/client": "^7.1.0",
     "astro": "^5.16.4",
-    "express": "^5.2.1",
+    "graphql": "^16.12.0",
     "prisma": "^7.1.0",
     "zod": "^4.1.13"
   },

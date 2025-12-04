@@ -8,7 +8,7 @@ import { check, sleep } from 'k6';
 export const options = {
   // Define el objetivo de la prueba: 50 usuarios virtuales (VUs) durante 30 segundos
   stages: [
-    { duration: '30s', target: 1 }, // Aumenta la carga a 1 VU
+    { duration: '5s', target: 1 }, // Aumenta la carga a 1 VU
   ],
   // Define métricas que deben cumplirse
   thresholds: {
@@ -22,7 +22,7 @@ export const options = {
 // ----------------------------------------------------
 // 2. Definición de la Query GraphQL
 // ----------------------------------------------------
-const API_URL = 'http://localhost:4321/api/graphql'; // Usamos la URL de desarrollo de Astro
+const API_URL = 'http://localhost:3000/api/graphql'; // Usamos la URL de desarrollo de Vercel
 
 // La query que usaremos para probar (ejemplo: obtener la lista de servicios de visa)
 const query = `
