@@ -55,7 +55,10 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        
+
+      - name: Code Quality (Linting)
+        run: pnpm run lint
+
       # Aquí se usaría una Base de Datos de prueba (PostgreSQL/Supabase)
       # que requiere variables de entorno (DATABASE_URL_TEST)
       - name: Run Unit & Integration Tests (Vitest)

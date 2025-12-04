@@ -24,6 +24,7 @@
   "devDependencies": {
     "@astrojs/ts-plugin": "^1.10.6",
     "@playwright/test": "^1.57.0",
+    "eslint": "^9.39.1",
     "playwright": "^1.57.0",
     "vitest": "^4.0.15"
   }
