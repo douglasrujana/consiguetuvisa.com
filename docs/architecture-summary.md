@@ -17,7 +17,7 @@ El proyecto sigue una arquitectura **JAMstack desacoplada (headless)**:
 | Framework Web             | **Astro**                      | Framework principal para la UI y el enrutamiento de la API.                                                                                                       |
 | Entorno de Despliegue     | **Vercel**                     | Plataforma de hosting serverless.                                                                                                                                 |
 | Adaptador de Astro        | `@astrojs/vercel`              | Prepara el proyecto para un despliegue optimizado en Vercel, convirtiendo las rutas de API en Vercel Serverless Functions.                                        |
-| Servidor GraphQL          | **`graphql.js` (Puro)**        | Implementación base de GraphQL. **Seleccionado por su estabilidad probada en el entorno de desarrollo local (`astro dev`)**, donde `graphql-yoga` fallaba.       |
+| Servidor GraphQL          | **`graphql.js` (Puro)**        | Implementación base de GraphQL. **Seleccionado por su estabilidad probada en el entorno de desarrollo local (`pnpm vercel-dev`) y para producción en Vercel**, donde `graphql-yoga` fallaba en el desarrollo. |
 | ORM / Base de Datos       | **Prisma**                     | Herramienta para la interacción con la base de datos.                                                                                                             |
 | Pruebas de Carga          | **k6**                         | Utilizado para verificar el rendimiento y la correcta funcionalidad del endpoint de la API.                                                                       |
 | Gestor de Paquetes        | **pnpm**                       | Utilizado para la gestión de dependencias del proyecto.                                                                                                           |
@@ -39,12 +39,12 @@ El proyecto sigue una arquitectura **JAMstack desacoplada (headless)**:
 -   **Lógica de Negocio Aislada:** El `schema` (`typeDefs`) y los `resolvers` se definen en `src/server/graphql/server.ts`, manteniendo la lógica de GraphQL separada del handler de la API. Los resolvers son el puente hacia los controladores y casos de uso en `src/server/lib/features/`.
 
 ### Justificación de la Decisión: `graphql.js` vs `graphql-yoga`
-Durante la depuración, se encontró una **incompatibilidad fundamental entre `graphql-yoga` y el entorno de desarrollo local de Astro (Vite)**. `graphql-yoga` provocaba un fallo silencioso que impedía que el endpoint de la API se cargara, bloqueando todo el desarrollo local.
+Durante la depuración, se encontró una **incompatibilidad fundamental entre `graphql-yoga` y el entorno de desarrollo local de Astro (impulsado por Vite)**. `graphql-yoga` provocaba un fallo silencioso que impedía que el endpoint de la API se cargara correctamente cuando se ejecutaba con `pnpm dev` o incluso `pnpm vercel-dev` cuando Astro intentaba procesar su módulo.
 
-Aunque `graphql-yoga` es una librería excelente para producción, su inestabilidad en el entorno `dev` local la hizo inviable. Se optó por la implementación "a ring pelado" con `graphql.js` porque:
-1.  **Funciona de manera estable y probada** en el entorno de desarrollo local.
+Aunque `graphql-yoga` es una librería excelente y compatible con Vercel en producción, su inestabilidad e imposibilidad de ejecución en el entorno de desarrollo local actual la hizo inviable para una experiencia de desarrollo fluida. Por ello, se optó por la implementación "a ring pelado" con `graphql.js` por las siguientes razones:
+1.  **Funciona de manera estable y probada** en el entorno de desarrollo local (`pnpm vercel-dev`) y es compatible con el despliegue en Vercel.
 2.  **Garantiza que lo que se desarrolla localmente funcionará en producción**, evitando sorpresas.
-3.  **Es la máxima expresión de "anti-vendor lock-in"**, al depender únicamente de la especificación oficial de GraphQL y no de un servidor específico.
+3.  **Es la máxima expresión de "anti-vendor lock-in"**, al depender únicamente de la especificación oficial de GraphQL y no de un servidor de conveniencia específico.
 
 La desventaja es la pérdida de comodidades como GraphiQL integrado, que pueden ser añadidas manualmente si se requiere en el futuro.
 
