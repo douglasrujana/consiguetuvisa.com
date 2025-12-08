@@ -1,0 +1,102 @@
+---
+// src/pages/dashboard/index.astro
+import Layout from '../../components/global/Layout.astro';
+import { SignedIn, SignedOut } from '@clerk/astro/components';
+import { createClerkClient } from '@clerk/astro/server';
+import UserDashboard from '../../components/dashboard/UserDashboard.svelte';
+import Button from '../../components/ui/Button.astro';
+import { getServices } from '@core/di/ContextFactory';
+import { validateCreateUserFromClerk } from '@features/user';
+
+// Obtener usuario de Clerk
+const { auth } = Astro.locals as any;
+const { userId } = auth();
+
+let localUser = null;
+let userName = 'Usuario';
+let userRole = 'USER';
+let isAdmin = false;
+
+// Si hay usuario autenticado, sincronizar con Turso
+if (userId) {
+  try {
+    const { userService } = getServices();
+    
+    // Primero buscar si ya existe
+    localUser = await userService.getByExternalId(userId);
+    
+    // Si no existe, obtener de Clerk y crear
+    if (!localUser) {
+      const clerk = createClerkClient({
+        secretKey: import.meta.env.CLERK_SECRET_KEY,
+        publishableKey: import.meta.env.PUBLIC_CLERK_PUBLISHABLE_KEY,
+      });
+      
+      const clerkUser = await clerk.users.getUser(userId);
+      const email = clerkUser.emailAddresses[0]?.emailAddress;
+      
+      if (email) {
+        const validatedData = validateCreateUserFromClerk({
+          externalId: userId,
+          email,
+          firstName: clerkUser.firstName,
+          lastName: clerkUser.lastName,
+        });
+        
+        localUser = await userService.syncFromClerk(validatedData);
+        console.log('[Dashboard] User synced:', email);
+      }
+    }
+    
+    if (localUser) {
+      userName = localUser.firstName || localUser.email?.split('@')[0] || 'Usuario';
+      userRole = localUser.role || 'USER';
+      isAdmin = userRole === 'ADMIN';
+    }
+  } catch (error) {
+    console.error('[Dashboard] Error syncing user:', error);
+  }
+}
+
+// Verificar si hay error de acceso admin
+const url = new URL(Astro.request.url);
+const adminError = url.searchParams.get('error') === 'admin_required';
+---
+
+<Layout title="Mi Panel">
+  <section class="py-8 bg-gray-50 min-h-[80vh]">
+    <div class="container-main">
+      <SignedOut>
+        <div class="text-center py-20 bg-white rounded-xl shadow-sm">
+          <h1 class="text-2xl font-bold text-brand-primary mb-4">Acceso Restringido</h1>
+          <p class="text-text-secondary mb-6">Debes iniciar sesión para ver tu panel.</p>
+          <Button href="/login">Iniciar Sesión</Button>
+        </div>
+      </SignedOut>
+
+      <SignedIn>
+        {adminError && (
+          <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p class="text-yellow-800">
+              <strong>Acceso denegado:</strong> No tienes permisos de administrador.
+            </p>
+          </div>
+        )}
+
+        {isAdmin && (
+          <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex justify-between items-center">
+            <p class="text-blue-800">Eres administrador</p>
+            <Button href="/admin" variant="secondary" size="sm">Ir al Panel Admin</Button>
+          </div>
+        )}
+
+        <UserDashboard 
+          client:load 
+          userId={userId || ''} 
+          userName={userName}
+          userRole={userRole}
+        />
+      </SignedIn>
+    </div>
+  </section>
+</Layout>

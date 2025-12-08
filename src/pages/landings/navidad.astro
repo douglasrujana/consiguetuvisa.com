@@ -1,0 +1,204 @@
+---
+// src/pages/landings/navidad.astro
+// Landing Page - Promoción Navidad 2025
+import Icon from '../../components/ui/Icon.astro';
+import Countdown from '../../components/landings/navidad/Countdown.svelte';
+import '../../styles/global.css';
+import '../../../design-system/landing-pages/oferta-navidad/theme.css';
+
+const benefits = [
+  'Evaluación completa de tu caso',
+  'Revisión profesional de documentos',
+  'Llenado del formulario DS-160',
+  'Preparación para la entrevista',
+  'Acompañamiento hasta la cita',
+  'Soporte por WhatsApp ilimitado',
+];
+
+const testimonials = [
+  { name: 'María G.', text: '¡Aprobada a la primera! Excelente servicio.' },
+  { name: 'Carlos M.', text: 'Muy profesionales, 100% recomendados.' },
+  { name: 'Ana R.', text: 'Me explicaron todo paso a paso.' },
+];
+
+const whatsappMessage = encodeURIComponent('Hola! Quiero aprovechar la PROMO NAVIDAD para mi visa 🎄');
+const whatsappLink = `https://wa.me/593999999999?text=${whatsappMessage}`;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Promoción especial de Navidad - Asesoría completa para tu visa de turismo con 40% de descuento. Oferta válida hasta el 24 de Diciembre." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <title>🎄 Promo Navidad - 40% OFF en Asesoría de Visa | ConsigueTuVisa</title>
+</head>
+<body class="min-h-screen bg-xmas-snow font-sans">
+  
+  <!-- HERO -->
+  <section class="xmas-hero min-h-screen flex items-center py-12 relative">
+    <!-- Decorative snowflakes -->
+    <div class="snowflake text-4xl" style="left: 10%; animation-duration: 10s;">❄</div>
+    <div class="snowflake text-2xl" style="left: 25%; animation-duration: 14s; animation-delay: 2s;">❄</div>
+    <div class="snowflake text-3xl" style="left: 50%; animation-duration: 12s; animation-delay: 4s;">❄</div>
+    <div class="snowflake text-xl" style="left: 75%; animation-duration: 16s; animation-delay: 1s;">❄</div>
+    <div class="snowflake text-2xl" style="left: 90%; animation-duration: 11s; animation-delay: 3s;">❄</div>
+    
+    <div class="container-main relative z-10">
+      <div class="max-w-4xl mx-auto text-center text-white">
+        
+        <!-- Badge -->
+        <div class="xmas-badge mb-6">
+          <span>🎄</span>
+          <span>OFERTA ESPECIAL NAVIDAD 2025</span>
+          <span>🎄</span>
+        </div>
+        
+        <!-- Headline -->
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight">
+          Tu Visa de Turismo<br/>
+          <span class="text-xmas-gold-light">con 40% de Descuento</span>
+        </h1>
+        
+        <p class="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
+          Asesoría profesional completa para EE.UU, Canadá, Europa y más. 
+          <strong>Regalo de Navidad para tu próximo viaje.</strong>
+        </p>
+        
+        <!-- Countdown -->
+        <div class="mb-8">
+          <p class="text-white/80 mb-3 text-sm uppercase tracking-wider">La oferta termina en:</p>
+          <Countdown client:load />
+        </div>
+        
+        <!-- Price -->
+        <div class="mb-8">
+          <p class="price-old">Precio regular: $150</p>
+          <p class="price-new">$89</p>
+          <p class="text-white/80 text-sm">Pago único • Sin costos ocultos</p>
+        </div>
+        
+        <!-- CTA -->
+        <a href={whatsappLink} target="_blank" rel="noopener" class="xmas-btn-whatsapp pulse-glow">
+          <Icon name="whatsapp" size={28} />
+          <span>¡Quiero esta Promo!</span>
+        </a>
+        
+        <p class="text-white/60 text-sm mt-4">
+          📱 Respuesta inmediata • Cupos limitados
+        </p>
+      </div>
+    </div>
+  </section>
+  
+  <!-- QUÉ INCLUYE -->
+  <section class="py-16 md:py-20 bg-white">
+    <div class="container-main">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          ¿Qué incluye la Promo Navidad?
+        </h2>
+        <p class="text-gray-600 text-lg">
+          Todo lo que necesitas para conseguir tu visa, en un solo paquete.
+        </p>
+      </div>
+      
+      <div class="max-w-3xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-4">
+          {benefits.map(benefit => (
+            <div class="flex items-center gap-3 bg-green-50 p-4 rounded-xl">
+              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <Icon name="check" size={18} class="text-white" />
+              </div>
+              <span class="text-gray-800 font-medium">{benefit}</span>
+            </div>
+          ))}
+        </div>
+        
+        <!-- Bonus -->
+        <div class="mt-8 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-6 text-center">
+          <p class="text-yellow-800 font-bold text-lg mb-2">🎁 BONUS NAVIDEÑO</p>
+          <p class="text-gray-700">
+            Guía PDF exclusiva: <strong>"10 Errores que Debes Evitar en tu Entrevista de Visa"</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- TESTIMONIOS -->
+  <section class="py-16 bg-gray-50">
+    <div class="container-main">
+      <h2 class="text-2xl md:text-3xl font-bold text-center text-gray-900 mb-10">
+        Miles de ecuatorianos ya viajaron con nuestra ayuda
+      </h2>
+      
+      <div class="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        {testimonials.map(t => (
+          <div class="bg-white p-6 rounded-xl shadow-md">
+            <div class="flex gap-1 mb-3">
+              {[1,2,3,4,5].map(() => (
+                <Icon name="star" size={18} class="text-yellow-400 fill-yellow-400" />
+              ))}
+            </div>
+            <p class="text-gray-600 mb-4 italic">"{t.text}"</p>
+            <p class="font-semibold text-gray-900">{t.name}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+  
+  <!-- URGENCIA + CTA FINAL -->
+  <section class="py-16 md:py-20 xmas-hero relative">
+    <div class="container-main relative z-10">
+      <div class="max-w-2xl mx-auto text-center text-white">
+        <p class="text-xl mb-2">⚠️ Solo quedan</p>
+        <p class="text-5xl md:text-6xl font-extrabold mb-4">15 CUPOS</p>
+        <p class="text-xl text-white/90 mb-8">
+          a este precio especial de Navidad
+        </p>
+        
+        <a href={whatsappLink} target="_blank" rel="noopener" class="xmas-btn-whatsapp pulse-glow text-xl">
+          <Icon name="whatsapp" size={32} />
+          <span>Reservar mi Cupo Ahora</span>
+        </a>
+        
+        <div class="mt-8 flex flex-wrap justify-center gap-6 text-white/80 text-sm">
+          <span>✓ Sin pagos online</span>
+          <span>✓ Coordinas por WhatsApp</span>
+          <span>✓ Pagas cuando inicies</span>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- FOOTER SIMPLE -->
+  <footer class="bg-gray-900 text-white py-8">
+    <div class="container-main text-center">
+      <p class="text-2xl font-bold mb-2">
+        Consigue<span class="text-green-400">TuVisa</span>
+      </p>
+      <p class="text-gray-400 mb-4">Asesoría profesional para visas de turismo</p>
+      <p class="text-gray-500 text-sm">
+        © 2025 ConsigueTuVisa. Todos los derechos reservados.
+      </p>
+    </div>
+  </footer>
+  
+  <!-- WhatsApp Float -->
+  <a 
+    href={whatsappLink}
+    target="_blank"
+    rel="noopener"
+    class="fixed bottom-6 right-6 z-50 bg-green-500 text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform pulse-glow"
+    aria-label="WhatsApp"
+  >
+    <Icon name="whatsapp" size={28} />
+  </a>
+
+</body>
+</html>

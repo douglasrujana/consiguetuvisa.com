@@ -1,0 +1,2 @@
+##
+El flujo de la aplicación (GraphQL Handler $\rightarrow$ Schema Merger $\rightarrow$ Asesoria Resolver $\rightarrow$ Asesoria Service $\rightarrow$ Asesoria Repository $\rightarrow$ Prisma) está completo.

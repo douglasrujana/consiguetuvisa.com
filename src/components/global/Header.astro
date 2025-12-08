@@ -1,0 +1,72 @@
+---
+// src/components/global/Header.astro
+import { SignedIn, SignedOut, UserButton } from '@clerk/astro/components';
+import Button from '../ui/Button.astro';
+
+const navLinks = [
+  { label: 'Inicio', href: '/' },
+  { label: 'Servicios', href: '#servicios' },
+  { label: 'Proceso', href: '#proceso' },
+  { label: 'Testimonios', href: '#testimonios' },
+  { label: 'FAQ', href: '#faq' },
+];
+---
+
+<header class="sticky top-0 z-40 bg-surface-white/95 backdrop-blur-sm border-b border-surface-muted">
+  <div class="container-main">
+    <nav class="flex items-center justify-between h-16 md:h-20">
+      <!-- Logo -->
+      <a href="/" class="flex items-center gap-2">
+        <span class="text-xl md:text-2xl font-bold text-brand-primary">
+          Consigue<span class="text-brand-secondary">TuVisa</span>
+        </span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <ul class="hidden md:flex items-center gap-8">
+        {navLinks.map(link => (
+          <li>
+            <a 
+              href={link.href} 
+              class="text-text-secondary hover:text-brand-primary font-medium transition-colors"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <!-- Auth Buttons -->
+      <div class="flex items-center gap-3">
+        <SignedOut>
+          <a 
+            href="/login" 
+            class="text-text-secondary hover:text-brand-primary font-medium transition-colors hidden sm:inline-flex"
+          >
+            Iniciar Sesión
+          </a>
+          <Button href="/registro" size="sm">
+            Registrarse
+          </Button>
+        </SignedOut>
+        
+        <SignedIn>
+          <a 
+            href="/dashboard" 
+            class="text-text-secondary hover:text-brand-primary font-medium transition-colors hidden sm:inline-flex"
+          >
+            Mi Panel
+          </a>
+          <UserButton 
+            afterSignOutUrl="/"
+            appearance={{
+              elements: {
+                avatarBox: "w-9 h-9"
+              }
+            }}
+          />
+        </SignedIn>
+      </div>
+    </nav>
+  </div>
+</header>

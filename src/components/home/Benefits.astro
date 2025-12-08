@@ -1,0 +1,48 @@
+---
+// src/components/home/Benefits.astro
+import Section from '../ui/Section.astro';
+import Card from '../ui/Card.astro';
+import Icon from '../ui/Icon.astro';
+
+const benefits = [
+  {
+    icon: 'star',
+    title: '97% Satisfacción',
+    description: 'Miles de ecuatorianos han confiado en nuestro servicio con excelentes resultados.',
+  },
+  {
+    icon: 'users',
+    title: 'Asistencia Completa',
+    description: 'Te acompañamos en todo el proceso, desde el diagnóstico hasta la cita consular.',
+  },
+  {
+    icon: 'document',
+    title: 'Revisión Profesional',
+    description: 'Verificamos cada documento para evitar errores que puedan afectar tu solicitud.',
+  },
+  {
+    icon: 'calendar',
+    title: 'Acompañamiento',
+    description: 'Preparación para la entrevista y acompañamiento el día de tu cita.',
+  },
+];
+---
+
+<Section background="white">
+  <div class="text-center mb-12">
+    <div class="accent-line mx-auto mb-4"></div>
+    <h2 class="heading-section">¿Por qué elegirnos?</h2>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    {benefits.map(benefit => (
+      <Card class="text-center">
+        <div class="w-14 h-14 bg-brand-secondary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <Icon name={benefit.icon} size={28} class="text-brand-secondary" />
+        </div>
+        <h3 class="heading-card mb-2">{benefit.title}</h3>
+        <p class="text-body">{benefit.description}</p>
+      </Card>
+    ))}
+  </div>
+</Section>

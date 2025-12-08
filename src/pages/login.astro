@@ -1,0 +1,37 @@
+---
+// src/pages/login.astro
+import Layout from '../components/global/Layout.astro';
+import { SignIn } from '@clerk/astro/components';
+---
+
+<Layout title="Iniciar Sesión">
+  <section class="min-h-[80vh] flex items-center justify-center py-12 bg-surface-light">
+    <div class="container-main">
+      <div class="max-w-md mx-auto">
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-bold text-brand-primary mb-2">Bienvenido de vuelta</h1>
+          <p class="text-text-secondary">Inicia sesión para acceder a tu panel</p>
+        </div>
+        
+        <div class="flex justify-center">
+          <SignIn 
+            routing="path"
+            path="/login"
+            signUpUrl="/registro"
+            afterSignInUrl="/dashboard"
+            appearance={{
+              elements: {
+                rootBox: "w-full",
+                card: "shadow-xl rounded-xl",
+                headerTitle: "text-brand-primary",
+                headerSubtitle: "text-text-secondary",
+                formButtonPrimary: "bg-brand-secondary hover:bg-brand-accent",
+                footerActionLink: "text-brand-secondary hover:text-brand-accent",
+              }
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

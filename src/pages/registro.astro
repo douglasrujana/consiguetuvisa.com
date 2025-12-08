@@ -1,0 +1,37 @@
+---
+// src/pages/registro.astro
+import Layout from '../components/global/Layout.astro';
+import { SignUp } from '@clerk/astro/components';
+---
+
+<Layout title="Crear Cuenta">
+  <section class="min-h-[80vh] flex items-center justify-center py-12 bg-surface-light">
+    <div class="container-main">
+      <div class="max-w-md mx-auto">
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-bold text-brand-primary mb-2">Crea tu cuenta</h1>
+          <p class="text-text-secondary">Regístrate para comenzar tu proceso de visa</p>
+        </div>
+        
+        <div class="flex justify-center">
+          <SignUp 
+            routing="path"
+            path="/registro"
+            signInUrl="/login"
+            afterSignUpUrl="/dashboard"
+            appearance={{
+              elements: {
+                rootBox: "w-full",
+                card: "shadow-xl rounded-xl",
+                headerTitle: "text-brand-primary",
+                headerSubtitle: "text-text-secondary",
+                formButtonPrimary: "bg-brand-secondary hover:bg-brand-accent",
+                footerActionLink: "text-brand-secondary hover:text-brand-accent",
+              }
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,21 @@
+/* src/styles/global.css */
+/* 2. ESTILO BASE GLOBAL */
+
+@import "tailwindcss";
+@import "../../design-system/global/tokens.css";
+@import "../../design-system/global/themes/light.css";
+@import "../../design-system/global/components.css";
+@import "../../design-system/global/utilities.css";
+
+/* Establece Montserrat como la fuente base para todo el cuerpo del documento */
+body {
+    font-family: 'Montserrat', sans-serif;
+    /* El fondo limpio definido en tailwind.config.mjs */
+    @apply bg-white text-brand-primary;
+}
+
+/* 3. TRANSICIONES GLOBALES SUTILES (Para la estética Jony Ive) */
+/* Hace que todas las transiciones sean suaves y agradables */
+* {
+    @apply transition-all duration-300 ease-in-out;
+}

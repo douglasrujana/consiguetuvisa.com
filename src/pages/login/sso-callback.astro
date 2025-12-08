@@ -1,0 +1,10 @@
+---
+// src/pages/login/sso-callback.astro
+// Callback de SSO - sincroniza usuario y redirige
+import { AuthenticateWithRedirectCallback } from '@clerk/astro/components';
+---
+
+<AuthenticateWithRedirectCallback
+  afterSignUpUrl="/api/auth/sync-redirect"
+  afterSignInUrl="/api/auth/sync-redirect"
+/>

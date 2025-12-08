@@ -1,0 +1,41 @@
+---
+// src/pages/admin/index.astro
+import Layout from '../../components/global/Layout.astro';
+import { SignedIn, SignedOut } from '@clerk/astro/components';
+import AdminDashboard from '../../components/dashboard/AdminDashboard.svelte';
+import Button from '../../components/ui/Button.astro';
+
+// Obtener usuario local desde middleware (ya verificado como ADMIN)
+const { auth, localUser } = Astro.locals as any;
+const { userId } = auth();
+
+// El middleware ya verifica el rol ADMIN, si llegamos aquí es porque es admin
+const isAdmin = localUser?.role === 'ADMIN';
+const adminName = localUser?.firstName || localUser?.email?.split('@')[0] || 'Admin';
+---
+
+<Layout title="Panel de Administración">
+  <section class="py-8 bg-gray-50 min-h-screen">
+    <div class="max-w-7xl mx-auto px-4">
+      <SignedOut>
+        <div class="text-center py-20 bg-white rounded-xl shadow-sm">
+          <h1 class="text-2xl font-bold text-brand-primary mb-4">Acceso Restringido</h1>
+          <p class="text-text-secondary mb-6">Debes iniciar sesión como administrador.</p>
+          <Button href="/login">Iniciar Sesión</Button>
+        </div>
+      </SignedOut>
+
+      <SignedIn>
+        {isAdmin ? (
+          <AdminDashboard client:load adminName={adminName} />
+        ) : (
+          <div class="text-center py-20 bg-white rounded-xl shadow-sm">
+            <h1 class="text-2xl font-bold text-red-600 mb-4">Acceso Denegado</h1>
+            <p class="text-text-secondary mb-6">No tienes permisos de administrador.</p>
+            <Button href="/dashboard">Ir a Mi Panel</Button>
+          </div>
+        )}
+      </SignedIn>
+    </div>
+  </section>
+</Layout>

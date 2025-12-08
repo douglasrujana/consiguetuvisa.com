@@ -1,25 +1,67 @@
 // src/server/graphql/server.ts
 // This file is now only for exporting the raw GraphQL schema parts
 // without instantiating any server.
+// src/server/graphql/schema.ts
+// ORQUESTADOR DEL ESQUEMA GRAPHQL (SCHEMA MERGER)
+// Fusiona los esquemas de todas las features en un único Schema ejecutable.
 
-export const typeDefs = `#graphql
-  type Service {
-    id: ID!
-    name: String!
-    price: Float!
-  }
+/**
+ * GraphQL Schema Definition
+ * Type Definitions y Resolvers
+ * Aquí definimos los tipos GraphQL, queries y mutations.
+ * Definimos el esquema GraphQL utilizando SDL (Schema Definition Language).
+ * Aquí se describen los tipos, queries y mutations disponibles en la API.
+ */
+
+import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge'; 
+import { gql } from 'graphql-tag';
+// Importamos la feature de Asesoría
+import {
+    asesoriaTypeDefs,
+    asesoriaResolvers
+} from '../lib/features/asesoria/Asesoria.graphql';
+
+// ----------------------------------------------------------------------
+// 1. DEFINICIONES BASE DEL SISTEMA
+// ----------------------------------------------------------------------
+
+/**
+ * Los tipos base contienen los puntos de entrada (Query y Mutation).
+ * Las features individuales usan 'extend type' para añadirse a estos.
+ */
+const baseTypeDefs = gql`
+  # Siempre necesita una Query y una Mutation raíz
   type Query {
-    services: [Service]
-    health: String
+    # Query de ejemplo para la salud del servicio
+    _empty: String
+  }
+  
+  type Mutation {
+    _empty: String
   }
 `;
 
-export const resolvers = {
-  Query: {
-    services: () => [
-      { id: 1, name: 'Visa Turista Mock', price: 50.00 },
-      { id: 2, name: 'Visa Estudiante Mock', price: 100.00 },
-    ],
-    health: () => "OK - GraphQL Server is live!",
-  },
-};
+// ----------------------------------------------------------------------
+// 2. FUSIÓN DE TYPE DEFS
+// ----------------------------------------------------------------------
+
+/**
+ * Fusionamos la definición base con las definiciones de todas las features.
+ */
+export const typeDefs = mergeTypeDefs([
+  baseTypeDefs,
+  asesoriaTypeDefs,
+  // Aquí se añadirían typeDefs de otras features (ej: userTypeDefs)
+]);
+
+// ----------------------------------------------------------------------
+// 3. FUSIÓN DE RESOLVERS
+// ----------------------------------------------------------------------
+
+/**
+ * Fusionamos la lógica de Resolvers de todas las features.
+ */
+export const resolvers = mergeResolvers([
+  asesoriaResolvers,
+  // Aquí se añadirían resolvers de otras features (ej: userResolvers)
+]);

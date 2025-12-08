@@ -1,0 +1,22 @@
+---
+// src/components/ui/Section.astro
+interface Props {
+  id?: string;
+  class?: string;
+  background?: 'white' | 'light' | 'gradient';
+}
+
+const { id, class: className = '', background = 'white' } = Astro.props;
+
+const backgrounds = {
+  white: 'bg-surface-white',
+  light: 'bg-surface-light',
+  gradient: 'gradient-hero',
+};
+---
+
+<section id={id} class={`section ${backgrounds[background]} ${className}`}>
+  <div class="container-main">
+    <slot />
+  </div>
+</section>

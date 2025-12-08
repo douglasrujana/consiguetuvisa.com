@@ -1,0 +1,58 @@
+---
+// src/components/home/FAQ.astro
+import Section from '../ui/Section.astro';
+import Icon from '../ui/Icon.astro';
+
+const faqs = [
+  {
+    question: '¿Cuánto tiempo toma el proceso de asesoría?',
+    answer: 'El tiempo varía según el tipo de visa. Para EE.UU generalmente son 2-4 semanas desde la evaluación hasta la cita. Te damos un estimado personalizado en tu primera consulta.',
+  },
+  {
+    question: '¿Qué incluye la evaluación gratuita?',
+    answer: 'Analizamos tu perfil, revisamos tu situación laboral y financiera, y te damos una recomendación honesta sobre tus posibilidades de aprobación.',
+  },
+  {
+    question: '¿Garantizan la aprobación de la visa?',
+    answer: 'Ninguna empresa puede garantizar la aprobación, ya que la decisión final es del consulado. Lo que sí garantizamos es una preparación profesional que maximiza tus posibilidades.',
+  },
+  {
+    question: '¿Cuánto cuesta el servicio de asesoría?',
+    answer: 'Los precios varían según el tipo de visa y el nivel de acompañamiento que necesites. Agenda una evaluación gratuita y te daremos una cotización personalizada.',
+  },
+  {
+    question: '¿Atienden fuera de Quito?',
+    answer: 'Sí, atendemos a clientes de todo Ecuador. Nuestras asesorías pueden ser presenciales en Quito o virtuales por videollamada.',
+  },
+];
+---
+
+<Section id="faq" background="light">
+  <div class="max-w-3xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="accent-line mx-auto mb-4"></div>
+      <h2 class="heading-section mb-4">Preguntas Frecuentes</h2>
+      <p class="text-body">
+        Resolvemos tus dudas más comunes sobre nuestro servicio.
+      </p>
+    </div>
+
+    <div class="space-y-4">
+      {faqs.map((faq, index) => (
+        <details class="group bg-surface-white rounded-xl shadow-sm">
+          <summary class="flex items-center justify-between p-6 cursor-pointer list-none">
+            <h3 class="font-semibold text-brand-primary pr-4">{faq.question}</h3>
+            <Icon 
+              name="chevron" 
+              size={20} 
+              class="text-text-muted group-open:rotate-180 transition-transform flex-shrink-0" 
+            />
+          </summary>
+          <div class="px-6 pb-6 pt-0">
+            <p class="text-body">{faq.answer}</p>
+          </div>
+        </details>
+      ))}
+    </div>
+  </div>
+</Section>

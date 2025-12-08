@@ -1,0 +1,31 @@
+/* design-system/global/utilities.css */
+/* Utilidades personalizadas */
+
+/* === GRADIENTES === */
+.gradient-hero {
+  background: linear-gradient(135deg, var(--color-surface-light) 0%, var(--color-surface-white) 100%);
+}
+
+.gradient-cta {
+  background: linear-gradient(135deg, var(--color-brand-secondary) 0%, var(--color-brand-accent) 100%);
+}
+
+/* === DECORADORES === */
+.accent-line {
+  @apply w-16 h-1 bg-brand-secondary rounded-full;
+}
+
+/* === ANIMACIONES === */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === WHATSAPP FLOTANTE === */
+.whatsapp-float {
+  @apply fixed bottom-6 right-6 z-50 bg-whatsapp text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform;
+}

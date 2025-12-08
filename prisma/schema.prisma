@@ -1,14 +1,188 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
+}
+
+// ============================================
+// USUARIOS Y AUTENTICACIÓN
+// ============================================
+
+model User {
+  id            String   @id @default(uuid())
+  externalId    String?  @unique // Clerk ID, Supabase ID, etc.
+  email         String   @unique
+  firstName     String?
+  lastName      String?
+  phone         String?
+  role          String   @default("USER") // USER, ADMIN, AGENT
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  solicitudes  Solicitud[]
+  appointments Appointment[]
+  documents    Document[]
+  notes        Note[]        @relation("UserNotes")
+  createdNotes Note[]        @relation("NoteCreator")
+}
+
+// ============================================
+// SOLICITUDES DE VISA (Core del negocio)
+// ============================================
+
+model Solicitud {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Tipo de visa
+  visaType           String // USA_TURISMO, CANADA_VISITANTE, SCHENGEN, UK, MEXICO, OTRO
+  destinationCountry String
+
+  // Estado del proceso
+  status      String @default("NUEVA") // NUEVA, EN_REVISION, DOCUMENTOS, FORMULARIO, CITA_AGENDADA, ENTREVISTA, APROBADA, RECHAZADA, CANCELADA
+  currentStep Int    @default(1)
+  totalSteps  Int    @default(5)
+
+  // Datos del solicitante
+  fullName       String
+  birthDate      DateTime?
+  nationality    String?
+  passportNumber String?
+  passportExpiry DateTime?
+
+  // Datos de contacto
+  phone String
+  email String
+  city  String?
+
+  // Datos del viaje
+  travelPurpose String?
+  travelDate    DateTime?
+  returnDate    DateTime?
+
+  // Información adicional
+  hasVisaHistory   Boolean @default(false)
+  visaHistoryNotes String?
+  hasDenials       Boolean @default(false)
+  denialNotes      String?
+
+  // Integración externa
+  bitrixLeadId String? // ID del lead en Bitrix24
+  bitrixDealId String? // ID del deal en Bitrix24
+
+  // Fechas importantes
+  appointmentDate DateTime?
+  interviewDate   DateTime?
+
+  // Metadata
+  source          String? // WEB, WHATSAPP, REFERIDO, LANDING_NAVIDAD
+  assignedAgentId String?
+  priority        String  @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  documents     Document[]
+  notes         Note[]
+  statusHistory StatusHistory[]
+}
+
+// ============================================
+// HISTORIAL DE ESTADOS
+// ============================================
+
+model StatusHistory {
+  id          String    @id @default(uuid())
+  solicitudId String
+  solicitud   Solicitud @relation(fields: [solicitudId], references: [id])
+
+  fromStatus String?
+  toStatus   String
+  changedBy  String? // User ID que hizo el cambio
+  reason     String?
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// DOCUMENTOS
+// ============================================
+
+model Document {
+  id          String     @id @default(uuid())
+  solicitudId String?
+  solicitud   Solicitud? @relation(fields: [solicitudId], references: [id])
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+
+  name     String
+  type     String // PASAPORTE, FOTO, COMPROBANTE_INGRESOS, CARTA_TRABAJO, DS160, OTRO
+  fileUrl  String?
+  fileName String?
+  fileSize Int?
+  mimeType String?
+
+  status      String    @default("PENDIENTE") // PENDIENTE, RECIBIDO, APROBADO, RECHAZADO
+  reviewNotes String?
+  reviewedBy  String?
+  reviewedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// NOTAS Y COMENTARIOS
+// ============================================
+
+model Note {
+  id          String     @id @default(uuid())
+  solicitudId String?
+  solicitud   Solicitud? @relation(fields: [solicitudId], references: [id])
+  userId      String?
+  user        User?      @relation("UserNotes", fields: [userId], references: [id])
+
+  content    String
+  type       String  @default("GENERAL") // GENERAL, INTERNO, CLIENTE, SISTEMA
+  isInternal Boolean @default(false) // Solo visible para admins
+
+  createdById String
+  createdBy   User     @relation("NoteCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+// ============================================
+// CITAS (Legacy - mantener compatibilidad)
+// ============================================
+
+model Appointment {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  serviceType   String
+  scheduledDate DateTime
+  status        String   @default("PENDING")
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ============================================
+// CONFIGURACIÓN DEL SISTEMA
+// ============================================
+
+model SystemConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  type      String   @default("STRING") // STRING, NUMBER, BOOLEAN, JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

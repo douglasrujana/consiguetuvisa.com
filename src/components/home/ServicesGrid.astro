@@ -1,0 +1,100 @@
+---
+// src/components/home/ServicesGrid.astro
+import Section from '../ui/Section.astro';
+import Card from '../ui/Card.astro';
+import Icon from '../ui/Icon.astro';
+import Button from '../ui/Button.astro';
+import FlagUS from '../ui/flags/FlagUS.astro';
+import FlagCA from '../ui/flags/FlagCA.astro';
+import FlagMX from '../ui/flags/FlagMX.astro';
+import FlagEU from '../ui/flags/FlagEU.astro';
+import FlagGB from '../ui/flags/FlagGB.astro';
+import FlagWorld from '../ui/flags/FlagWorld.astro';
+
+const visas = [
+  {
+    country: 'Estados Unidos',
+    flag: 'us',
+    description: 'Visa B1/B2 de turismo y negocios. Asesoría completa para DS-160.',
+  },
+  {
+    country: 'Canadá',
+    flag: 'ca',
+    description: 'Visa de visitante. Te ayudamos con la aplicación online.',
+  },
+  {
+    country: 'México',
+    flag: 'mx',
+    description: 'Visa de turismo mexicana. Proceso rápido y sencillo.',
+  },
+  {
+    country: 'Schengen',
+    flag: 'eu',
+    description: 'Acceso a 27 países europeos con una sola visa.',
+  },
+  {
+    country: 'Reino Unido',
+    flag: 'gb',
+    description: 'Visa de visitante UK. Asesoría especializada.',
+  },
+  {
+    country: 'Otros Destinos',
+    flag: 'world',
+    description: 'Australia, Nueva Zelanda, Japón y más. Consulta disponibilidad.',
+  },
+];
+
+const flagComponents: Record<string, any> = {
+  us: FlagUS,
+  ca: FlagCA,
+  mx: FlagMX,
+  eu: FlagEU,
+  gb: FlagGB,
+  world: FlagWorld,
+};
+---
+
+<Section id="servicios" background="light">
+  <div class="text-center mb-12">
+    <div class="accent-line mx-auto mb-4"></div>
+    <h2 class="heading-section mb-4">Tipos de Visa</h2>
+    <p class="text-body max-w-2xl mx-auto">
+      Escoge tu destino y agenda una asesoría personalizada con nuestros expertos.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {visas.map(visa => {
+      const FlagComponent = flagComponents[visa.flag];
+      return (
+        <Card class="group">
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 rounded-xl overflow-hidden shadow-md flex-shrink-0 ring-2 ring-surface-muted">
+              <FlagComponent />
+            </div>
+            <div class="flex-1">
+              <h3 class="heading-card mb-2 group-hover:text-brand-secondary transition-colors">
+                {visa.country}
+              </h3>
+              <p class="text-body mb-4">{visa.description}</p>
+              <a 
+                href="#contacto" 
+                class="inline-flex items-center gap-1 text-brand-secondary font-medium hover:gap-2 transition-all"
+              >
+                Más información
+                <Icon name="arrow" size={16} />
+              </a>
+            </div>
+          </div>
+        </Card>
+      );
+    })}
+  </div>
+
+  <div class="text-center mt-10">
+    <Button href="#contacto" size="lg">
+      Agenda tu Asesoría
+      <Icon name="arrow" size={20} />
+    </Button>
+  </div>
+</Section>

@@ -1,0 +1,19 @@
+/* design-system/landing-pages/oferta-navidad/tokens.css */
+/* Tokens específicos para la landing de Navidad */
+
+:root {
+  /* Colores navideños */
+  --xmas-red: #c41e3a;
+  --xmas-red-dark: #9a1830;
+  --xmas-green: #165b33;
+  --xmas-green-light: #1e7b46;
+  --xmas-gold: #d4af37;
+  --xmas-gold-light: #f4d03f;
+  --xmas-snow: #f8f9fa;
+  --xmas-cream: #fff8e7;
+  
+  /* Gradientes */
+  --gradient-xmas: linear-gradient(135deg, var(--xmas-red) 0%, var(--xmas-red-dark) 100%);
+  --gradient-gold: linear-gradient(135deg, var(--xmas-gold) 0%, var(--xmas-gold-light) 100%);
+  --gradient-festive: linear-gradient(180deg, var(--xmas-red) 0%, var(--xmas-green) 100%);
+}

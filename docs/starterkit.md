@@ -15,7 +15,6 @@ mkdir -p src/server/lib/features/asesoria,src/server/lib/features/perfil
 mkdir -p src/server/lib/tests
 mkdir -p src/server/tests
 
-
 ##
 # Instalación de dependencias de Testing (desarrollo)
 pnpm install vitest playwright @playwright/test @astrojs/ts-plugin -D

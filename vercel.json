@@ -1,0 +1,7 @@
+{
+    "version": 2,
+    "framework": "astro",
+    "devCommand": "astro dev --port $PORT",
+    "builds": [],
+    "routes": []
+}

@@ -1,0 +1,66 @@
+/* design-system/global/components.css */
+/* Componentes base del design system */
+
+/* === BOTONES === */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg transition-all duration-200;
+}
+
+.btn-primary {
+  @apply bg-brand-secondary text-text-inverse hover:bg-brand-accent shadow-md hover:shadow-lg;
+}
+
+.btn-secondary {
+  @apply bg-surface-white text-brand-primary border-2 border-brand-primary hover:bg-surface-light;
+}
+
+.btn-whatsapp {
+  @apply bg-whatsapp text-text-inverse hover:brightness-110 shadow-md hover:shadow-lg;
+}
+
+.btn-lg {
+  @apply px-8 py-4 text-lg;
+}
+
+.btn-sm {
+  @apply px-4 py-2 text-sm;
+}
+
+/* === CARDS === */
+.card {
+  @apply bg-surface-white rounded-xl shadow-md p-6 transition-all duration-200;
+}
+
+.card-hover {
+  @apply hover:shadow-lg hover:-translate-y-1;
+}
+
+/* === CONTENEDORES === */
+.container-main {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.section {
+  @apply py-16 md:py-20;
+}
+
+/* === TIPOGRAFÍA === */
+.heading-hero {
+  @apply text-4xl md:text-5xl lg:text-6xl font-bold text-brand-primary leading-tight;
+}
+
+.heading-section {
+  @apply text-3xl md:text-4xl font-bold text-brand-primary;
+}
+
+.heading-card {
+  @apply text-xl font-semibold text-brand-primary;
+}
+
+.text-body {
+  @apply text-base text-text-secondary leading-relaxed;
+}
+
+.text-small {
+  @apply text-sm text-text-muted;
+}

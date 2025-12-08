@@ -1,0 +1,139 @@
+/* design-system/landing-pages/oferta-navidad/theme.css */
+/* Estilos del tema navideño */
+
+@import "./tokens.css";
+
+.xmas-hero {
+  background: var(--gradient-xmas);
+  position: relative;
+  overflow: hidden;
+}
+
+.xmas-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M30 30l15-15v30l-15-15zm0 0l-15 15V15l15 15z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.xmas-badge {
+  background: var(--gradient-gold);
+  color: #1a1a1a;
+  font-weight: 700;
+  padding: 0.5rem 1.5rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+}
+
+.xmas-card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.xmas-btn-primary {
+  background: var(--xmas-green);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 1.125rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(22, 91, 51, 0.3);
+}
+
+.xmas-btn-primary:hover {
+  background: var(--xmas-green-light);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(22, 91, 51, 0.4);
+}
+
+.xmas-btn-whatsapp {
+  background: #25d366;
+  color: white;
+  padding: 1.25rem 2.5rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+}
+
+.xmas-btn-whatsapp:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(37, 211, 102, 0.5);
+}
+
+.countdown-box {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  min-width: 80px;
+  text-align: center;
+}
+
+.countdown-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: white;
+}
+
+.countdown-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 0.25rem;
+}
+
+.price-old {
+  text-decoration: line-through;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.5rem;
+}
+
+.price-new {
+  font-size: 4rem;
+  font-weight: 800;
+  color: var(--xmas-gold-light);
+  line-height: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.snowflake {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.3);
+  animation: fall linear infinite;
+  pointer-events: none;
+}
+
+@keyframes fall {
+  0% { transform: translateY(-10vh) rotate(0deg); }
+  100% { transform: translateY(110vh) rotate(360deg); }
+}
+
+.pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(37, 211, 102, 0.4); }
+  50% { box-shadow: 0 0 40px rgba(37, 211, 102, 0.6); }
+}

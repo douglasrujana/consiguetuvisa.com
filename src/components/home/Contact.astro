@@ -1,0 +1,86 @@
+---
+// src/components/home/Contact.astro
+import Section from '../ui/Section.astro';
+import Icon from '../ui/Icon.astro';
+import LeadCaptureForm from '../forms/LeadCaptureForm.svelte';
+---
+
+<Section id="contacto" background="white">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="accent-line mx-auto mb-4"></div>
+      <h2 class="heading-section mb-4">Agenda tu Evaluación Gratuita</h2>
+      <p class="text-body max-w-2xl mx-auto">
+        Cuéntanos sobre tu caso y te contactaremos en menos de 24 horas.
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-5 gap-8">
+      <!-- Form -->
+      <div class="lg:col-span-3">
+        <div class="bg-surface-light rounded-xl p-6 md:p-8">
+          <LeadCaptureForm 
+            client:load
+            formId="contact-main"
+            showVisaType={true}
+            showCity={true}
+            showMessage={true}
+            submitText="Solicitar Evaluación Gratuita"
+            successMessage="¡Gracias! Te contactaremos en menos de 24 horas."
+          />
+        </div>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="bg-brand-secondary text-text-inverse rounded-xl p-6">
+          <h3 class="font-semibold text-lg mb-4">¿Prefieres contacto directo?</h3>
+          <p class="text-text-inverse/80 mb-6">
+            Escríbenos por WhatsApp y te respondemos en minutos.
+          </p>
+          <a 
+            href="https://wa.me/593999999999?text=Hola,%20quiero%20información%20sobre%20asesoría%20de%20visa" 
+            target="_blank"
+            rel="noopener"
+            class="w-full bg-whatsapp text-white text-center py-3 px-6 rounded-lg font-semibold hover:brightness-110 transition-all flex items-center justify-center gap-2"
+          >
+            <Icon name="whatsapp" size={20} />
+            Escribir por WhatsApp
+          </a>
+        </div>
+
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-brand-secondary/10 rounded-lg flex items-center justify-center">
+              <Icon name="phone" size={20} class="text-brand-secondary" />
+            </div>
+            <div>
+              <p class="text-small">Teléfono</p>
+              <p class="font-medium text-brand-primary">+593 99 999 9999</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-brand-secondary/10 rounded-lg flex items-center justify-center">
+              <Icon name="mail" size={20} class="text-brand-secondary" />
+            </div>
+            <div>
+              <p class="text-small">Email</p>
+              <p class="font-medium text-brand-primary">info@consiguetuvisa.com</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-brand-secondary/10 rounded-lg flex items-center justify-center">
+              <Icon name="location" size={20} class="text-brand-secondary" />
+            </div>
+            <div>
+              <p class="text-small">Ubicación</p>
+              <p class="font-medium text-brand-primary">Quito, Ecuador</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Section>

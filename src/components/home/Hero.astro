@@ -1,0 +1,61 @@
+---
+// src/components/home/Hero.astro
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+---
+
+<section class="gradient-hero py-16 md:py-24 lg:py-32">
+  <div class="container-main">
+    <div class="max-w-4xl mx-auto text-center">
+      <!-- Badge -->
+      <div class="inline-flex items-center gap-2 bg-brand-secondary/10 text-brand-secondary px-4 py-2 rounded-full text-sm font-medium mb-6">
+        <Icon name="shield" size={16} />
+        <span>97% de clientes satisfechos</span>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="heading-hero mb-6">
+        Tu Visa de Turismo
+        <span class="text-brand-secondary block">Sin Complicaciones</span>
+      </h1>
+
+      <!-- Subheadline -->
+      <p class="text-xl md:text-2xl text-text-secondary mb-4 max-w-2xl mx-auto">
+        Acompañamiento experto paso a paso para conseguir tu visa sin estrés y sin errores.
+      </p>
+
+      <!-- Destinations -->
+      <p class="text-text-muted mb-8">
+        EE.UU | Canadá | México | Europa | Reino Unido | Schengen
+      </p>
+
+      <!-- CTAs -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <Button href="#contacto" size="lg">
+          Evaluación Gratuita
+          <Icon name="arrow" size={20} />
+        </Button>
+        <Button href="https://wa.me/593999999999" variant="whatsapp" size="lg" target="_blank">
+          <Icon name="whatsapp" size={20} />
+          Escríbenos Ahora
+        </Button>
+      </div>
+
+      <!-- Trust indicators -->
+      <div class="flex flex-wrap justify-center gap-8 mt-12 text-text-secondary">
+        <div class="flex items-center gap-2">
+          <Icon name="check" size={20} class="text-success" />
+          <span>Revisión profesional</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <Icon name="check" size={20} class="text-success" />
+          <span>Asistencia completa</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <Icon name="check" size={20} class="text-success" />
+          <span>Acompañamiento a cita</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

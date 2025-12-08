@@ -1,16 +1,25 @@
 ---
+// src/pages/index.astro
+// Homepage - consiguetuvisa.com
 
+import Layout from '../components/global/Layout.astro';
+import Hero from '../components/home/Hero.astro';
+import Benefits from '../components/home/Benefits.astro';
+import ServicesGrid from '../components/home/ServicesGrid.astro';
+import Testimonials from '../components/home/Testimonials.astro';
+import StepsFlow from '../components/home/StepsFlow.astro';
+import Trust from '../components/home/Trust.astro';
+import FAQ from '../components/home/FAQ.astro';
+import Contact from '../components/home/Contact.astro';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout title="Asesoría Profesional para Visas de Turismo">
+  <Hero />
+  <Benefits />
+  <ServicesGrid />
+  <Testimonials />
+  <StepsFlow />
+  <Trust />
+  <FAQ />
+  <Contact />
+</Layout>
