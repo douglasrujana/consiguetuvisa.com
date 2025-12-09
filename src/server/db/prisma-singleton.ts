@@ -1,12 +1,12 @@
 // src/server/db/prisma-singleton.ts
 // Singleton de Prisma Client para Prisma 7 con Turso/LibSQL
 
-// ESM/CommonJS compatible imports for Vercel
+// PrismaClient: CommonJS module, needs default import
 import pkg from '@prisma/client';
 const { PrismaClient } = pkg;
 
-import adapterPkg from '@prisma/adapter-libsql';
-const { PrismaLibSql } = adapterPkg;
+// PrismaLibSql: ESM module, named export works
+import { PrismaLibSql } from '@prisma/adapter-libsql';
 
 declare global {
   // eslint-disable-next-line no-var
