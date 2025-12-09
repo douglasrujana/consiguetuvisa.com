@@ -1,0 +1,387 @@
+---
+/**
+ * /kiosko/[campaign].astro - Modo Kiosko para centros comerciales
+ * Solo ruleta, pantalla completa, sin formulario
+ */
+import SpinWheel from '@components/promo/SpinWheel.svelte';
+import PrizeReveal from '@components/promo/PrizeReveal.svelte';
+import { CampaignRepository } from '@server/lib/features/promo';
+import { urlFor } from '@adapters/cms/sanity.client';
+
+// Obtener slug de la URL
+const { campaign: slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/');
+}
+
+// Obtener datos de la campaña
+const campaignRepo = new CampaignRepository();
+const campaign = await campaignRepo.findBySlug(slug);
+
+if (!campaign || !campaign.isActive) {
+  return Astro.redirect('/');
+}
+
+// Validar fechas
+const now = new Date();
+if (now < new Date(campaign.startDate) || now > new Date(campaign.endDate)) {
+  return Astro.redirect('/');
+}
+
+// Preparar datos
+const campaignData = {
+  id: campaign.id,
+  name: campaign.name,
+  slug: campaign.slug,
+  prizes: campaign.prizes.map(p => ({
+    id: p.id,
+    name: p.name,
+    color: p.color,
+    type: p.type,
+  })),
+  agencyInfo: campaign.agencyInfo,
+  theme: campaign.theme,
+};
+
+const primaryColor = campaign.theme?.primaryColor || '#1e3a5f';
+const secondaryColor = campaign.theme?.secondaryColor || '#2d5be3';
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{campaign.name} | Kiosko</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style define:vars={{ primaryColor, secondaryColor }}>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .kiosko-page {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primaryColor) 0%, var(--secondaryColor) 100%);
+      padding: 2rem;
+      position: relative;
+    }
+
+    .logo {
+      position: absolute;
+      top: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 180px;
+    }
+
+    .campaign-title {
+      color: white;
+      font-size: 2.5rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .wheel-wrapper {
+      position: relative;
+    }
+
+    .spin-instruction {
+      position: absolute;
+      bottom: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+      50% { opacity: 0.7; transform: translateX(-50%) scale(1.05); }
+    }
+
+    .result-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .result-overlay.show {
+      display: flex;
+    }
+
+    .result-content {
+      text-align: center;
+      color: white;
+      padding: 3rem;
+      animation: scaleIn 0.5s ease;
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0.5); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .result-emoji {
+      font-size: 8rem;
+      margin-bottom: 1rem;
+    }
+
+    .result-title {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-title.winner {
+      color: #10b981;
+    }
+
+    .result-title.retry {
+      color: #fbbf24;
+    }
+
+    .result-prize {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .result-code {
+      font-family: monospace;
+      font-size: 2.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      border: 2px dashed rgba(255, 255, 255, 0.5);
+      margin: 1rem 0;
+    }
+
+    .btn-reset {
+      margin-top: 2rem;
+      padding: 1.5rem 4rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: white;
+      background: linear-gradient(135deg, var(--secondaryColor), var(--primaryColor));
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-reset:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .footer-info {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    /* Ocultar botón interno de la ruleta en modo kiosko */
+    :global(.spin-button) {
+      display: none !important;
+    }
+
+    .big-spin-btn {
+      position: absolute;
+      bottom: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 1.5rem 4rem;
+      font-size: 2rem;
+      font-weight: 800;
+      color: white;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.5);
+      transition: all 0.3s ease;
+      z-index: 10;
+    }
+
+    .big-spin-btn:hover:not(:disabled) {
+      transform: translateX(-50%) scale(1.05);
+      box-shadow: 0 12px 40px rgba(16, 185, 129, 0.6);
+    }
+
+    .big-spin-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .big-spin-btn:active:not(:disabled) {
+      transform: translateX(-50%) scale(0.98);
+    }
+  </style>
+</head>
+<body>
+  <main class="kiosko-page">
+    {campaign.agencyInfo?.logo && (
+      <img 
+        src={urlFor(campaign.agencyInfo.logo).width(180).url()} 
+        alt="Logo"
+        class="logo"
+      />
+    )}
+
+    <h1 class="campaign-title">{campaign.name}</h1>
+
+    <div class="wheel-wrapper">
+      <SpinWheel 
+        client:load
+        prizes={campaignData.prizes}
+        size={450}
+        disabled={false}
+      />
+      <button id="spinBtn" class="big-spin-btn">
+        🎰 ¡GIRAR!
+      </button>
+    </div>
+
+    <!-- Resultado -->
+    <div id="resultOverlay" class="result-overlay">
+      <div class="result-content">
+        <div id="resultEmoji" class="result-emoji">🎉</div>
+        <h2 id="resultTitle" class="result-title winner">¡FELICIDADES!</h2>
+        <p id="resultPrize" class="result-prize"></p>
+        <div id="resultCode" class="result-code" style="display: none;"></div>
+        <button class="btn-reset" onclick="resetKiosko()">
+          🔄 Siguiente participante
+        </button>
+      </div>
+    </div>
+
+    <footer class="footer-info">
+      {campaign.agencyInfo?.name && <span>{campaign.agencyInfo.name}</span>}
+      {campaign.agencyInfo?.phone && <span> | {campaign.agencyInfo.phone}</span>}
+    </footer>
+  </main>
+
+  <script define:vars={{ campaignData }}>
+    // Estado del kiosko
+    let isSpinning = false;
+    let wheelComponent = null;
+
+    // Esperar a que el componente Svelte esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+      const spinBtn = document.getElementById('spinBtn');
+      
+      spinBtn.addEventListener('click', async () => {
+        if (isSpinning) return;
+        
+        isSpinning = true;
+        spinBtn.disabled = true;
+        spinBtn.textContent = '🎰 Girando...';
+
+        // Seleccionar premio aleatorio basado en probabilidades
+        const prizeIndex = selectRandomPrize();
+        
+        // Disparar evento para girar la ruleta
+        document.dispatchEvent(new CustomEvent('kioskSpin', { 
+          detail: { prizeIndex } 
+        }));
+
+        // Esperar animación (5 segundos)
+        setTimeout(() => {
+          showResult(campaignData.prizes[prizeIndex]);
+        }, 5200);
+      });
+    });
+
+    function selectRandomPrize() {
+      // Selección aleatoria simple para modo kiosko
+      // En producción, esto debería llamar al backend
+      return Math.floor(Math.random() * campaignData.prizes.length);
+    }
+
+    function showResult(prize) {
+      const overlay = document.getElementById('resultOverlay');
+      const emoji = document.getElementById('resultEmoji');
+      const title = document.getElementById('resultTitle');
+      const prizeEl = document.getElementById('resultPrize');
+      const codeEl = document.getElementById('resultCode');
+
+      const isWinner = prize && prize.type !== 'retry';
+      
+      const emojis = {
+        travel: '✈️',
+        giftcard: '🎁',
+        service: '📋',
+        discount: '💰',
+        dinner: '🍽️',
+        flight: '🎫',
+        retry: '🔄',
+      };
+
+      emoji.textContent = emojis[prize.type] || '🎉';
+      
+      if (isWinner) {
+        title.textContent = '¡FELICIDADES!';
+        title.className = 'result-title winner';
+        prizeEl.textContent = prize.name;
+        
+        // Generar código temporal para kiosko
+        const tempCode = 'KIOSK-' + Date.now().toString(36).toUpperCase();
+        codeEl.textContent = tempCode;
+        codeEl.style.display = 'block';
+      } else {
+        title.textContent = '¡Sigue participando!';
+        title.className = 'result-title retry';
+        prizeEl.textContent = 'Mejor suerte la próxima vez';
+        codeEl.style.display = 'none';
+      }
+
+      overlay.classList.add('show');
+    }
+
+    window.resetKiosko = function() {
+      const overlay = document.getElementById('resultOverlay');
+      const spinBtn = document.getElementById('spinBtn');
+      
+      overlay.classList.remove('show');
+      isSpinning = false;
+      spinBtn.disabled = false;
+      spinBtn.textContent = '🎰 ¡GIRAR!';
+
+      // Reset de la ruleta
+      document.dispatchEvent(new CustomEvent('kioskReset'));
+    };
+
+    // Escuchar eventos del componente Svelte
+    document.addEventListener('wheelSpinEnd', (e) => {
+      // El componente terminó de girar
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,637 @@
+---
+/**
+ * /kiosko/demo.astro - Ruleta Loca Standalone Premium
+ * 100% independiente, sin backend, diseño navideño premium
+ * Layout: Ruleta izquierda + Premio derecha (estilo Easypromos)
+ */
+
+// Premios hardcodeados para demo
+const prizes = [
+  { id: '1', name: 'VIAJE GALÁPAGOS', color: '#FF6B6B', type: 'travel', emoji: '✈️' },
+  { id: '2', name: 'GIFT CARD $100', color: '#4ECDC4', type: 'giftcard', emoji: '🎁' },
+  { id: '3', name: 'SIGUE JUGANDO', color: '#9B59B6', type: 'retry', emoji: '🔄' },
+  { id: '4', name: 'GIFT CARD $50', color: '#3498DB', type: 'giftcard', emoji: '💳' },
+  { id: '5', name: 'ASESORÍA GRATIS', color: '#2ECC71', type: 'service', emoji: '📋' },
+  { id: '6', name: 'SIGUE JUGANDO', color: '#E74C3C', type: 'retry', emoji: '🔄' },
+  { id: '7', name: 'DESCUENTO 20%', color: '#F39C12', type: 'discount', emoji: '💰' },
+  { id: '8', name: 'CENA PARA 2', color: '#1ABC9C', type: 'dinner', emoji: '🍽️' },
+];
+
+// URLs de sonidos (Pixabay - libres de derechos)
+const sounds = {
+  start: 'https://cdn.pixabay.com/audio/2022/03/15/audio_7625e3d4a0.mp3', // Click/inicio
+  spin: 'https://cdn.pixabay.com/audio/2022/10/30/audio_3c6c61238d.mp3',  // Suspenso ruleta
+  win: 'https://cdn.pixabay.com/audio/2021/08/04/audio_0625c1539c.mp3',   // Fanfarria victoria
+  lose: 'https://cdn.pixabay.com/audio/2022/03/15/audio_942694a069.mp3',  // Sonido neutro
+};
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🎄 Ruleta Navidad 2025</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="kiosko-container">
+    <!-- Partículas de nieve -->
+    <div class="snowflakes" aria-hidden="true">
+      {Array.from({ length: 15 }).map((_, i) => (
+        <div class="snowflake" style={`--delay: ${Math.random() * 10}s; --left: ${Math.random() * 100}%`}>❄</div>
+      ))}
+    </div>
+
+    <!-- Layout principal: Ruleta + Panel lateral -->
+    <div class="main-layout">
+      <!-- Sección izquierda: Ruleta -->
+      <div class="wheel-section">
+        <!-- Branding -->
+        <div class="branding">
+          <img src="/favicon.svg" alt="ConsigueTuVisa" class="brand-logo" onerror="this.style.display='none'"/>
+          <span class="brand-name">ConsigueTuVisa.com</span>
+        </div>
+        
+        <header class="header">
+          <h1 class="title">🎄 ¡TE PONEMOS A VIAJAR! 🎅</h1>
+          <p class="subtitle">Gira la Ruleta Loca y gana premios increíbles</p>
+          <p class="subtitle-small">Viajes, Gift Cards, Descuentos y más...</p>
+        </header>
+
+        <div class="wheel-wrapper">
+          <!-- Luces decorativas -->
+          <div class="lights-ring">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div class="light" style={`--angle: ${i * 18}deg; --delay: ${i * 0.1}s`}></div>
+            ))}
+          </div>
+
+          <!-- Puntero -->
+          <div class="pointer">
+            <svg viewBox="0 0 50 70" class="pointer-svg">
+              <defs>
+                <linearGradient id="pointerGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#FFD700"/>
+                  <stop offset="50%" style="stop-color:#FFA500"/>
+                  <stop offset="100%" style="stop-color:#FFD700"/>
+                </linearGradient>
+              </defs>
+              <polygon points="25,70 2,8 25,20 48,8" fill="url(#pointerGold)"/>
+            </svg>
+          </div>
+
+          <!-- Ruleta SVG -->
+          <div class="wheel" id="wheel">
+            <svg viewBox="0 0 400 400" class="wheel-svg">
+              <defs>
+                <linearGradient id="rimGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#FFD700"/>
+                  <stop offset="50%" style="stop-color:#FFA500"/>
+                  <stop offset="100%" style="stop-color:#FFD700"/>
+                </linearGradient>
+                <radialGradient id="centerGradient" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" style="stop-color:#4A90D9"/>
+                  <stop offset="100%" style="stop-color:#1E3A5F"/>
+                </radialGradient>
+              </defs>
+
+              <!-- Borde exterior -->
+              <circle cx="200" cy="200" r="195" fill="#1a1a2e"/>
+              <circle cx="200" cy="200" r="195" fill="none" stroke="url(#rimGradient)" stroke-width="10"/>
+              <circle cx="200" cy="200" r="188" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+
+              <!-- Segmentos -->
+              <g id="segments">
+                {prizes.map((prize, i) => {
+                  const angle = 360 / prizes.length;
+                  const startAngle = i * angle - 90;
+                  const startRad = (startAngle * Math.PI) / 180;
+                  const endRad = ((startAngle + angle) * Math.PI) / 180;
+                  const radius = 183;
+                  const x1 = 200 + radius * Math.cos(startRad);
+                  const y1 = 200 + radius * Math.sin(startRad);
+                  const x2 = 200 + radius * Math.cos(endRad);
+                  const y2 = 200 + radius * Math.sin(endRad);
+                  const path = `M 200 200 L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`;
+                  const midAngle = startAngle + angle / 2;
+                  const midRad = (midAngle * Math.PI) / 180;
+
+                  return (
+                    <g>
+                      <path d={path} fill={prize.color} stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                      {prize.name.split('').map((char, ci) => {
+                        const charRadius = 55 + ci * 9;
+                        const charX = 200 + charRadius * Math.cos(midRad);
+                        const charY = 200 + charRadius * Math.sin(midRad);
+                        return (
+                          <text
+                            x={charX}
+                            y={charY}
+                            transform={`rotate(${midAngle + 90}, ${charX}, ${charY})`}
+                            text-anchor="middle"
+                            dominant-baseline="middle"
+                            class="prize-char"
+                          >
+                            {char}
+                          </text>
+                        );
+                      })}
+                    </g>
+                  );
+                })}
+              </g>
+
+              <!-- Centro -->
+              <circle cx="200" cy="200" r="40" fill="url(#centerGradient)"/>
+              <circle cx="200" cy="200" r="32" fill="none" stroke="url(#rimGradient)" stroke-width="3"/>
+              <text x="200" y="200" text-anchor="middle" dominant-baseline="middle" class="center-text">✖</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Botón GIRAR -->
+        <button id="spinBtn" class="spin-btn">¡JUGAR!</button>
+      </div>
+
+      <!-- Sección derecha: Panel de premio (aparece al ganar) -->
+      <div id="prizePanel" class="prize-panel hidden">
+        <button id="closePanel" class="close-btn">✕</button>
+        
+        <div class="prize-header">
+          <span id="prizeStatus" class="prize-status">¡Enhorabuena!</span>
+          <p id="prizeMessage" class="prize-message">Has conseguido un premio</p>
+        </div>
+
+        <div class="prize-display">
+          <div id="prizeEmoji" class="prize-big-emoji">🎁</div>
+          <div id="prizeName" class="prize-big-name">GIFT CARD $100</div>
+        </div>
+
+        <div class="prize-code-section">
+          <span class="code-label">Código:</span>
+          <div class="code-box">
+            <span id="prizeCode" class="code-value">ABC123</span>
+            <button id="copyCode" class="copy-btn">📋 Copiar</button>
+          </div>
+        </div>
+
+        <div class="share-section">
+          <p class="share-label">¡Compártelo ahora!</p>
+          <div class="share-buttons">
+            <button id="shareFb" class="share-btn facebook">📘 Facebook</button>
+            <button id="shareWa" class="share-btn whatsapp">💬 WhatsApp</button>
+          </div>
+        </div>
+
+        <button id="nextPlayer" class="next-btn">🔄 Siguiente Participante</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      background: #1a1a2e;
+    }
+
+    .kiosko-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      padding: 1rem;
+    }
+
+    /* Nieve */
+    .snowflakes { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .snowflake {
+      position: absolute;
+      top: -50px;
+      left: var(--left);
+      font-size: 1.2rem;
+      color: rgba(255, 255, 255, 0.7);
+      animation: fall 12s linear infinite;
+      animation-delay: var(--delay);
+    }
+    @keyframes fall {
+      0% { transform: translateY(-50px) rotate(0deg); }
+      100% { transform: translateY(100vh) rotate(360deg); }
+    }
+
+    /* Layout principal */
+    .main-layout {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      max-width: 1200px;
+    }
+
+    /* Sección ruleta */
+    .wheel-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Branding */
+    .branding {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      background: rgba(255,255,255,0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      backdrop-filter: blur(10px);
+    }
+    .brand-logo { width: 28px; height: 28px; }
+    .brand-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 0.5px;
+    }
+
+    .header { text-align: center; margin-bottom: 1rem; }
+    .title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      background: linear-gradient(135deg, #FFD700, #FF6B6B, #4ECDC4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s ease infinite;
+      background-size: 200% 200%;
+    }
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .subtitle {
+      color: rgba(255,255,255,0.95);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 0.25rem;
+    }
+    .subtitle-small {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+
+    .wheel-wrapper {
+      position: relative;
+      width: 420px;
+      height: 420px;
+    }
+
+    /* Luces */
+    .lights-ring { position: absolute; inset: -15px; border-radius: 50%; pointer-events: none; }
+    .light {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #FFD700;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: rotate(var(--angle)) translateY(-225px);
+      box-shadow: 0 0 10px 3px currentColor;
+      animation: blink 0.6s ease infinite alternate;
+      animation-delay: var(--delay);
+    }
+    .light:nth-child(odd) { background: #FF6B6B; color: #FF6B6B; }
+    .light:nth-child(even) { background: #4ECDC4; color: #4ECDC4; }
+    @keyframes blink {
+      from { opacity: 0.5; }
+      to { opacity: 1; }
+    }
+
+    /* Puntero */
+    .pointer {
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+    }
+    .pointer-svg { width: 50px; height: 70px; }
+
+    /* Ruleta */
+    .wheel {
+      width: 100%;
+      height: 100%;
+      transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+    }
+    .wheel-svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 10px 30px rgba(0,0,0,0.4));
+    }
+    .prize-char {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      fill: white;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+    .center-text { font-size: 28px; fill: white; font-weight: 900; }
+
+    /* Botón GIRAR */
+    .spin-btn {
+      margin-top: 1.5rem;
+      padding: 1rem 4rem;
+      font-size: 1.5rem;
+      font-weight: 800;
+      font-family: 'Montserrat', sans-serif;
+      color: #333;
+      background: linear-gradient(180deg, #fff 0%, #e0e0e0 100%);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: all 0.2s;
+    }
+    .spin-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+    .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Panel de premio */
+    .prize-panel {
+      background: #1a1a2e;
+      border-radius: 16px;
+      padding: 2rem;
+      width: 380px;
+      color: white;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      animation: slideIn 0.5s ease;
+    }
+    .prize-panel.hidden { display: none; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(50px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .prize-header { margin-bottom: 1.5rem; }
+    .prize-status {
+      background: #FFD700;
+      color: #333;
+      padding: 0.25rem 1rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.875rem;
+    }
+    .prize-message {
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .prize-display {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .prize-big-emoji { font-size: 4rem; margin-bottom: 0.5rem; }
+    .prize-big-name {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .prize-code-section { margin-bottom: 1.5rem; }
+    .code-label { font-size: 0.875rem; color: rgba(255,255,255,0.7); }
+    .code-box {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .code-value {
+      background: rgba(255,255,255,0.1);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #4ECDC4;
+      flex: 1;
+    }
+    .copy-btn {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    .share-section { margin-bottom: 1.5rem; }
+    .share-label { font-size: 0.875rem; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem; }
+    .share-buttons { display: flex; gap: 0.5rem; }
+    .share-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .share-btn.facebook { background: #1877F2; color: white; }
+    .share-btn.whatsapp { background: #25D366; color: white; }
+
+    .next-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .main-layout { flex-direction: column; }
+      .wheel-wrapper { width: 350px; height: 350px; }
+      .prize-panel { width: 100%; max-width: 400px; }
+    }
+  </style>
+
+  <script define:vars={{ prizes, sounds }}>
+    let isSpinning = false;
+    let currentRotation = 0;
+    let spinSound, winSound, loseSound;
+    
+    const wheel = document.getElementById('wheel');
+    const spinBtn = document.getElementById('spinBtn');
+    const prizePanel = document.getElementById('prizePanel');
+    const closePanel = document.getElementById('closePanel');
+    const nextPlayer = document.getElementById('nextPlayer');
+    const copyCode = document.getElementById('copyCode');
+    const shareFb = document.getElementById('shareFb');
+    const shareWa = document.getElementById('shareWa');
+
+    const segmentAngle = 360 / prizes.length;
+
+    let startSound;
+    
+    // Precargar sonidos
+    function initSounds() {
+      startSound = new Audio(sounds.start);
+      startSound.volume = 0.6;
+      
+      spinSound = new Audio(sounds.spin);
+      spinSound.volume = 0.5;
+      
+      winSound = new Audio(sounds.win);
+      winSound.volume = 0.7;
+      
+      loseSound = new Audio(sounds.lose);
+      loseSound.volume = 0.5;
+    }
+
+    // Inicializar al primer click
+    let soundsReady = false;
+    document.addEventListener('click', () => {
+      if (!soundsReady) {
+        initSounds();
+        soundsReady = true;
+      }
+    }, { once: true });
+
+    spinBtn.addEventListener('click', spin);
+    closePanel.addEventListener('click', reset);
+    nextPlayer.addEventListener('click', reset);
+    copyCode.addEventListener('click', () => {
+      const code = document.getElementById('prizeCode').textContent;
+      navigator.clipboard.writeText(code);
+      copyCode.textContent = '✓ Copiado';
+      setTimeout(() => copyCode.textContent = '📋 Copiar', 2000);
+    });
+
+    shareFb.addEventListener('click', () => {
+      const text = `¡Gané ${document.getElementById('prizeName').textContent} en la Ruleta Navideña! 🎄🎁`;
+      window.open(`https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(text)}`, '_blank');
+    });
+
+    shareWa.addEventListener('click', () => {
+      const text = `¡Gané ${document.getElementById('prizeName').textContent} en la Ruleta Navideña! 🎄🎁 Código: ${document.getElementById('prizeCode').textContent}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    });
+
+    function spin() {
+      if (isSpinning) return;
+      
+      if (!soundsReady) { initSounds(); soundsReady = true; }
+      
+      isSpinning = true;
+      spinBtn.disabled = true;
+      spinBtn.textContent = 'Girando...';
+
+      // Sonido de inicio (click)
+      if (startSound) {
+        startSound.currentTime = 0;
+        startSound.play().catch(e => console.log('Audio error:', e));
+      }
+
+      // Sonido de giro (después de un pequeño delay)
+      setTimeout(() => {
+        if (spinSound) {
+          spinSound.currentTime = 0;
+          spinSound.play().catch(e => console.log('Audio error:', e));
+        }
+      }, 300);
+
+      // Seleccionar premio
+      const prizeIndex = Math.floor(Math.random() * prizes.length);
+      const prize = prizes[prizeIndex];
+
+      // Calcular rotación
+      const extraSpins = 4 + Math.floor(Math.random() * 2);
+      const prizeAngle = prizeIndex * segmentAngle;
+      const targetRotation = currentRotation + (extraSpins * 360) + (360 - prizeAngle) - (segmentAngle / 2);
+      
+      currentRotation = targetRotation;
+      wheel.style.transform = `rotate(${targetRotation}deg)`;
+
+      setTimeout(() => {
+        if (spinSound) spinSound.pause();
+        showResult(prize);
+      }, 4200);
+    }
+
+    function showResult(prize) {
+      const isWinner = prize.type !== 'retry';
+      
+      // Reproducir sonido
+      if (isWinner && winSound) {
+        winSound.currentTime = 0;
+        winSound.play().catch(e => console.log('Audio error:', e));
+      } else if (!isWinner && loseSound) {
+        loseSound.currentTime = 0;
+        loseSound.play().catch(e => console.log('Audio error:', e));
+      }
+
+      // Actualizar panel
+      document.getElementById('prizeStatus').textContent = isWinner ? '¡Enhorabuena!' : '¡Sigue intentando!';
+      document.getElementById('prizeMessage').textContent = isWinner 
+        ? `Has conseguido: ${prize.name}` 
+        : 'No ganaste esta vez, ¡pero puedes volver a intentar!';
+      document.getElementById('prizeEmoji').textContent = prize.emoji;
+      document.getElementById('prizeName').textContent = prize.name;
+      document.getElementById('prizeCode').textContent = generateCode();
+
+      // Mostrar/ocultar secciones según resultado
+      document.querySelector('.prize-code-section').style.display = isWinner ? 'block' : 'none';
+      document.querySelector('.share-section').style.display = isWinner ? 'block' : 'none';
+
+      prizePanel.classList.remove('hidden');
+    }
+
+    function reset() {
+      prizePanel.classList.add('hidden');
+      isSpinning = false;
+      spinBtn.disabled = false;
+      spinBtn.textContent = '¡JUGAR!';
+    }
+
+    function generateCode() {
+      return 'NAV' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+  </script>
+</body>
+</html>

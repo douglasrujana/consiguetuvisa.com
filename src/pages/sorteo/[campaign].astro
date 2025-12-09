@@ -1,0 +1,483 @@
+---
+/**
+ * /sorteo/[campaign].astro - Landing de Sorteo/Ruleta Loca
+ * Página completa con formulario + ruleta
+ */
+import Layout from '@components/global/Layout.astro';
+import SpinWheel from '@components/promo/SpinWheel.svelte';
+import CardSelector from '@components/promo/CardSelector.svelte';
+import ParticipationForm from '@components/promo/ParticipationForm.svelte';
+import PrizeReveal from '@components/promo/PrizeReveal.svelte';
+import { CampaignRepository } from '@server/lib/features/promo';
+import { urlFor } from '@adapters/cms/sanity.client';
+
+// Obtener slug de la URL
+const { campaign: slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/');
+}
+
+// Obtener datos de la campaña
+const campaignRepo = new CampaignRepository();
+const campaign = await campaignRepo.findBySlug(slug);
+
+// Si no existe o no está activa, redirigir
+if (!campaign || !campaign.isActive) {
+  return Astro.redirect('/');
+}
+
+// Validar fechas
+const now = new Date();
+const startDate = new Date(campaign.startDate);
+const endDate = new Date(campaign.endDate);
+
+if (now < startDate || now > endDate) {
+  return Astro.redirect('/');
+}
+
+// Preparar datos para el cliente
+const campaignData = {
+  id: campaign.id,
+  name: campaign.name,
+  slug: campaign.slug,
+  description: campaign.description,
+  prizes: campaign.prizes.map(p => ({
+    id: p.id,
+    name: p.name,
+    color: p.color,
+    type: p.type,
+    description: p.description,
+    value: p.value,
+  })),
+  cardBrands: campaign.cardBrands.map(cb => ({
+    id: cb.id,
+    name: cb.name,
+    slug: cb.slug,
+    logo: cb.logo,
+    spinsPerCard: cb.spinsPerCard,
+  })),
+  agencyInfo: campaign.agencyInfo,
+  theme: campaign.theme,
+};
+
+// Colores del tema
+const primaryColor = campaign.theme?.primaryColor || '#1e3a5f';
+const secondaryColor = campaign.theme?.secondaryColor || '#2d5be3';
+---
+
+<Layout title={`${campaign.name} | Sorteo`}>
+  <main class="sorteo-page" style={`--primary: ${primaryColor}; --secondary: ${secondaryColor};`}>
+    <!-- Header de la campaña -->
+    <header class="campaign-header">
+      {campaign.agencyInfo?.logo && (
+        <img 
+          src={urlFor(campaign.agencyInfo.logo).width(200).url()} 
+          alt={campaign.agencyInfo.name || 'Logo'}
+          class="agency-logo"
+        />
+      )}
+      <h1>{campaign.name}</h1>
+      {campaign.description && <p class="description">{campaign.description}</p>}
+    </header>
+
+    <!-- Contenedor principal -->
+    <div class="sorteo-container">
+      <!-- Paso 1: Selección de tarjetas -->
+      <section class="step" id="step-cards">
+        <div class="step-number">1</div>
+        <CardSelector 
+          client:load
+          cards={campaignData.cardBrands}
+          onSelectionChange="handleCardSelection"
+        />
+      </section>
+
+      <!-- Paso 2: Formulario -->
+      <section class="step" id="step-form">
+        <div class="step-number">2</div>
+        <div id="form-container">
+          <!-- Se renderiza con Svelte -->
+        </div>
+      </section>
+
+      <!-- Paso 3: Ruleta -->
+      <section class="step" id="step-wheel">
+        <div class="step-number">3</div>
+        <div class="wheel-container">
+          <SpinWheel 
+            client:load
+            prizes={campaignData.prizes}
+            size={350}
+            disabled={true}
+          />
+        </div>
+      </section>
+    </div>
+
+    <!-- Modal de premio -->
+    <div id="prize-modal"></div>
+
+    <!-- Info de la agencia -->
+    {campaign.agencyInfo && (
+      <footer class="agency-info">
+        <div class="agency-details">
+          {campaign.agencyInfo.name && <p class="agency-name">{campaign.agencyInfo.name}</p>}
+          {campaign.agencyInfo.address && <p>📍 {campaign.agencyInfo.address}</p>}
+          {campaign.agencyInfo.phone && <p>📞 {campaign.agencyInfo.phone}</p>}
+          {campaign.agencyInfo.whatsapp && (
+            <a href={`https://wa.me/${campaign.agencyInfo.whatsapp.replace(/\D/g, '')}`} class="whatsapp-btn">
+              💬 WhatsApp
+            </a>
+          )}
+        </div>
+      </footer>
+    )}
+  </main>
+</Layout>
+
+<script define:vars={{ campaignData }}>
+  // Estado de la aplicación
+  let state = {
+    selectedCards: [],
+    totalSpins: 0,
+    participationId: null,
+    currentStep: 1,
+    spinsRemaining: 0,
+  };
+
+  // GraphQL endpoint
+  const GRAPHQL_URL = '/api/graphql';
+
+  async function graphql(query, variables = {}) {
+    const res = await fetch(GRAPHQL_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, variables }),
+    });
+    const json = await res.json();
+    if (json.errors) throw new Error(json.errors[0].message);
+    return json.data;
+  }
+
+  // Manejar selección de tarjetas
+  window.handleCardSelection = function(selected) {
+    state.selectedCards = selected;
+    state.totalSpins = selected.reduce((sum, slug) => {
+      const card = campaignData.cardBrands.find(c => c.slug === slug);
+      return sum + (card?.spinsPerCard || 1);
+    }, 0);
+    updateUI();
+  };
+
+  // Crear participación
+  async function createParticipation(formData) {
+    const mutation = `
+      mutation CreateParticipation($input: CreateParticipationInput!) {
+        createParticipation(input: $input) {
+          id
+          totalSpins
+          spinsUsed
+        }
+      }
+    `;
+
+    const data = await graphql(mutation, {
+      input: {
+        campaignId: campaignData.slug,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        selectedCards: state.selectedCards,
+        source: 'WEB',
+      }
+    });
+
+    state.participationId = data.createParticipation.id;
+    state.spinsRemaining = data.createParticipation.totalSpins;
+    state.currentStep = 3;
+    
+    // Habilitar ruleta
+    enableWheel();
+  }
+
+  // Girar ruleta
+  async function spin() {
+    if (!state.participationId || state.spinsRemaining <= 0) return;
+
+    const mutation = `
+      mutation Spin($participationId: String!) {
+        spin(participationId: $participationId) {
+          success
+          prize {
+            id
+            name
+            type
+            description
+            value
+          }
+          prizeCode
+          spinsRemaining
+          message
+        }
+      }
+    `;
+
+    const data = await graphql(mutation, {
+      participationId: state.participationId
+    });
+
+    state.spinsRemaining = data.spin.spinsRemaining;
+
+    // Mostrar resultado
+    showPrizeModal(data.spin);
+  }
+
+  function showPrizeModal(result) {
+    // Implementar modal de premio
+    const modal = document.getElementById('prize-modal');
+    if (!modal) return;
+
+    const isWinner = result.prize && result.prize.type !== 'retry';
+    
+    modal.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal-content">
+          <div class="prize-emoji">${isWinner ? '🎉' : '🔄'}</div>
+          <h2>${isWinner ? '¡FELICIDADES!' : '¡Sigue participando!'}</h2>
+          ${isWinner ? `
+            <p class="prize-name">${result.prize.name}</p>
+            ${result.prizeCode ? `<p class="prize-code">Código: ${result.prizeCode}</p>` : ''}
+          ` : `
+            <p>${result.message}</p>
+          `}
+          ${state.spinsRemaining > 0 ? `
+            <button onclick="closeModalAndSpin()" class="btn-spin-again">
+              🎰 Girar de nuevo (${state.spinsRemaining})
+            </button>
+          ` : ''}
+          <button onclick="closeModal()" class="btn-close">Cerrar</button>
+        </div>
+      </div>
+    `;
+    modal.style.display = 'block';
+  }
+
+  window.closeModal = function() {
+    const modal = document.getElementById('prize-modal');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.innerHTML = '';
+    }
+  };
+
+  window.closeModalAndSpin = function() {
+    closeModal();
+    // Trigger spin en el componente Svelte
+    document.dispatchEvent(new CustomEvent('triggerSpin'));
+  };
+
+  function enableWheel() {
+    // Comunicar con el componente Svelte
+    document.dispatchEvent(new CustomEvent('enableWheel'));
+  }
+
+  function updateUI() {
+    // Actualizar contador de giros en el formulario
+    const badge = document.querySelector('.spins-badge');
+    if (badge) {
+      badge.textContent = `🎰 ${state.totalSpins} giro${state.totalSpins > 1 ? 's' : ''} disponible${state.totalSpins > 1 ? 's' : ''}`;
+    }
+  }
+
+  // Exponer funciones globales
+  window.createParticipation = createParticipation;
+  window.spin = spin;
+</script>
+
+<style>
+  .sorteo-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    padding: 2rem 1rem;
+  }
+
+  .campaign-header {
+    text-align: center;
+    color: white;
+    margin-bottom: 2rem;
+  }
+
+  .agency-logo {
+    max-width: 150px;
+    margin-bottom: 1rem;
+  }
+
+  .campaign-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .description {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .sorteo-container {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .step {
+    background: white;
+    border-radius: 24px;
+    padding: 2rem;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .step-number {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    background: var(--secondary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .wheel-container {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0 4rem;
+  }
+
+  .agency-info {
+    margin-top: 3rem;
+    text-align: center;
+    color: white;
+  }
+
+  .agency-details {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 1.5rem;
+    border-radius: 16px;
+    display: inline-block;
+  }
+
+  .agency-name {
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .agency-details p {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+  }
+
+  .whatsapp-btn {
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: #25d366;
+    color: white;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .whatsapp-btn:hover {
+    transform: scale(1.05);
+  }
+
+  /* Modal styles */
+  :global(.modal-overlay) {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  :global(.modal-content) {
+    background: white;
+    padding: 2rem;
+    border-radius: 24px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+  }
+
+  :global(.prize-emoji) {
+    font-size: 4rem;
+  }
+
+  :global(.prize-name) {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  :global(.prize-code) {
+    font-family: monospace;
+    background: #f1f5f9;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 1.125rem;
+  }
+
+  :global(.btn-spin-again) {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    margin: 1rem 0 0.5rem;
+    background: linear-gradient(135deg, #2d5be3, #1e3a5f);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  :global(.btn-close) {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  #prize-modal {
+    display: none;
+  }
+
+  @media (max-width: 640px) {
+    .campaign-header h1 {
+      font-size: 1.75rem;
+    }
+
+    .step {
+      padding: 1.5rem;
+    }
+  }
+</style>

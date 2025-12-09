@@ -186,3 +186,49 @@ model SystemConfig {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ============================================
+// PARTICIPACIONES EN SORTEOS (Ruleta Loca)
+// ============================================
+
+model Participation {
+  id         String   @id @default(uuid())
+  campaignId String   // ID de la campaña en Sanity
+  
+  // Datos del participante
+  name       String
+  email      String
+  phone      String   // WhatsApp
+  country    String   @default("EC")
+  
+  // Tarjetas seleccionadas (JSON array de slugs)
+  selectedCards String // JSON: ["visa-gold", "mastercard-platinum"]
+  totalSpins    Int    @default(1)
+  spinsUsed     Int    @default(0)
+  
+  // Resultado
+  prizeId       String?  // ID del premio en Sanity (null si no ganó)
+  prizeName     String?
+  prizeCode     String?  @unique // Código único para canjear
+  prizeStatus   String   @default("PENDING") // PENDING, VERIFIED, DELIVERED, EXPIRED
+  
+  // Verificación
+  verifiedAt    DateTime?
+  verifiedBy    String?
+  deliveredAt   DateTime?
+  
+  // Integración CRM
+  crmLeadId     String?
+  
+  // Metadata
+  ipAddress     String?
+  userAgent     String?
+  source        String   @default("WEB") // WEB, KIOSK
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([campaignId])
+  @@index([email])
+  @@index([prizeCode])
+}

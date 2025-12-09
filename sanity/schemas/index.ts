@@ -9,6 +9,11 @@ import author from './documents/author';
 import category from './documents/category';
 import tag from './documents/tag';
 
+// Documents - Promo
+import campaign from './documents/campaign';
+import prize from './documents/prize';
+import cardBrand from './documents/cardBrand';
+
 // Blocks
 import hero from './blocks/hero';
 import features from './blocks/features';
@@ -26,6 +31,10 @@ export const schemaTypes = [
   author,
   category,
   tag,
+  // Documents - Promo
+  campaign,
+  prize,
+  cardBrand,
   // Blocks
   hero,
   features,
