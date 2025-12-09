@@ -34,3 +34,5 @@ pnpm-debug.log*
 # SQLite local
 *.db
 *.db-journal
+
+.vercel
