@@ -1,0 +1,757 @@
+---
+// src/pages/blog/[slug].astro
+
+/**
+ * BLOG - Post Individual
+ * Diseño inspirado en Boundless.com/blog
+ */
+
+import { getServices } from '@server/lib/core/di/ContextFactory';
+import { urlFor } from '@server/lib/adapters/cms';
+import type { Post, PostSummary } from '@server/lib/features/blog/Blog.entity';
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/blog');
+}
+
+const { blogService } = getServices();
+
+let post: Post | null = null;
+let relatedPosts: PostSummary[] = [];
+
+try {
+  post = await blogService.findPostBySlug(slug);
+  
+  if (post) {
+    relatedPosts = await blogService.getRelatedPosts(post._id, post.category.slug, 3);
+  }
+} catch (error) {
+  console.error(`Error fetching post "${slug}":`, error);
+}
+
+if (!post) {
+  return Astro.redirect('/blog');
+}
+
+// SEO
+const seoTitle = post.seo?.metaTitle || post.title;
+const seoDescription = post.seo?.metaDescription || post.excerpt || `${post.title} - ConsigueTuVisa`;
+const ogImage = post.seo?.ogImage || post.featuredImage;
+
+// Helpers
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+// Generar tabla de contenidos desde el content
+function generateTOC(content: any[]): { id: string; text: string; level: number }[] {
+  const toc: { id: string; text: string; level: number }[] = [];
+  
+  content?.forEach((block) => {
+    if (block._type === 'block' && ['h2', 'h3'].includes(block.style)) {
+      const text = block.children?.map((c: any) => c.text).join('') || '';
+      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      toc.push({
+        id,
+        text,
+        level: block.style === 'h2' ? 2 : 3,
+      });
+    }
+  });
+  
+  return toc;
+}
+
+const toc = generateTOC(post.content);
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={seoDescription} />
+  <meta property="og:title" content={seoTitle} />
+  <meta property="og:description" content={seoDescription} />
+  <meta property="og:type" content="article" />
+  {ogImage && <meta property="og:image" content={urlFor(ogImage).width(1200).height(630).url()} />}
+  <meta property="article:published_time" content={post.publishedAt} />
+  {post.updatedAt && <meta property="article:modified_time" content={post.updatedAt} />}
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <title>{seoTitle} | ConsigueTuVisa</title>
+  
+  <!-- Schema.org Article -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.title,
+    "description": post.excerpt,
+    "image": post.featuredImage ? urlFor(post.featuredImage).width(1200).url() : undefined,
+    "datePublished": post.publishedAt,
+    "dateModified": post.updatedAt || post.publishedAt,
+    "author": {
+      "@type": "Person",
+      "name": post.author.name,
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "ConsigueTuVisa",
+    },
+  })} />
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <a href="/" class="logo">
+        Consigue<span>TuVisa</span>
+      </a>
+      <nav class="nav">
+        <a href="/">Inicio</a>
+        <a href="/blog">Blog</a>
+        <a href="/registro" class="btn-cta">Comenzar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Breadcrumbs -->
+    <nav class="breadcrumbs">
+      <div class="container">
+        <a href="/">Inicio</a>
+        <span>/</span>
+        <a href="/blog">Blog</a>
+        <span>/</span>
+        <a href={`/blog?category=${post.category.slug}`}>{post.category.title}</a>
+        <span>/</span>
+        <span class="current">{post.title}</span>
+      </div>
+    </nav>
+
+    <!-- Article Header -->
+    <header class="article-header">
+      <div class="container">
+        <div class="article-meta">
+          <a 
+            href={`/blog?category=${post.category.slug}`}
+            class="article-category"
+            style={post.category.color ? `background-color: ${post.category.color}` : ''}
+          >
+            {post.category.title}
+          </a>
+          {post.readingTime && (
+            <span class="article-reading-time">{post.readingTime} min de lectura</span>
+          )}
+        </div>
+        
+        <h1 class="article-title">{post.title}</h1>
+        
+        {post.excerpt && (
+          <p class="article-excerpt">{post.excerpt}</p>
+        )}
+        
+        <div class="article-author-date">
+          <div class="article-author">
+            {post.author.avatar && (
+              <img 
+                src={urlFor(post.author.avatar).width(48).height(48).url()} 
+                alt={post.author.name}
+                class="article-author-avatar"
+              />
+            )}
+            <div>
+              <a href={`/blog?author=${post.author.slug}`} class="article-author-name">
+                {post.author.name}
+              </a>
+              {post.author.role && (
+                <span class="article-author-role">{post.author.role}</span>
+              )}
+            </div>
+          </div>
+          <div class="article-dates">
+            <time datetime={post.publishedAt}>
+              Publicado: {formatDate(post.publishedAt)}
+            </time>
+            {post.updatedAt && post.updatedAt !== post.publishedAt && (
+              <time datetime={post.updatedAt}>
+                Actualizado: {formatDate(post.updatedAt)}
+              </time>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Featured Image -->
+    {post.featuredImage && (
+      <div class="article-featured-image">
+        <div class="container">
+          <img 
+            src={urlFor(post.featuredImage).width(1200).height(600).url()} 
+            alt={post.featuredImage.alt || post.title}
+          />
+        </div>
+      </div>
+    )}
+
+    <!-- Article Content -->
+    <div class="article-layout">
+      <div class="container">
+        <!-- TOC Sidebar -->
+        {toc.length > 0 && (
+          <aside class="toc">
+            <h4>Contenido</h4>
+            <nav>
+              {toc.map((item) => (
+                <a 
+                  href={`#${item.id}`} 
+                  class:list={['toc-link', `toc-level-${item.level}`]}
+                >
+                  {item.text}
+                </a>
+              ))}
+            </nav>
+          </aside>
+        )}
+
+        <!-- Content -->
+        <article class="article-content">
+          {post.content?.map((block: any) => {
+            if (block._type === 'block') {
+              const text = block.children?.map((c: any) => c.text).join('') || '';
+              const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+              
+              switch (block.style) {
+                case 'h2':
+                  return <h2 id={id}>{text}</h2>;
+                case 'h3':
+                  return <h3 id={id}>{text}</h3>;
+                case 'h4':
+                  return <h4>{text}</h4>;
+                case 'blockquote':
+                  return <blockquote>{text}</blockquote>;
+                default:
+                  return <p>{text}</p>;
+              }
+            }
+            
+            if (block._type === 'image' && block.asset) {
+              return (
+                <figure>
+                  <img src={urlFor(block).width(800).url()} alt={block.alt || ''} />
+                  {block.caption && <figcaption>{block.caption}</figcaption>}
+                </figure>
+              );
+            }
+            
+            return null;
+          })}
+
+          <!-- Tags -->
+          {post.tags && post.tags.length > 0 && (
+            <div class="article-tags">
+              <span>Tags:</span>
+              {post.tags.map((tag) => (
+                <a href={`/blog?tag=${tag.slug}`} class="tag">
+                  #{tag.title}
+                </a>
+              ))}
+            </div>
+          )}
+
+          <!-- Author Box -->
+          <div class="author-box">
+            {post.author.avatar && (
+              <img 
+                src={urlFor(post.author.avatar).width(80).height(80).url()} 
+                alt={post.author.name}
+                class="author-box-avatar"
+              />
+            )}
+            <div class="author-box-info">
+              <h4>{post.author.name}</h4>
+              {post.author.role && <span class="author-box-role">{post.author.role}</span>}
+              {post.author.bio && <p>{post.author.bio}</p>}
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <!-- Related Posts -->
+    {relatedPosts.length > 0 && (
+      <section class="related-posts">
+        <div class="container">
+          <h3>Artículos relacionados</h3>
+          <div class="related-grid">
+            {relatedPosts.map((relPost) => (
+              <a href={`/blog/${relPost.slug}`} class="related-card">
+                {relPost.featuredImage && (
+                  <img 
+                    src={urlFor(relPost.featuredImage).width(400).height(250).url()} 
+                    alt={relPost.title}
+                  />
+                )}
+                <div class="related-card-content">
+                  <span class="related-card-category">{relPost.category.title}</span>
+                  <h4>{relPost.title}</h4>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p class="footer__logo">Consigue<span>TuVisa</span></p>
+      <p class="footer__copy">© 2025 ConsigueTuVisa. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+</body>
+</html>
+
+<style>
+  :root {
+    --color-primary: #2563eb;
+    --color-primary-dark: #1d4ed8;
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-900: #111827;
+    --color-accent: #10b981;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--color-gray-900);
+    line-height: 1.6;
+    background: white;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* Header */
+  .header {
+    position: sticky;
+    top: 0;
+    background: white;
+    border-bottom: 1px solid var(--color-gray-200);
+    z-index: 100;
+  }
+
+  .header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+  }
+
+  .logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-gray-900);
+    text-decoration: none;
+  }
+
+  .logo span { color: var(--color-accent); }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nav a {
+    color: var(--color-gray-600);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .btn-cta {
+    background: var(--color-primary) !important;
+    color: white !important;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+  }
+
+  /* Breadcrumbs */
+  .breadcrumbs {
+    padding: 1rem 0;
+    background: var(--color-gray-50);
+    font-size: 0.875rem;
+  }
+
+  .breadcrumbs a {
+    color: var(--color-gray-500);
+    text-decoration: none;
+  }
+
+  .breadcrumbs a:hover { color: var(--color-primary); }
+
+  .breadcrumbs span { color: var(--color-gray-400); margin: 0 0.5rem; }
+
+  .breadcrumbs .current {
+    color: var(--color-gray-700);
+    font-weight: 500;
+  }
+
+  /* Article Header */
+  .article-header {
+    padding: 3rem 0;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .article-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .article-category {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    background: var(--color-primary);
+    color: white;
+    text-decoration: none;
+  }
+
+  .article-reading-time {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+  }
+
+  .article-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+
+  .article-excerpt {
+    font-size: 1.25rem;
+    color: var(--color-gray-600);
+    margin-bottom: 2rem;
+  }
+
+  .article-author-date {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .article-author {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .article-author-avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .article-author-name {
+    font-weight: 600;
+    color: var(--color-gray-900);
+    text-decoration: none;
+    display: block;
+  }
+
+  .article-author-role {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+  }
+
+  .article-dates {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  /* Featured Image */
+  .article-featured-image {
+    margin-bottom: 3rem;
+  }
+
+  .article-featured-image img {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    display: block;
+    border-radius: 1rem;
+  }
+
+  /* Article Layout */
+  .article-layout .container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    max-width: 900px;
+  }
+
+  @media (min-width: 1024px) {
+    .article-layout .container {
+      grid-template-columns: 200px 1fr;
+      max-width: 1100px;
+    }
+  }
+
+  /* TOC */
+  .toc {
+    position: sticky;
+    top: 5rem;
+    align-self: start;
+  }
+
+  .toc h4 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-gray-500);
+    margin-bottom: 1rem;
+  }
+
+  .toc-link {
+    display: block;
+    padding: 0.5rem 0;
+    font-size: 0.875rem;
+    color: var(--color-gray-600);
+    text-decoration: none;
+    border-left: 2px solid var(--color-gray-200);
+    padding-left: 1rem;
+    transition: all 0.2s;
+  }
+
+  .toc-link:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .toc-level-3 { padding-left: 1.5rem; }
+
+  /* Article Content */
+  .article-content {
+    font-size: 1.125rem;
+    line-height: 1.8;
+  }
+
+  .article-content h2 {
+    font-size: 1.75rem;
+    margin: 2.5rem 0 1rem;
+    scroll-margin-top: 5rem;
+  }
+
+  .article-content h3 {
+    font-size: 1.375rem;
+    margin: 2rem 0 0.75rem;
+    scroll-margin-top: 5rem;
+  }
+
+  .article-content p {
+    margin-bottom: 1.5rem;
+  }
+
+  .article-content blockquote {
+    border-left: 4px solid var(--color-primary);
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    font-style: italic;
+    color: var(--color-gray-600);
+  }
+
+  .article-content figure {
+    margin: 2rem 0;
+  }
+
+  .article-content figure img {
+    width: 100%;
+    border-radius: 0.5rem;
+  }
+
+  .article-content figcaption {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+    margin-top: 0.5rem;
+  }
+
+  /* Tags */
+  .article-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 3rem 0;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-gray-200);
+  }
+
+  .article-tags span {
+    font-weight: 500;
+    color: var(--color-gray-600);
+  }
+
+  .tag {
+    padding: 0.25rem 0.75rem;
+    background: var(--color-gray-100);
+    color: var(--color-gray-600);
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    text-decoration: none;
+  }
+
+  .tag:hover {
+    background: var(--color-gray-200);
+  }
+
+  /* Author Box */
+  .author-box {
+    display: flex;
+    gap: 1.5rem;
+    padding: 2rem;
+    background: var(--color-gray-50);
+    border-radius: 1rem;
+    margin-top: 2rem;
+  }
+
+  .author-box-avatar {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .author-box-info h4 {
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .author-box-role {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .author-box-info p {
+    font-size: 0.9375rem;
+    color: var(--color-gray-600);
+    margin: 0;
+  }
+
+  /* Related Posts */
+  .related-posts {
+    padding: 4rem 0;
+    background: var(--color-gray-50);
+    margin-top: 4rem;
+  }
+
+  .related-posts h3 {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .related-card {
+    background: white;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .related-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .related-card img {
+    width: 100%;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+  }
+
+  .related-card-content {
+    padding: 1rem;
+  }
+
+  .related-card-category {
+    font-size: 0.75rem;
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .related-card h4 {
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    line-height: 1.4;
+  }
+
+  /* Footer */
+  .footer {
+    background: var(--color-gray-900);
+    color: white;
+    padding: 3rem 0;
+    text-align: center;
+  }
+
+  .footer__logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .footer__logo span { color: var(--color-accent); }
+
+  .footer__copy {
+    color: var(--color-gray-400);
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 640px) {
+    .article-title { font-size: 1.75rem; }
+    .article-excerpt { font-size: 1rem; }
+    .toc { display: none; }
+  }
+</style>

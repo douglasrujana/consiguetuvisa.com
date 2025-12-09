@@ -24,6 +24,10 @@ import {
     pageTypeDefs,
     pageResolvers
 } from '../lib/features/page/Page.graphql';
+import {
+    blogTypeDefs,
+    blogResolvers
+} from '../lib/features/blog/Blog.graphql';
 
 // ----------------------------------------------------------------------
 // 1. DEFINICIONES BASE DEL SISTEMA
@@ -56,6 +60,7 @@ export const typeDefs = mergeTypeDefs([
   baseTypeDefs,
   asesoriaTypeDefs,
   pageTypeDefs,
+  blogTypeDefs,
 ]);
 
 // ----------------------------------------------------------------------
@@ -68,4 +73,5 @@ export const typeDefs = mergeTypeDefs([
 export const resolvers = mergeResolvers([
   asesoriaResolvers,
   pageResolvers,
+  blogResolvers,
 ]);

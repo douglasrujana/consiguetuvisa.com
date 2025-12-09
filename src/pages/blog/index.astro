@@ -1,0 +1,588 @@
+---
+// src/pages/blog/index.astro
+
+/**
+ * BLOG - Lista de Posts
+ * Diseño inspirado en Boundless.com/blog
+ */
+
+import { getServices } from '@server/lib/core/di/ContextFactory';
+import { urlFor } from '@server/lib/adapters/cms';
+import type { PostSummary, Category } from '@server/lib/features/blog/Blog.entity';
+
+// Obtener parámetros de URL
+const url = new URL(Astro.request.url);
+const categoryFilter = url.searchParams.get('category') || undefined;
+const page = parseInt(url.searchParams.get('page') || '1');
+const limit = 9;
+const offset = (page - 1) * limit;
+
+// Obtener datos
+const { blogService } = getServices();
+
+const [postsResult, categories] = await Promise.all([
+  Promise.all([
+    blogService.listPosts({ limit, offset, category: categoryFilter }),
+    blogService.countPosts({ category: categoryFilter }),
+  ]),
+  blogService.listCategories(),
+]);
+
+const [posts, totalPosts] = postsResult;
+const totalPages = Math.ceil(totalPosts / limit);
+const hasMore = page < totalPages;
+
+// Helper para formatear fecha
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Blog de ConsigueTuVisa - Guías, consejos y noticias sobre visas de turismo para Estados Unidos, Canadá y más." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <title>Blog | ConsigueTuVisa</title>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <a href="/" class="logo">
+        Consigue<span>TuVisa</span>
+      </a>
+      <nav class="nav">
+        <a href="/">Inicio</a>
+        <a href="/blog" class="active">Blog</a>
+        <a href="/registro" class="btn-cta">Comenzar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <h1>Blog</h1>
+        <p>Guías, consejos y noticias sobre visas de turismo</p>
+      </div>
+    </section>
+
+    <!-- Filtros por categoría -->
+    <section class="filters">
+      <div class="container">
+        <div class="category-tabs">
+          <a 
+            href="/blog" 
+            class:list={['tab', { active: !categoryFilter }]}
+          >
+            Todos
+          </a>
+          {categories.map((cat) => (
+            <a 
+              href={`/blog?category=${cat.slug}`}
+              class:list={['tab', { active: categoryFilter === cat.slug }]}
+              style={cat.color ? `--cat-color: ${cat.color}` : ''}
+            >
+              {cat.icon && <span class="tab-icon">{cat.icon}</span>}
+              {cat.title}
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Grid de Posts -->
+    <section class="posts-section">
+      <div class="container">
+        {posts.length === 0 ? (
+          <div class="empty-state">
+            <p>No hay artículos disponibles.</p>
+            {categoryFilter && (
+              <a href="/blog" class="btn-secondary">Ver todos los artículos</a>
+            )}
+          </div>
+        ) : (
+          <div class="posts-grid">
+            {posts.map((post, index) => (
+              <article class:list={['post-card', { featured: index === 0 && page === 1 }]}>
+                <a href={`/blog/${post.slug}`} class="post-card__link">
+                  {post.featuredImage && (
+                    <div class="post-card__image">
+                      <img 
+                        src={urlFor(post.featuredImage).width(600).height(400).url()} 
+                        alt={post.featuredImage.alt || post.title}
+                        loading={index < 3 ? 'eager' : 'lazy'}
+                      />
+                    </div>
+                  )}
+                  <div class="post-card__content">
+                    <div class="post-card__meta">
+                      <span 
+                        class="post-card__category"
+                        style={post.category.color ? `background-color: ${post.category.color}20; color: ${post.category.color}` : ''}
+                      >
+                        {post.category.title}
+                      </span>
+                      {post.readingTime && (
+                        <span class="post-card__reading-time">
+                          {post.readingTime} min de lectura
+                        </span>
+                      )}
+                    </div>
+                    <h2 class="post-card__title">{post.title}</h2>
+                    {post.excerpt && (
+                      <p class="post-card__excerpt">{post.excerpt}</p>
+                    )}
+                    <div class="post-card__footer">
+                      <div class="post-card__author">
+                        {post.author.avatar && (
+                          <img 
+                            src={urlFor(post.author.avatar).width(40).height(40).url()} 
+                            alt={post.author.name}
+                            class="post-card__author-avatar"
+                          />
+                        )}
+                        <span class="post-card__author-name">{post.author.name}</span>
+                      </div>
+                      <time class="post-card__date" datetime={post.publishedAt}>
+                        {formatDate(post.publishedAt)}
+                      </time>
+                    </div>
+                  </div>
+                </a>
+              </article>
+            ))}
+          </div>
+        )}
+
+        <!-- Paginación -->
+        {totalPages > 1 && (
+          <nav class="pagination">
+            {page > 1 && (
+              <a 
+                href={`/blog?page=${page - 1}${categoryFilter ? `&category=${categoryFilter}` : ''}`}
+                class="pagination__btn"
+              >
+                ← Anterior
+              </a>
+            )}
+            <span class="pagination__info">
+              Página {page} de {totalPages}
+            </span>
+            {hasMore && (
+              <a 
+                href={`/blog?page=${page + 1}${categoryFilter ? `&category=${categoryFilter}` : ''}`}
+                class="pagination__btn"
+              >
+                Siguiente →
+              </a>
+            )}
+          </nav>
+        )}
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p class="footer__logo">Consigue<span>TuVisa</span></p>
+      <p class="footer__copy">© 2025 ConsigueTuVisa. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+</body>
+</html>
+
+<style>
+  :root {
+    --color-primary: #2563eb;
+    --color-primary-dark: #1d4ed8;
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-900: #111827;
+    --color-accent: #10b981;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--color-gray-900);
+    line-height: 1.6;
+    background: white;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* Header */
+  .header {
+    position: sticky;
+    top: 0;
+    background: white;
+    border-bottom: 1px solid var(--color-gray-200);
+    z-index: 100;
+  }
+
+  .header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+  }
+
+  .logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-gray-900);
+    text-decoration: none;
+  }
+
+  .logo span {
+    color: var(--color-accent);
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nav a {
+    color: var(--color-gray-600);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+
+  .nav a:hover,
+  .nav a.active {
+    color: var(--color-primary);
+  }
+
+  .btn-cta {
+    background: var(--color-primary) !important;
+    color: white !important;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .btn-cta:hover {
+    background: var(--color-primary-dark) !important;
+  }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, var(--color-gray-50) 0%, white 100%);
+    padding: 4rem 0;
+    text-align: center;
+  }
+
+  .hero h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero p {
+    font-size: 1.25rem;
+    color: var(--color-gray-600);
+  }
+
+  /* Filters */
+  .filters {
+    border-bottom: 1px solid var(--color-gray-200);
+    background: white;
+    position: sticky;
+    top: 4rem;
+    z-index: 50;
+  }
+
+  .category-tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem 0;
+    overflow-x: auto;
+  }
+
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    background: var(--color-gray-100);
+    color: var(--color-gray-600);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .tab:hover {
+    background: var(--color-gray-200);
+  }
+
+  .tab.active {
+    background: var(--color-primary);
+    color: white;
+  }
+
+  .tab-icon {
+    font-size: 1rem;
+  }
+
+  /* Posts Grid */
+  .posts-section {
+    padding: 3rem 0;
+  }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+  }
+
+  .post-card {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 1px solid var(--color-gray-200);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .post-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  .post-card.featured {
+    grid-column: 1 / -1;
+  }
+
+  @media (min-width: 768px) {
+    .post-card.featured {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .post-card.featured .post-card__image {
+      height: 100%;
+    }
+
+    .post-card.featured .post-card__content {
+      padding: 2rem;
+    }
+
+    .post-card.featured .post-card__title {
+      font-size: 1.75rem;
+    }
+  }
+
+  .post-card__link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+
+  .post-card__image {
+    aspect-ratio: 16/10;
+    overflow: hidden;
+  }
+
+  .post-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+  }
+
+  .post-card:hover .post-card__image img {
+    transform: scale(1.05);
+  }
+
+  .post-card__content {
+    padding: 1.5rem;
+  }
+
+  .post-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .post-card__category {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    background: var(--color-primary);
+    color: white;
+  }
+
+  .post-card__reading-time {
+    font-size: 0.75rem;
+    color: var(--color-gray-500);
+  }
+
+  .post-card__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+    color: var(--color-gray-900);
+  }
+
+  .post-card__excerpt {
+    font-size: 0.9375rem;
+    color: var(--color-gray-600);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .post-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-gray-100);
+  }
+
+  .post-card__author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .post-card__author-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .post-card__author-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-gray-700);
+  }
+
+  .post-card__date {
+    font-size: 0.8125rem;
+    color: var(--color-gray-500);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--color-gray-500);
+  }
+
+  .btn-secondary {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+    text-decoration: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-gray-200);
+  }
+
+  .pagination__btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+    text-decoration: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .pagination__btn:hover {
+    background: var(--color-gray-200);
+  }
+
+  .pagination__info {
+    color: var(--color-gray-500);
+    font-size: 0.875rem;
+  }
+
+  /* Footer */
+  .footer {
+    background: var(--color-gray-900);
+    color: white;
+    padding: 3rem 0;
+    text-align: center;
+  }
+
+  .footer__logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .footer__logo span {
+    color: var(--color-accent);
+  }
+
+  .footer__copy {
+    color: var(--color-gray-400);
+    font-size: 0.875rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .hero h1 {
+      font-size: 2rem;
+    }
+
+    .posts-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .nav {
+      gap: 1rem;
+    }
+  }
+</style>

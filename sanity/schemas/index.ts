@@ -1,7 +1,13 @@
 // sanity/schemas/index.ts
 
-// Documents
+// Documents - Pages
 import page from './documents/page';
+
+// Documents - Blog
+import post from './documents/post';
+import author from './documents/author';
+import category from './documents/category';
+import tag from './documents/tag';
 
 // Blocks
 import hero from './blocks/hero';
@@ -13,8 +19,13 @@ import cta from './blocks/cta';
 import richText from './blocks/richText';
 
 export const schemaTypes = [
-  // Documents
+  // Documents - Pages
   page,
+  // Documents - Blog
+  post,
+  author,
+  category,
+  tag,
   // Blocks
   hero,
   features,
