@@ -1,0 +1,63 @@
+---
+// src/components/blocks/BlockRenderer.astro
+
+/**
+ * BLOCK RENDERER - Orquestador de bloques
+ * Renderiza el componente correcto según el _type de cada sección.
+ */
+
+import type { PageSection } from '@server/lib/features/page/Page.entity';
+
+import Hero from './Hero.astro';
+import Features from './Features.astro';
+import Testimonials from './Testimonials.astro';
+import Pricing from './Pricing.astro';
+import FAQ from './FAQ.astro';
+import CTA from './CTA.astro';
+
+interface Props {
+  sections: PageSection[];
+}
+
+const { sections } = Astro.props;
+
+// Mapeo de tipos a componentes
+const blockComponents: Record<string, any> = {
+  hero: Hero,
+  features: Features,
+  testimonials: Testimonials,
+  pricing: Pricing,
+  faq: FAQ,
+  cta: CTA,
+  // richText se maneja aparte si es necesario
+};
+---
+
+{sections?.map((section) => {
+  const Component = blockComponents[section._type];
+  
+  if (!Component) {
+    // En desarrollo, mostrar warning para bloques no implementados
+    if (import.meta.env.DEV) {
+      return (
+        <div class="block-warning">
+          ⚠️ Bloque no implementado: <code>{section._type}</code>
+        </div>
+      );
+    }
+    return null;
+  }
+  
+  return <Component {...section} />;
+})}
+
+<style>
+  .block-warning {
+    padding: 1rem;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 0.5rem;
+    margin: 1rem;
+    font-family: monospace;
+  }
+</style>

@@ -19,6 +19,10 @@ import { SolicitudService } from '@features/solicitud/Solicitud.service';
 import { SolicitudRepository } from '@features/solicitud/Solicitud.repository';
 import type { ISolicitudRepository } from '@features/solicitud/Solicitud.port';
 
+import { PageService } from '@features/page/Page.service';
+import { PageRepository } from '@features/page/Page.repository';
+import type { IPageRepository } from '@features/page/Page.port';
+
 import { getEmailProvider } from '@adapters/email';
 import { getCRMProvider } from '@adapters/crm';
 
@@ -34,6 +38,7 @@ export interface AppContext {
   userService: UserService;
   leadService: LeadService;
   solicitudService: SolicitudService;
+  pageService: PageService;
 }
 
 // Alias para compatibilidad con GraphQL
@@ -49,6 +54,7 @@ export function buildContext(request: Request): AppContext {
   const authProvider: IAuthProvider = new ClerkAuthAdapter();
   const userRepository: IUserRepository = new UserRepository();
   const solicitudRepository: ISolicitudRepository = new SolicitudRepository();
+  const pageRepository: IPageRepository = new PageRepository();
   const emailProvider = getEmailProvider();
   const crmProvider = getCRMProvider();
 
@@ -57,6 +63,7 @@ export function buildContext(request: Request): AppContext {
   const userService = new UserService(userRepository);
   const leadService = new LeadService(emailProvider, crmProvider);
   const solicitudService = new SolicitudService(solicitudRepository);
+  const pageService = new PageService(pageRepository);
 
   // --- 3. CONTEXTO FINAL ---
   return {
@@ -66,6 +73,7 @@ export function buildContext(request: Request): AppContext {
     userService,
     leadService,
     solicitudService,
+    pageService,
   };
 }
 
@@ -81,6 +89,7 @@ export function getServices() {
     const authProvider: IAuthProvider = new ClerkAuthAdapter();
     const userRepository: IUserRepository = new UserRepository();
     const solicitudRepository: ISolicitudRepository = new SolicitudRepository();
+    const pageRepository: IPageRepository = new PageRepository();
     const emailProvider = getEmailProvider();
     const crmProvider = getCRMProvider();
 
@@ -89,6 +98,7 @@ export function getServices() {
       userService: new UserService(userRepository),
       leadService: new LeadService(emailProvider, crmProvider),
       solicitudService: new SolicitudService(solicitudRepository),
+      pageService: new PageService(pageRepository),
     };
   }
   return cachedServices;

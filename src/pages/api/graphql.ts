@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
     // 1. CREACIÓN DEL CONTENEDOR DE SERVICIO (IoC)
     // Se crea un nuevo Contexto con todas las dependencias cableadas por petición.
     console.log('[DEBUG] 🔧 Building context...');
-    const context: GraphQLContext = buildContext(request.headers);
+    const context: GraphQLContext = buildContext(request);
     console.log('[DEBUG] ✅ Context built');
 
     // 2. EJECUCIÓN DE LA OPERACIÓN GRAPHQL

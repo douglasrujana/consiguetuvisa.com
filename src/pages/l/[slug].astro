@@ -1,0 +1,100 @@
+---
+// src/pages/l/[slug].astro
+
+/**
+ * LANDING PAGE DINÁMICA
+ * Renderiza cualquier landing page creada en Sanity CMS.
+ * URL: /l/{slug}
+ */
+
+import { getServices } from '@server/lib/core/di/ContextFactory';
+import BlockRenderer from '@components/blocks/BlockRenderer.astro';
+import type { Page } from '@server/lib/features/page/Page.entity';
+
+// Obtener el slug de la URL
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/404');
+}
+
+// Obtener la página desde Sanity via GraphQL/Service
+const { pageService } = getServices();
+let page: Page | null = null;
+
+try {
+  page = await pageService.findPageBySlug(slug);
+} catch (error) {
+  console.error(`Error fetching page "${slug}":`, error);
+}
+
+// Si no existe, redirigir a 404
+if (!page) {
+  return Astro.redirect('/404');
+}
+
+// SEO
+const seoTitle = page.seo?.title || page.title;
+const seoDescription = page.seo?.description || `${page.title} - ConsigueTuVisa`;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={seoDescription} />
+  <meta property="og:title" content={seoTitle} />
+  <meta property="og:description" content={seoDescription} />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <title>{seoTitle} | ConsigueTuVisa</title>
+  
+  <style is:global>
+    :root {
+      --color-primary-50: #ebf8ff;
+      --color-primary-100: #bee3f8;
+      --color-primary-500: #3182ce;
+      --color-primary-600: #2b6cb0;
+      --color-primary-800: #1a365d;
+      --color-primary-900: #1a365d;
+      --color-accent: #ed8936;
+      --color-gray-50: #f7fafc;
+      --color-gray-100: #edf2f7;
+      --color-gray-500: #a0aec0;
+      --color-gray-600: #718096;
+      --color-gray-700: #4a5568;
+      --color-gray-900: #1a202c;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      line-height: 1.5;
+      color: var(--color-gray-900);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <BlockRenderer sections={page.sections} />
+  </main>
+  
+  <!-- Footer simple -->
+  <footer style="background: var(--color-gray-900); color: white; padding: 2rem; text-align: center;">
+    <p style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">
+      Consigue<span style="color: #48bb78;">TuVisa</span>
+    </p>
+    <p style="color: #a0aec0; font-size: 0.875rem;">
+      © 2025 ConsigueTuVisa. Todos los derechos reservados.
+    </p>
+  </footer>
+</body>
+</html>

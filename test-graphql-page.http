@@ -1,0 +1,24 @@
+### Test GraphQL - Page Query
+POST http://localhost:3000/api/graphql
+Content-Type: application/json
+
+{
+  "query": "query { pages { _id title slug _updatedAt } }"
+}
+
+### Test GraphQL - Single Page
+POST http://localhost:3000/api/graphql
+Content-Type: application/json
+
+{
+  "query": "query GetPage($slug: String!) { page(slug: $slug) { _id title slug sections { ... on HeroBlock { _type title subtitle ctaText ctaUrl } ... on FeaturesBlock { _type title items { title description } } } } }",
+  "variables": { "slug": "black-friday" }
+}
+
+### Test GraphQL - Page Exists
+POST http://localhost:3000/api/graphql
+Content-Type: application/json
+
+{
+  "query": "query { pageExists(slug: \"black-friday\") }"
+}

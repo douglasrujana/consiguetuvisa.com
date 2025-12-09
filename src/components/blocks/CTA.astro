@@ -1,0 +1,90 @@
+---
+// src/components/blocks/CTA.astro
+
+import type { CTABlock } from '@server/lib/features/page/Page.entity';
+
+interface Props extends CTABlock {}
+
+const { title, subtitle, buttonText, buttonUrl, variant = 'primary' } = Astro.props;
+---
+
+<section class:list={['cta', `cta--${variant}`]}>
+  <div class="cta__container">
+    <h2 class="cta__title">{title}</h2>
+    {subtitle && <p class="cta__subtitle">{subtitle}</p>}
+    <a href={buttonUrl} class="cta__button">
+      {buttonText}
+    </a>
+  </div>
+</section>
+
+<style>
+  .cta {
+    padding: 5rem 2rem;
+    text-align: center;
+  }
+
+  .cta--primary {
+    background: linear-gradient(135deg, var(--color-primary-600, #2b6cb0) 0%, var(--color-primary-800, #1a365d) 100%);
+  }
+
+  .cta--secondary {
+    background: var(--color-gray-100, #edf2f7);
+  }
+
+  .cta__container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .cta__title {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .cta--primary .cta__title {
+    color: white;
+  }
+
+  .cta--secondary .cta__title {
+    color: var(--color-gray-900, #1a202c);
+  }
+
+  .cta__subtitle {
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+  }
+
+  .cta--primary .cta__subtitle {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .cta--secondary .cta__subtitle {
+    color: var(--color-gray-600, #718096);
+  }
+
+  .cta__button {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .cta--primary .cta__button {
+    background: white;
+    color: var(--color-primary-600, #2b6cb0);
+  }
+
+  .cta--secondary .cta__button {
+    background: var(--color-primary-500, #3182ce);
+    color: white;
+  }
+
+  .cta__button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+</style>

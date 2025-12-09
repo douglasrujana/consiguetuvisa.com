@@ -1,0 +1,108 @@
+---
+// src/components/blocks/Features.astro
+
+import type { FeaturesBlock } from '@server/lib/features/page/Page.entity';
+
+interface Props extends FeaturesBlock {}
+
+const { title, subtitle, items } = Astro.props;
+---
+
+<section class="features">
+  <div class="features__container">
+    {(title || subtitle) && (
+      <div class="features__header">
+        {title && <h2 class="features__title">{title}</h2>}
+        {subtitle && <p class="features__subtitle">{subtitle}</p>}
+      </div>
+    )}
+    
+    <div class="features__grid">
+      {items?.map((item) => (
+        <div class="feature-card">
+          {item.icon && (
+            <div class="feature-card__icon">
+              <span>{item.icon}</span>
+            </div>
+          )}
+          <h3 class="feature-card__title">{item.title}</h3>
+          <p class="feature-card__description">{item.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .features {
+    padding: 5rem 2rem;
+    background-color: var(--color-gray-50, #f7fafc);
+  }
+
+  .features__container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .features__header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .features__title {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 700;
+    color: var(--color-gray-900, #1a202c);
+    margin-bottom: 0.5rem;
+  }
+
+  .features__subtitle {
+    font-size: 1.125rem;
+    color: var(--color-gray-600, #718096);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .features__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+
+  .feature-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  .feature-card__icon {
+    width: 3rem;
+    height: 3rem;
+    background: var(--color-primary-100, #ebf8ff);
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+
+  .feature-card__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-gray-900, #1a202c);
+    margin-bottom: 0.5rem;
+  }
+
+  .feature-card__description {
+    color: var(--color-gray-600, #718096);
+    line-height: 1.6;
+  }
+</style>

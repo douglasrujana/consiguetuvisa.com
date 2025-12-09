@@ -1,0 +1,86 @@
+---
+// src/components/blocks/Hero.astro
+
+import type { HeroBlock } from '@server/lib/features/page/Page.entity';
+import { urlFor } from '@server/lib/adapters/cms';
+
+interface Props extends HeroBlock {}
+
+const { title, subtitle, ctaText, ctaUrl, backgroundImage } = Astro.props;
+
+const bgImageUrl = backgroundImage ? urlFor(backgroundImage).width(1920).url() : null;
+---
+
+<section 
+  class="hero"
+  style={bgImageUrl ? `background-image: url(${bgImageUrl})` : undefined}
+>
+  <div class="hero__overlay"></div>
+  <div class="hero__content">
+    <h1 class="hero__title">{title}</h1>
+    {subtitle && <p class="hero__subtitle">{subtitle}</p>}
+    {ctaText && ctaUrl && (
+      <a href={ctaUrl} class="hero__cta">
+        {ctaText}
+      </a>
+    )}
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-primary-900, #1a365d);
+    background-size: cover;
+    background-position: center;
+    padding: 4rem 2rem;
+  }
+
+  .hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(26, 54, 93, 0.9) 0%, rgba(26, 54, 93, 0.7) 100%);
+  }
+
+  .hero__content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 800px;
+  }
+
+  .hero__title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+  }
+
+  .hero__subtitle {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .hero__cta {
+    display: inline-block;
+    padding: 1rem 2rem;
+    background-color: var(--color-accent, #ed8936);
+    color: white;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .hero__cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(237, 137, 54, 0.4);
+  }
+</style>

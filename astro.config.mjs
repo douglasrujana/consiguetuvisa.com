@@ -2,6 +2,7 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from "@tailwindcss/vite";
 import svelte from '@astrojs/svelte';
+import react from '@astrojs/react';
 import clerk from '@clerk/astro';
 import vercel from '@astrojs/vercel';
 
@@ -11,6 +12,7 @@ export default defineConfig({
     adapter: vercel(),
     integrations: [
         svelte(),
+        react(),
         clerk({
             afterSignInUrl: '/dashboard',
             afterSignUpUrl: '/dashboard',

@@ -15,11 +15,15 @@
 
 import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge'; 
 import { gql } from 'graphql-tag';
-// Importamos la feature de Asesoría
+// Importamos las features
 import {
     asesoriaTypeDefs,
     asesoriaResolvers
 } from '../lib/features/asesoria/Asesoria.graphql';
+import {
+    pageTypeDefs,
+    pageResolvers
+} from '../lib/features/page/Page.graphql';
 
 // ----------------------------------------------------------------------
 // 1. DEFINICIONES BASE DEL SISTEMA
@@ -51,7 +55,7 @@ const baseTypeDefs = gql`
 export const typeDefs = mergeTypeDefs([
   baseTypeDefs,
   asesoriaTypeDefs,
-  // Aquí se añadirían typeDefs de otras features (ej: userTypeDefs)
+  pageTypeDefs,
 ]);
 
 // ----------------------------------------------------------------------
@@ -63,5 +67,5 @@ export const typeDefs = mergeTypeDefs([
  */
 export const resolvers = mergeResolvers([
   asesoriaResolvers,
-  // Aquí se añadirían resolvers de otras features (ej: userResolvers)
+  pageResolvers,
 ]);
