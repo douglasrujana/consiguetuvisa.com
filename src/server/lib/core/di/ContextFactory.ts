@@ -15,6 +15,10 @@ import type { IUserRepository } from '@features/user';
 
 import { LeadService } from '@features/leads/Lead.service';
 
+import { SolicitudService } from '@features/solicitud/Solicitud.service';
+import { SolicitudRepository } from '@features/solicitud/Solicitud.repository';
+import type { ISolicitudRepository } from '@features/solicitud/Solicitud.port';
+
 import { getEmailProvider } from '@adapters/email';
 import { getCRMProvider } from '@adapters/crm';
 
@@ -29,6 +33,7 @@ export interface AppContext {
   authService: AuthService;
   userService: UserService;
   leadService: LeadService;
+  solicitudService: SolicitudService;
 }
 
 // Alias para compatibilidad con GraphQL
@@ -43,6 +48,7 @@ export function buildContext(request: Request): AppContext {
   // --- 1. ADAPTADORES (Infraestructura) ---
   const authProvider: IAuthProvider = new ClerkAuthAdapter();
   const userRepository: IUserRepository = new UserRepository();
+  const solicitudRepository: ISolicitudRepository = new SolicitudRepository();
   const emailProvider = getEmailProvider();
   const crmProvider = getCRMProvider();
 
@@ -50,6 +56,7 @@ export function buildContext(request: Request): AppContext {
   const authService = new AuthService(authProvider);
   const userService = new UserService(userRepository);
   const leadService = new LeadService(emailProvider, crmProvider);
+  const solicitudService = new SolicitudService(solicitudRepository);
 
   // --- 3. CONTEXTO FINAL ---
   return {
@@ -58,6 +65,7 @@ export function buildContext(request: Request): AppContext {
     authService,
     userService,
     leadService,
+    solicitudService,
   };
 }
 
@@ -72,6 +80,7 @@ export function getServices() {
   if (!cachedServices) {
     const authProvider: IAuthProvider = new ClerkAuthAdapter();
     const userRepository: IUserRepository = new UserRepository();
+    const solicitudRepository: ISolicitudRepository = new SolicitudRepository();
     const emailProvider = getEmailProvider();
     const crmProvider = getCRMProvider();
 
@@ -79,6 +88,7 @@ export function getServices() {
       authService: new AuthService(authProvider),
       userService: new UserService(userRepository),
       leadService: new LeadService(emailProvider, crmProvider),
+      solicitudService: new SolicitudService(solicitudRepository),
     };
   }
   return cachedServices;
