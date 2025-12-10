@@ -9,8 +9,16 @@ const navLinks = [
   { label: 'Proceso', href: '#proceso' },
   { label: 'Testimonios', href: '#testimonios' },
   { label: 'FAQ', href: '#faq' },
+  { label: 'Blog', href: '/blog' },
 ];
+
+// Obtener usuario local del middleware (si existe)
+const localUser = (Astro.locals as any).localUser;
+const isAdmin = localUser?.role === 'ADMIN';
 ---
+
+<!-- Mobile Menu Toggle (hidden checkbox at top level for CSS :has selector) -->
+<input type="checkbox" id="mobile-menu-toggle" class="sr-only peer" />
 
 <header class="sticky top-0 z-40 bg-surface-white/95 backdrop-blur-sm border-b border-surface-muted">
   <div class="container-main">
@@ -36,16 +44,17 @@ const navLinks = [
         ))}
       </ul>
 
-      <!-- Auth Buttons -->
+      <!-- Right side: Auth + Mobile Menu -->
       <div class="flex items-center gap-3">
+        <!-- Auth Buttons (Desktop) -->
         <SignedOut>
           <a 
             href="/login" 
-            class="text-text-secondary hover:text-brand-primary font-medium transition-colors hidden sm:inline-flex"
+            class="text-text-secondary hover:text-brand-primary font-medium transition-colors hidden md:inline-flex"
           >
             Iniciar Sesión
           </a>
-          <Button href="/registro" size="sm">
+          <Button href="/registro" size="sm" class="hidden md:inline-flex">
             Registrarse
           </Button>
         </SignedOut>
@@ -53,10 +62,19 @@ const navLinks = [
         <SignedIn>
           <a 
             href="/dashboard" 
-            class="text-text-secondary hover:text-brand-primary font-medium transition-colors hidden sm:inline-flex"
+            class="text-text-secondary hover:text-brand-primary font-medium transition-colors hidden md:inline-flex"
           >
             Mi Panel
           </a>
+          {isAdmin && (
+            <a 
+              href="/admin" 
+              class="text-blue-600 hover:text-blue-800 font-medium transition-colors hidden md:inline-flex items-center gap-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+              Admin
+            </a>
+          )}
           <UserButton 
             afterSignOutUrl="/"
             appearance={{
@@ -66,7 +84,71 @@ const navLinks = [
             }}
           />
         </SignedIn>
+
+        <!-- Mobile Menu Toggle Button -->
+        <label for="mobile-menu-toggle" class="mobile-toggle md:hidden cursor-pointer p-2 -mr-2 text-text-secondary hover:text-brand-primary">
+          <svg class="hamburger w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg class="close w-6 h-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </label>
       </div>
     </nav>
   </div>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu hidden md:hidden bg-surface-white border-t border-surface-muted">
+    <div class="container-main py-4">
+      <ul class="flex flex-col gap-1">
+        {navLinks.map(link => (
+          <li>
+            <a 
+              href={link.href} 
+              class="block py-3 px-4 text-text-secondary hover:text-brand-primary hover:bg-surface-muted rounded-lg font-medium transition-colors"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <div class="mt-4 pt-4 border-t border-surface-muted flex flex-col gap-2">
+        <SignedOut>
+          <a href="/login" class="block py-3 px-4 text-text-secondary hover:text-brand-primary hover:bg-surface-muted rounded-lg font-medium">
+            Iniciar Sesión
+          </a>
+          <a href="/registro" class="block py-3 px-4 bg-brand-primary text-white rounded-lg font-medium text-center">
+            Registrarse
+          </a>
+        </SignedOut>
+        <SignedIn>
+          <a href="/dashboard" class="block py-3 px-4 text-text-secondary hover:text-brand-primary hover:bg-surface-muted rounded-lg font-medium">
+            Mi Panel
+          </a>
+          {isAdmin && (
+            <a href="/admin" class="block py-3 px-4 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg font-medium flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+              Panel Admin
+            </a>
+          )}
+        </SignedIn>
+      </div>
+    </div>
+  </div>
 </header>
+
+<style>
+  /* Mobile menu toggle using :has() selector */
+  #mobile-menu-toggle:checked ~ header .mobile-menu {
+    display: block;
+  }
+  
+  #mobile-menu-toggle:checked ~ header .mobile-toggle .hamburger {
+    display: none;
+  }
+  
+  #mobile-menu-toggle:checked ~ header .mobile-toggle .close {
+    display: block;
+  }
+</style>

@@ -14,7 +14,6 @@ const { userId } = auth();
 
 let localUser = null;
 let userName = 'Usuario';
-let userRole = 'USER';
 let isAdmin = false;
 
 // Si hay usuario autenticado, sincronizar con Turso
@@ -50,8 +49,8 @@ if (userId) {
     
     if (localUser) {
       userName = localUser.firstName || localUser.email?.split('@')[0] || 'Usuario';
-      userRole = localUser.role || 'USER';
-      isAdmin = userRole === 'ADMIN';
+      isAdmin = localUser.role === 'ADMIN';
+      // Admin tiene acceso dual: puede ver su dashboard personal Y el admin
     }
   } catch (error) {
     console.error('[Dashboard] Error syncing user:', error);
@@ -84,9 +83,22 @@ const adminError = url.searchParams.get('error') === 'admin_required';
         )}
 
         {isAdmin && (
-          <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex justify-between items-center">
-            <p class="text-blue-800">Eres administrador</p>
-            <Button href="/admin" variant="secondary" size="sm">Ir al Panel Admin</Button>
+          <div class="mb-6 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-3">
+              <span class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+              </span>
+              <div>
+                <p class="font-semibold text-blue-900">Modo Administrador</p>
+                <p class="text-sm text-blue-700">Tienes acceso al panel de administración</p>
+              </div>
+            </div>
+            <a 
+              href="/admin" 
+              class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              Panel Admin
+            </a>
           </div>
         )}
 
@@ -94,7 +106,6 @@ const adminError = url.searchParams.get('error') === 'admin_required';
           client:load 
           userId={userId || ''} 
           userName={userName}
-          userRole={userRole}
         />
       </SignedIn>
     </div>

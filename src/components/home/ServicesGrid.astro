@@ -4,54 +4,46 @@ import Section from '../ui/Section.astro';
 import Card from '../ui/Card.astro';
 import Icon from '../ui/Icon.astro';
 import Button from '../ui/Button.astro';
-import FlagUS from '../ui/flags/FlagUS.astro';
-import FlagCA from '../ui/flags/FlagCA.astro';
-import FlagMX from '../ui/flags/FlagMX.astro';
-import FlagEU from '../ui/flags/FlagEU.astro';
-import FlagGB from '../ui/flags/FlagGB.astro';
-import FlagWorld from '../ui/flags/FlagWorld.astro';
 
+// Usando flagcdn.com para banderas de alta calidad
 const visas = [
   {
     country: 'Estados Unidos',
-    flag: 'us',
+    flagUrl: 'https://flagcdn.com/w80/us.png',
+    flagAlt: 'Bandera de Estados Unidos',
     description: 'Visa B1/B2 de turismo y negocios. Asesoría completa para DS-160.',
   },
   {
     country: 'Canadá',
-    flag: 'ca',
+    flagUrl: 'https://flagcdn.com/w80/ca.png',
+    flagAlt: 'Bandera de Canadá',
     description: 'Visa de visitante. Te ayudamos con la aplicación online.',
   },
   {
     country: 'México',
-    flag: 'mx',
+    flagUrl: 'https://flagcdn.com/w80/mx.png',
+    flagAlt: 'Bandera de México',
     description: 'Visa de turismo mexicana. Proceso rápido y sencillo.',
   },
   {
     country: 'Schengen',
-    flag: 'eu',
+    flagUrl: 'https://flagcdn.com/w80/eu.png',
+    flagAlt: 'Bandera de la Unión Europea',
     description: 'Acceso a 27 países europeos con una sola visa.',
   },
   {
     country: 'Reino Unido',
-    flag: 'gb',
+    flagUrl: 'https://flagcdn.com/w80/gb.png',
+    flagAlt: 'Bandera del Reino Unido',
     description: 'Visa de visitante UK. Asesoría especializada.',
   },
   {
     country: 'Otros Destinos',
-    flag: 'world',
+    flagUrl: 'https://flagcdn.com/w80/un.png',
+    flagAlt: 'Bandera de las Naciones Unidas',
     description: 'Australia, Nueva Zelanda, Japón y más. Consulta disponibilidad.',
   },
 ];
-
-const flagComponents: Record<string, any> = {
-  us: FlagUS,
-  ca: FlagCA,
-  mx: FlagMX,
-  eu: FlagEU,
-  gb: FlagGB,
-  world: FlagWorld,
-};
 ---
 
 <Section id="servicios" background="light">
@@ -64,31 +56,33 @@ const flagComponents: Record<string, any> = {
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {visas.map(visa => {
-      const FlagComponent = flagComponents[visa.flag];
-      return (
-        <Card class="group">
-          <div class="flex items-start gap-4">
-            <div class="w-14 h-14 rounded-xl overflow-hidden shadow-md flex-shrink-0 ring-2 ring-surface-muted">
-              <FlagComponent />
-            </div>
-            <div class="flex-1">
-              <h3 class="heading-card mb-2 group-hover:text-brand-secondary transition-colors">
-                {visa.country}
-              </h3>
-              <p class="text-body mb-4">{visa.description}</p>
-              <a 
-                href="#contacto" 
-                class="inline-flex items-center gap-1 text-brand-secondary font-medium hover:gap-2 transition-all"
-              >
-                Más información
-                <Icon name="arrow" size={16} />
-              </a>
-            </div>
+    {visas.map(visa => (
+      <Card class="group">
+        <div class="flex items-start gap-4">
+          <img 
+            src={visa.flagUrl} 
+            alt={visa.flagAlt}
+            width="48"
+            height="36"
+            loading="lazy"
+            class="w-12 h-9 object-cover rounded shadow-sm flex-shrink-0"
+          />
+          <div class="flex-1">
+            <h3 class="heading-card mb-2 group-hover:text-brand-secondary transition-colors">
+              {visa.country}
+            </h3>
+            <p class="text-body mb-4">{visa.description}</p>
+            <a 
+              href="#contacto" 
+              class="inline-flex items-center gap-1 text-brand-secondary font-medium hover:gap-2 transition-all"
+            >
+              Más información
+              <Icon name="arrow" size={16} />
+            </a>
           </div>
-        </Card>
-      );
-    })}
+        </div>
+      </Card>
+    ))}
   </div>
 
   <div class="text-center mt-10">

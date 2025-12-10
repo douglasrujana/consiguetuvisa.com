@@ -1,102 +1,110 @@
-te tengo un nueo reto conces la ruleta y la raspadita loca ? usada en markating para sorteos, premio y puejos adpara a premios de biajes, aseosria gratis, gigcard d econsumo en nustra agencia de vaijes  de varios precios, participa teneindo tarjetas de ccredito miestra smas logos tengas mas intentos tienen dine que sabes ?
+# Proyecto: Ruleta Loca - ConsigueTuVisa.com
 
-Kiro
-Sí, conozco perfectamente esas mecánicas de gamificación para marketing. Son muy efectivas para captar leads y engagement.
+## Estado Actual: ✅ Implementación Completa
 
-Lo que entiendo del reto:
+### Resumen
+Sistema de gamificación para marketing con **Ruleta de Premios** para captura de leads en agencia de viajes.
 
-Ruleta de premios - El usuario gira y gana algo (viajes, asesoría gratis, gift cards)
-Raspadita digital - Raspa con el dedo/mouse para revelar premio
-Mecánica de intentos - Más logos de tarjetas de crédito = más oportunidades de jugar
-Premios variados - Desde asesoría gratis hasta viajes completos
-Preguntas antes de diseñar:
+---
 
-¿Dónde vivirá esto?
+## Arquitectura Implementada
 
-¿Landing page independiente (/sorteo o /ruleta)?
-¿Pop-up en el homepage?
-¿Ambos?
-¿Qué datos capturas del usuario?
+### Backend (Clean Architecture)
+```
+src/server/lib/features/promo/
+├── Promo.entity.ts       # Entidades: Campaign, Prize, Participation
+├── Promo.dto.ts          # Validación Zod
+├── Promo.port.ts         # Interfaces/Puertos
+├── Campaign.repository.ts # Repositorio Sanity
+├── Participation.repository.ts # Repositorio Prisma
+├── Promo.service.ts      # Lógica de sorteo, probabilidades
+├── Promo.graphql.ts      # Queries y Mutations
+└── index.ts              # Exportaciones
+```
 
-¿Solo email?
-¿Nombre + teléfono + email?
-¿Se integra con tu CRM (HubSpot)?
-¿Los premios son configurables desde Sanity?
-
-Probabilidades por premio
-Inventario (ej: solo 5 viajes disponibles)
-Fechas de vigencia
-¿Cómo validas las tarjetas de crédito?
-
-¿El usuario sube foto del logo?
-¿Selecciona de una lista (Visa, Mastercard, Amex, Diners)?
-¿Solo declara cuántas tiene?
-¿Necesitas anti-fraude?
-
-Límite de intentos por IP/email
-Verificación por email antes de jugar
-Respóndeme estas preguntas y te diseño la arquitectura + implementación completa.
-
-Credits used: 1.15
-Elapsed time: 38s
-Checkpoint
-Restore
-
-#Current File que opinas de este aproach te doy un emeplo  que opina de la ruleta loca
-
-Kiro
-Me gusta el approach. La imagen de Easypromos es exactamente el concepto. Analizo y te doy mi opinión:
-
-Tu approach: 8.5/10 ✅
-
-Lo que está bien:
-
-Parametrizable por campaña/país (escalable)
-Sin datos sensibles de TDC (solo logos = confianza)
-Verificación humana post-juego (evita fraude sin fricción)
-Premios en Sanity (marketing puede cambiar sin deploy)
-Integración CRM agnóstica (futuro-proof)
-Lo que agregaría:
-
-| Elemento | Por qué | |----------|---------| | Términos y condiciones | Legal obligatorio en Ecuador | | Política de privacidad | RGPD/LOPDP compliance | | Fecha de expiración del premio | Evita reclamos eternos | | Código único de premio | Para validar en llamada telefónica | | Historial de participaciones | Para auditoría y reportes | | Sonidos/animación | Aumenta engagement 40%+ |
-
-Sistema de TDC en Ecuador:
-
-| Marca | Variantes comunes | |-------|-------------------| | Visa | Clásica, Gold, Platinum, Signature, Infinite | | Mastercard | Clásica, Gold, Platinum, Black, World Elite | | Diners Club | Clásica, Gold, Black | | American Express | Green, Gold, Platinum | | Discover | Poco común en Ecuador |
-
-Bancos emisores principales: Pichincha, Guayaquil, Pacífico, Produbanco, Bolivariano, Internacional.
-
-Arquitectura propuesta:
-
-src/server/lib/features/
-└── promo/
-    ├── Promo.entity.ts       # Campaign, Prize, Participation
-    ├── Promo.dto.ts          # Validación Zod
-    ├── Promo.port.ts         # IPromoRepository
-    ├── Promo.repository.ts   # Prisma (participaciones) + Sanity (config)
-    ├── Promo.service.ts      # Lógica de sorteo, probabilidades
-    ├── Promo.graphql.ts      # Mutations: participate, spin
-    └── index.ts
-
+### Sanity Schemas (CMS)
+```
 sanity/schemas/documents/
-├── campaign.ts              # Campaña (fechas, país, activa)
-├── prize.ts                 # Premio (nombre, probabilidad, inventario)
-└── cardBrand.ts             # Marcas TDC por país
+├── campaign.ts    # Campaña (fechas, país, premios, TDC)
+├── prize.ts       # Premio (nombre, probabilidad, inventario, color)
+└── cardBrand.ts   # Marcas TDC (Visa, Mastercard, Diners, Amex)
+```
 
-src/pages/
-└── sorteo/
-    └── [campaign].astro     # /sorteo/navidad-2025
+### Prisma Model
+- `Participation` en `prisma/schema.prisma` - Guarda participaciones, códigos de premio, estado
 
+### Componentes Svelte
+```
 src/components/promo/
-├── SpinWheel.svelte         # Ruleta animada
+├── SpinWheel.svelte         # Ruleta animada (core reutilizable)
 ├── CardSelector.svelte      # Selector de logos TDC
-├── PrizeReveal.svelte       # Animación de premio
-└── ParticipationForm.svelte # Formulario
-Flujo del usuario:
+├── ParticipationForm.svelte # Formulario de registro
+├── PrizeReveal.svelte       # Modal de premio
+└── index.ts
+```
 
-1. Usuario llega a /sorteo/navidad-2025
+### Páginas
+```
+src/pages/
+├── sorteo/[campaign].astro  # Landing completa (form + ruleta + CRM)
+└── kiosko/
+    ├── [campaign].astro     # Modo kiosko conectado a Sanity
+    └── demo.astro           # ⭐ MODO STANDALONE (100% independiente)
+```
+
+---
+
+## Modo Kiosko Standalone (`/kiosko/demo`)
+
+### Características Actuales
+- ✅ 100% independiente (sin Sanity, sin backend)
+- ✅ Diseño premium navideño con glassmorphism
+- ✅ Layout horizontal: Ruleta izquierda + Panel premio derecha
+- ✅ Branding ConsigueTuVisa.com
+- ✅ Título: "¡TE PONEMOS A VIAJAR!"
+- ✅ Luces LED animadas alrededor
+- ✅ Partículas de nieve
+- ✅ Texto vertical en segmentos
+- ✅ Panel de premio con código único
+- ✅ Botones compartir: Facebook, WhatsApp
+- ✅ Copiar código al portapapeles
+
+### Sonidos (Mixkit CDN)
+```javascript
+const sounds = {
+  start: 'click al presionar JUGAR',
+  spin: 'suspenso mientras gira',
+  win: 'escándalo/fanfarria al ganar',
+  lose: 'sad trombone al perder'
+};
+```
+
+### Premios Hardcodeados
+1. VIAJE GALÁPAGOS (travel)
+2. GIFT CARD $100 (giftcard)
+3. SIGUE JUGANDO (retry)
+4. GIFT CARD $50 (giftcard)
+5. ASESORÍA GRATIS (service)
+6. SIGUE JUGANDO (retry)
+7. DESCUENTO 20% (discount)
+8. CENA PARA 2 (dinner)
+
+---
+
+## URLs de Prueba
+
+| Ambiente | URL |
+|----------|-----|
+| Local | `http://localhost:3000/kiosko/demo` |
+| Producción | `https://consiguetuvisa-com.vercel.app/kiosko/demo` |
+
+---
+
+## Flujo del Usuario (Landing `/sorteo/[campaign]`)
+
+1. Usuario llega a `/sorteo/navidad-2025`
 2. Ve intro + credenciales de la agencia
-3. Selecciona logos de TDC que tiene (1 logo = 1 intento)
+3. Selecciona logos de TDC (1 logo = 1 intento)
 4. Ingresa: nombre, email, WhatsApp
 5. Acepta términos
 6. Gira la ruleta (animación)
@@ -104,105 +112,40 @@ Flujo del usuario:
 8. Recibe email con detalles
 9. Lead llega al CRM
 10. Agente llama para verificar y entregar
-¿Procedemos con la implementación?
 
-Te sugiero empezar por:
+---
 
-Schemas de Sanity (campaign, prize, cardBrand)
-Feature promo en Clean Architecture
-Componente de ruleta (Svelte para animación fluida)
-Página del sorteo
-¿Aprobado?
+## GraphQL API
 
-Credits used: 1.29
-Elapsed time: 1m 28s
-Checkpoint
-Restore
-etoy enredado en la aruitectuta la ruleta loca sera independonete o anclada au landig, ejemplo ruleta+landig ?la ruleta loca tambie  la quiere usar independote en un cecntro comercal los promores usando una lato hacen girar la ruleta loca es idependoente, que opinas d eusar https://www.shadcn-svelte.com/
+### Queries
+- `campaign(slug)` - Obtener campaña
+- `campaigns(country)` - Listar campañas activas
+- `calculateSpins(campaignId, selectedCards)` - Calcular giros
+- `campaignStats(campaignId)` - Estadísticas
 
-Kiro
-Excelente pregunta. Tienes dos casos de uso diferentes:
+### Mutations
+- `createParticipation(input)` - Registrar participación
+- `spin(participationId)` - Girar ruleta
+- `verifyPrize(prizeCode)` - Verificar premio (admin)
+- `deliverPrize(prizeCode)` - Entregar premio (admin)
 
-Análisis de los escenarios:
+---
 
-| Escenario | Contexto | Necesidades | |-----------|----------|-------------| | Landing + Ruleta | Usuario en casa, web | Formulario completo, email, CRM | | Ruleta standalone | Centro comercial, tablet/laptop | Solo girar, promotor captura datos después |
+## Pendientes / Ideas Futuras
 
-Mi recomendación: Componente modular
+- [ ] Raspadita digital (alternativa a ruleta)
+- [ ] PWA para modo offline en kiosko
+- [ ] Integración email (Resend)
+- [ ] Integración CRM (HubSpot/Bitrix)
+- [ ] Dashboard admin de participaciones
+- [ ] Sonidos locales en `/public/sounds/`
 
-src/components/promo/
-├── SpinWheel.svelte          # 🎯 CORE - Solo la ruleta (reutilizable)
-├── PromoLanding.astro        # Landing completa (form + ruleta + info)
-├── PromoKiosk.astro          # Modo kiosko (solo ruleta, pantalla completa)
-├── CardSelector.svelte       # Selector de TDC
-├── PrizeReveal.svelte        # Animación premio
-└── ParticipationForm.svelte  # Formulario
+---
 
-src/pages/
-├── sorteo/
-│   └── [campaign].astro      # /sorteo/navidad-2025 (landing completa)
-└── kiosko/
-    └── [campaign].astro      # /kiosko/navidad-2025 (modo promotor)
-Modo Kiosko (centro comercial):
+## Notas Técnicas
 
-Pantalla completa, sin distracciones
-Solo ruleta + botón girar
-Promotor registra datos en otra pantalla/app
-Puede funcionar offline (PWA)
-Sobre shadcn-svelte: 9/10 ✅
-
-Ventajas:
-
-Componentes accesibles (a11y)
-Tailwind nativo (ya lo usas)
-Copy-paste, no dependencia
-Svelte = performance brutal
-Consistente con tu design system
-Lo usaría para:
-
-Formularios (Input, Select, Checkbox)
-Modales (Dialog)
-Toasts (notificaciones)
-Buttons, Cards
-NO lo usaría para:
-
-La ruleta (custom, necesitas canvas/SVG animado)
-Animaciones complejas (usar Svelte transitions + CSS)
-Arquitectura final propuesta:
-
-┌─────────────────────────────────────────────────────────┐
-│                    SpinWheel.svelte                      │
-│              (Componente core reutilizable)              │
-│         Props: prizes[], onSpin(), disabled              │
-└─────────────────────┬───────────────────────────────────┘
-                      │
-        ┌─────────────┴─────────────┐
-        │                           │
-        ▼                           ▼
-┌───────────────────┐     ┌───────────────────┐
-│  PromoLanding     │     │   PromoKiosk      │
-│  /sorteo/[camp]   │     │  /kiosko/[camp]   │
-├───────────────────┤     ├───────────────────┤
-│ - Info agencia    │     │ - Pantalla full   │
-│ - Form completo   │     │ - Solo ruleta     │
-│ - TDC selector    │     │ - Botón grande    │
-│ - Términos        │     │ - Modo offline    │
-│ - Email + CRM     │     │ - PIN promotor    │
-└───────────────────┘     └───────────────────┘
-¿Instalamos shadcn-svelte y empezamos?
-
-pnpm add -D bits-ui clsx tailwind-variants
-¿Aprobado el approach?
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- Stack: Astro 5 + Svelte 5 + Tailwind 4
+- CMS: Sanity
+- DB: Prisma + SQLite/Turso
+- Deploy: Vercel
+- Dependencias: bits-ui, tailwind-variants, nanoid

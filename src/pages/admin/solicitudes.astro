@@ -1,0 +1,56 @@
+---
+// src/pages/admin/solicitudes.astro - Gestión de solicitudes
+import { SignedIn, SignedOut } from '@clerk/astro/components';
+import AdminLayout from '../../components/admin/AdminLayout.svelte';
+import AdminDashboard from '../../components/dashboard/AdminDashboard.svelte';
+
+const { auth, localUser } = Astro.locals as any;
+const { userId } = auth();
+
+const isAdmin = localUser?.role === 'ADMIN';
+const adminName = localUser?.firstName || localUser?.email?.split('@')[0] || 'Admin';
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solicitudes - Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body>
+  <SignedOut>
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f3f4f6;">
+      <div style="text-align: center; background: white; padding: 3rem; border-radius: 12px;">
+        <h1 style="color: #1f2937; margin-bottom: 1rem;">Acceso Restringido</h1>
+        <a href="/login" style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none;">
+          Iniciar Sesión
+        </a>
+      </div>
+    </div>
+  </SignedOut>
+
+  <SignedIn>
+    {isAdmin ? (
+      <AdminLayout client:load adminName={adminName} currentPage="solicitudes">
+        <AdminDashboard client:load adminName={adminName} />
+      </AdminLayout>
+    ) : (
+      <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f3f4f6;">
+        <div style="text-align: center; background: white; padding: 3rem; border-radius: 12px;">
+          <h1 style="color: #dc2626; margin-bottom: 1rem;">Acceso Denegado</h1>
+          <a href="/dashboard" style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none;">
+            Ir a Mi Panel
+          </a>
+        </div>
+      </div>
+    )}
+  </SignedIn>
+</body>
+</html>

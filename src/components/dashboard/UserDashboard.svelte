@@ -4,14 +4,29 @@
   
   import type { Solicitud, DashboardStats } from '../../server/lib/features/solicitud';
   
+  // Lucide Icons
+  import FileText from 'lucide-svelte/icons/file-text';
+  import Clock from 'lucide-svelte/icons/clock';
+  import CheckCircle from 'lucide-svelte/icons/check-circle';
+  import Calendar from 'lucide-svelte/icons/calendar';
+  import MessageCircle from 'lucide-svelte/icons/message-circle';
+  import Plus from 'lucide-svelte/icons/plus';
+  import Loader2 from 'lucide-svelte/icons/loader-2';
+  import AlertCircle from 'lucide-svelte/icons/alert-circle';
+  import ClipboardList from 'lucide-svelte/icons/clipboard-list';
+  import FileCheck from 'lucide-svelte/icons/file-check';
+  import PenLine from 'lucide-svelte/icons/pen-line';
+  import CalendarCheck from 'lucide-svelte/icons/calendar-check';
+  import Target from 'lucide-svelte/icons/target';
+  import FolderOpen from 'lucide-svelte/icons/folder-open';
+  
   // Props
   interface Props {
     userId: string;
     userName?: string;
-    userRole?: string;
   }
   
-  let { userId, userName = 'Usuario', userRole = 'USER' }: Props = $props();
+  let { userId, userName = 'Usuario' }: Props = $props();
   
   // Estado reactivo con runas
   let stats = $state<DashboardStats>({
@@ -105,67 +120,94 @@
   }
   
   const steps = [
-    { num: 1, label: 'Evaluación', icon: '📋' },
-    { num: 2, label: 'Documentos', icon: '📄' },
-    { num: 3, label: 'Formulario', icon: '✍️' },
-    { num: 4, label: 'Cita', icon: '📅' },
-    { num: 5, label: 'Entrevista', icon: '🎯' },
+    { num: 1, label: 'Evaluación', icon: ClipboardList },
+    { num: 2, label: 'Documentos', icon: FileCheck },
+    { num: 3, label: 'Formulario', icon: PenLine },
+    { num: 4, label: 'Cita', icon: CalendarCheck },
+    { num: 5, label: 'Entrevista', icon: Target },
   ];
 </script>
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">Hola, {userName}</h1>
-      <p class="text-gray-600">Aquí puedes ver el estado de tus solicitudes</p>
+  <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Hola, {userName} 👋</h1>
+        <p class="text-gray-500 mt-1">Aquí puedes ver el estado de tus solicitudes</p>
+      </div>
+      <a 
+        href="/#contacto" 
+        class="bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium shadow-sm"
+      >
+        <Plus size={18} />
+        Nueva Solicitud
+      </a>
     </div>
-    <a 
-      href="/#contacto" 
-      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-    >
-      Nueva Solicitud
-    </a>
   </div>
   
   <!-- Stats Cards -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <div class="bg-white rounded-xl p-4 shadow-sm border">
-      <p class="text-3xl font-bold text-blue-600">{stats.totalSolicitudes}</p>
-      <p class="text-gray-600 text-sm">Total</p>
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+          <FileText size={16} class="text-blue-600" />
+        </div>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{stats.totalSolicitudes}</p>
+      <p class="text-gray-500 text-sm">Total</p>
     </div>
-    <div class="bg-white rounded-xl p-4 shadow-sm border">
-      <p class="text-3xl font-bold text-yellow-600">{stats.enProceso}</p>
-      <p class="text-gray-600 text-sm">En Proceso</p>
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+          <Clock size={16} class="text-yellow-600" />
+        </div>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{stats.enProceso}</p>
+      <p class="text-gray-500 text-sm">En Proceso</p>
     </div>
-    <div class="bg-white rounded-xl p-4 shadow-sm border">
-      <p class="text-3xl font-bold text-green-600">{stats.aprobadas}</p>
-      <p class="text-gray-600 text-sm">Aprobadas</p>
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+          <CheckCircle size={16} class="text-green-600" />
+        </div>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{stats.aprobadas}</p>
+      <p class="text-gray-500 text-sm">Aprobadas</p>
     </div>
-    <div class="bg-white rounded-xl p-4 shadow-sm border">
-      <p class="text-3xl font-bold text-indigo-600">{stats.citasPendientes}</p>
-      <p class="text-gray-600 text-sm">Citas Pendientes</p>
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+          <Calendar size={16} class="text-indigo-600" />
+        </div>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{stats.citasPendientes}</p>
+      <p class="text-gray-500 text-sm">Citas Pendientes</p>
     </div>
   </div>
   
   {#if loading}
     <div class="text-center py-12">
-      <div class="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+      <Loader2 size={32} class="animate-spin text-blue-600 mx-auto" />
       <p class="text-gray-600 mt-2">Cargando...</p>
     </div>
   {:else if error}
-    <div class="bg-red-50 text-red-700 p-4 rounded-lg">
+    <div class="bg-red-50 text-red-700 p-4 rounded-lg flex items-center gap-2">
+      <AlertCircle size={20} />
       {error}
     </div>
   {:else if !hasSolicitudes}
-    <div class="bg-white rounded-xl p-12 text-center shadow-sm border">
-      <div class="text-6xl mb-4">📋</div>
+    <div class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+      <div class="w-20 h-20 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+        <FolderOpen size={40} class="text-blue-600" />
+      </div>
       <h2 class="text-xl font-semibold text-gray-900 mb-2">No tienes solicitudes aún</h2>
-      <p class="text-gray-600 mb-6">Comienza tu proceso de visa con una evaluación gratuita</p>
+      <p class="text-gray-500 mb-6">Comienza tu proceso de visa con una evaluación gratuita</p>
       <a 
         href="/#contacto" 
-        class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+        class="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-colors font-medium"
       >
+        <Plus size={18} />
         Solicitar Evaluación
       </a>
     </div>
@@ -226,8 +268,8 @@
             <div class="flex justify-between">
               {#each steps as step}
                 <div class="flex flex-col items-center">
-                  <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg {selectedSolicitud.currentStep >= step.num ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}">
-                    {step.icon}
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center {selectedSolicitud.currentStep >= step.num ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'}">
+                    <step.icon size={20} />
                   </div>
                   <span class="text-xs mt-1 text-gray-600 hidden sm:block">{step.label}</span>
                 </div>
@@ -257,7 +299,10 @@
             </div>
             {#if selectedSolicitud.appointmentDate}
               <div class="bg-blue-50 rounded-lg p-3 md:col-span-2">
-                <p class="text-blue-600">📅 Cita programada</p>
+                <p class="text-blue-600 flex items-center gap-2">
+                  <CalendarCheck size={16} />
+                  Cita programada
+                </p>
                 <p class="font-medium text-blue-900">
                   {new Date(selectedSolicitud.appointmentDate).toLocaleDateString('es-EC', { 
                     weekday: 'long', 
@@ -275,9 +320,10 @@
             <a 
               href="https://wa.me/593999999999?text=Hola, tengo una consulta sobre mi solicitud {selectedSolicitud.id}"
               target="_blank"
-              class="flex-1 bg-green-500 text-white text-center py-3 rounded-lg hover:bg-green-600 transition-colors"
+              class="flex-1 bg-green-500 text-white text-center py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
             >
-              💬 Consultar por WhatsApp
+              <MessageCircle size={18} />
+              Consultar por WhatsApp
             </a>
           </div>
         </div>
