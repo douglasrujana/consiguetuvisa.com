@@ -1,0 +1,42 @@
+/* src/styles/shadcn.css */
+/* Variables de shadcn-svelte adaptadas al design system de ConsigueTuVisa */
+
+@layer base {
+  :root {
+    /* Usando los colores del design system */
+    --background: 0 0% 100%; /* surface-white */
+    --foreground: 215 28% 17%; /* text-primary #1e293b */
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
+    
+    /* Primary = brand-secondary #2d5be3 */
+    --primary: 224 76% 53%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary = surface-muted #f1f5f9 */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215 28% 17%;
+    
+    /* Muted = surface-light #f8fafc */
+    --muted: 210 40% 98%;
+    --muted-foreground: 215 16% 47%; /* text-secondary #64748b */
+    
+    /* Accent = brand-accent #3b82f6 */
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Destructive = error #ef4444 */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 224 76% 53%; /* brand-secondary */
+    
+    /* Radius del design system */
+    --radius: 0.5rem; /* radius-md */
+  }
+}

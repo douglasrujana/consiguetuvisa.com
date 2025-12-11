@@ -3,6 +3,8 @@
 import { SignedIn, SignedOut } from '@clerk/astro/components';
 import AdminLayout from '../../components/admin/AdminLayout.svelte';
 import AdminDashboard from '../../components/dashboard/AdminDashboard.svelte';
+import '../../styles/global.css';
+import '../../styles/shadcn.css';
 
 const { auth, localUser } = Astro.locals as any;
 const { userId } = auth();
@@ -19,10 +21,6 @@ const adminName = localUser?.firstName || localUser?.email?.split('@')[0] || 'Ad
   <title>Solicitudes - Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; }
-  </style>
 </head>
 <body>
   <SignedOut>

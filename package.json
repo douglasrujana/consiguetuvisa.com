@@ -52,12 +52,15 @@
         "sanity": "^4.20.3",
         "svelte": "^5.45.5",
         "svelte-flag-icons": "^3.0.1",
+        "tailwind-merge": "^3.4.0",
         "tailwind-variants": "^3.2.2",
         "zod": "^4.1.13"
     },
     "devDependencies": {
         "@astrojs/ts-plugin": "^1.10.6",
         "@eslint/js": "^9.39.1",
+        "@internationalized/date": "^3.10.0",
+        "@lucide/svelte": "^0.544.0",
         "@pact-foundation/pact": "^16.0.2",
         "@playwright/test": "^1.57.0",
         "@tailwindcss/vite": "^4.1.17",

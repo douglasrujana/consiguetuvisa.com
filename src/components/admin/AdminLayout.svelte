@@ -306,6 +306,9 @@
     border-radius: 9999px;
     font-size: 0.875rem;
     font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
   }
   
   .content-area {

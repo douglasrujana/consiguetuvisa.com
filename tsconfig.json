@@ -9,7 +9,8 @@
       "@adapters/*": ["src/server/lib/adapters/*"],
       "@core/*": ["src/server/lib/core/*"],
       "@components/*": ["src/components/*"],
-      "@db/*": ["src/server/db/*"]
+      "@db/*": ["src/server/db/*"],
+      "$lib/*": ["src/lib/*"]
     }
   },
   "include": [".astro/types.d.ts", "**/*"],
