@@ -1,0 +1,127 @@
+---
+/**
+ * DEMO DEL CHATBOT RAG
+ * Página de prueba para el widget de chat.
+ */
+import ChatWidget from '../components/chat/ChatWidget.svelte';
+---
+
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Demo - ConsigueTuVisa</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        color: white;
+      }
+      .container {
+        text-align: center;
+        max-width: 600px;
+      }
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+      p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+      }
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+      .feature {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .feature h3 {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+      }
+      .feature p {
+        font-size: 0.85rem;
+        margin: 0;
+        opacity: 0.8;
+      }
+      .hint {
+        margin-top: 3rem;
+        padding: 1rem 2rem;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 2rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .hint span {
+        animation: bounce 1s infinite;
+      }
+      @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🤖 Chatbot RAG Demo</h1>
+      <p>
+        Este es un chatbot con Retrieval-Augmented Generation (RAG) que responde
+        preguntas sobre trámites de visa usando una base de conocimiento indexada.
+      </p>
+
+      <div class="features">
+        <div class="feature">
+          <h3>🔍 RAG</h3>
+          <p>Busca en documentos relevantes antes de responder</p>
+        </div>
+        <div class="feature">
+          <h3>🧠 Gemini 2.5</h3>
+          <p>Powered by Google Gemini Flash</p>
+        </div>
+        <div class="feature">
+          <h3>📚 Knowledge Base</h3>
+          <p>Información sobre visas USA, Canadá, Schengen</p>
+        </div>
+        <div class="feature">
+          <h3>💬 Conversacional</h3>
+          <p>Mantiene contexto de la conversación</p>
+        </div>
+      </div>
+
+      <div class="hint">
+        <span>👉</span>
+        Haz clic en el botón de chat en la esquina inferior derecha
+      </div>
+    </div>
+
+    <!-- Chat Widget (Svelte con client:load) -->
+    <ChatWidget 
+      client:load
+      position="bottom-right"
+      title="Asistente de Visas"
+      placeholder="Pregunta sobre visas..."
+      welcomeMessage="¡Hola! 👋 Soy tu asistente virtual de ConsigueTuVisa. Puedo ayudarte con información sobre visas USA, Canadá, Schengen y nuestros servicios. ¿En qué puedo ayudarte?"
+    />
+  </body>
+</html>

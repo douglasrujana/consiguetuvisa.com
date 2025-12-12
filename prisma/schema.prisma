@@ -232,3 +232,202 @@ model Participation {
   @@index([email])
   @@index([prizeCode])
 }
+
+// ============================================
+// KNOWLEDGE BASE - ENUMS
+// ============================================
+
+enum SourceType {
+  BLOB
+  SANITY
+  WEB
+  SOCIAL
+  RSS
+  MANUAL
+}
+
+enum KBDocumentStatus {
+  PENDING
+  INDEXED
+  FAILED
+  OUTDATED
+}
+
+enum SentimentType {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+  COMPLAINT
+}
+
+enum AlertType {
+  COMPLAINT
+  POLICY_CHANGE
+  SYSTEM_ERROR
+  MENTION
+}
+
+enum AlertPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ============================================
+// KNOWLEDGE BASE - SOURCES
+// ============================================
+
+model Source {
+  id         String     @id @default(uuid())
+  type       SourceType
+  name       String
+  config     String     // JSON configuration
+  isActive   Boolean    @default(true)
+  lastSyncAt DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  // Relaciones
+  kbDocuments KBDocument[]
+}
+
+// ============================================
+// KNOWLEDGE BASE - DOCUMENTS
+// ============================================
+
+model KBDocument {
+  id          String           @id @default(uuid())
+  sourceId    String
+  source      Source           @relation(fields: [sourceId], references: [id])
+  externalId  String           // URL, Sanity _id, tweet ID, etc.
+  title       String
+  contentHash String           // SHA-256 para detectar cambios
+  status      KBDocumentStatus @default(PENDING)
+  metadata    String?          // JSON metadata
+  indexedAt   DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Relaciones
+  chunks Chunk[]
+
+  @@unique([sourceId, externalId])
+  @@index([status])
+  @@index([sourceId])
+}
+
+// ============================================
+// KNOWLEDGE BASE - CHUNKS
+// ============================================
+
+model Chunk {
+  id           String     @id @default(uuid())
+  documentId   String
+  document     KBDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content      String
+  position     Int
+  metadata     String?    // JSON metadata
+  createdAt    DateTime   @default(now())
+
+  // Relaciones
+  embedding Embedding?
+
+  @@index([documentId])
+}
+
+// ============================================
+// KNOWLEDGE BASE - EMBEDDINGS
+// ============================================
+
+model Embedding {
+  id         String   @id @default(uuid())
+  chunkId    String   @unique
+  chunk      Chunk    @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  vector     Bytes    // Serialized Float32Array
+  model      String   // "text-embedding-004"
+  dimensions Int      // 768
+  createdAt  DateTime @default(now())
+}
+
+// ============================================
+// CHATBOT - CONVERSATIONS
+// ============================================
+
+model Conversation {
+  id        String    @id @default(uuid())
+  userId    String?
+  title     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relaciones
+  messages ChatMessage[]
+
+  @@index([userId])
+}
+
+// ============================================
+// CHATBOT - MESSAGES
+// ============================================
+
+model ChatMessage {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String       // 'user' | 'assistant'
+  content        String
+  sources        String?      // JSON array of source citations
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+}
+
+// ============================================
+// SOCIAL LISTENING - MENTIONS
+// ============================================
+
+model SocialMention {
+  id                String        @id @default(uuid())
+  sourceId          String
+  platform          String        // twitter, facebook, instagram
+  externalId        String
+  author            String
+  content           String
+  sentiment         SentimentType
+  suggestedResponse String?
+  reviewedAt        DateTime?
+  reviewedBy        String?
+  publishedAt       DateTime
+  createdAt         DateTime      @default(now())
+
+  // Relaciones
+  alerts Alert[]
+
+  @@unique([platform, externalId])
+  @@index([sentiment])
+  @@index([sourceId])
+}
+
+// ============================================
+// ALERTS
+// ============================================
+
+model Alert {
+  id             String         @id @default(uuid())
+  type           AlertType
+  priority       AlertPriority
+  title          String
+  content        String
+  context        String?        // JSON context
+  sourceId       String?
+  mentionId      String?
+  mention        SocialMention? @relation(fields: [mentionId], references: [id])
+  acknowledgedAt DateTime?
+  acknowledgedBy String?
+  createdAt      DateTime       @default(now())
+
+  @@index([type])
+  @@index([priority])
+  @@index([acknowledgedAt])
+}

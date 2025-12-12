@@ -1,19 +1,40 @@
-> Actúa como un diseñador senior UI/UX + frontend architect experto en shadcn-svelte.
-> refactoriza solo el dashboard  en (http://localhost:3000/admin/solicitudes) a un  nivel Premiun
-> Instala los componentes de shadcn-svelte pero adáptalos a mi design system actual. Usa mis tokens existentes para colores, tipografía, radios y spacing. No sobrescribas mi configuración de Tailwind. Si un componente necesita estilos adicionales, extiéndelos sin reemplazar mis tokens.”**
-    - Sidebar
-    - Chart
-    - Data Table
-    - Skeleton
-    - Pagination 
-    - Input
-    - Buton
-    - Label
-    - Combox
-    - Input
-    - Item
-> Quiero un diseño MUY organizado, limpio, corporativo, con buen layout, jerarquía visual clara y widgets estilo KPI.**
-> Añade mejor jerarquía visual, más espaciado, y widgets con mejor composición.
-> Mantén la estructura pero mejora estética, balance, proporciones y claridad.”
+# Debug Log - ChatbotRepository Error
 
+## Issue (RESOLVED ✅)
 
+**Error:** `Cannot read properties of undefined (reading 'select')`
+
+**Stack trace:**
+```
+14:21:46 [ERROR] Cannot read properties of undefined (reading 'select')
+  at ChatbotRepository.createConversation (src/server/lib/features/chatbot/Chatbot.repository.ts:18:38)
+```
+
+## Root Cause
+
+`ChatbotRepository` was instantiated without the required `StoreSelector` parameter in `src/pages/api/chat/index.ts`.
+
+## Fix Applied
+
+1. **StoreSelector initialization** - Added proper initialization with both stores:
+   ```typescript
+   const memoryStore = new MemoryConversationStore();
+   const prismaStore = new PrismaConversationStore(prisma);
+   const storeSelector = new StoreSelector(memoryStore, prismaStore, storageMode);
+   const repository = new ChatbotRepository(storeSelector);
+   ```
+
+2. **Thread-safe initialization** - Added `initializationPromise` singleton to prevent duplicate initializations
+
+3. **Pre-warming endpoint** - Added `GET /api/chat` for pre-warming the chatbot on page load
+
+4. **ChatWidget warmup** - Added `warmupChatbot()` function that calls GET endpoint on mount
+
+## Verification
+
+```
+14:37:17 [200] /api/chat 4723ms (warmup - indexing 5 docs)
+14:37:33 [200] POST /api/chat 1745ms (message processed)
+```
+
+No errors. Chatbot responds correctly with RAG context.

@@ -32,6 +32,14 @@ import {
     promoTypeDefs,
     promoResolvers
 } from '../lib/features/promo/Promo.graphql';
+import {
+    knowledgeTypeDefs,
+    knowledgeResolvers
+} from '../lib/features/knowledge/Knowledge.graphql';
+import {
+    alertTypeDefs,
+    alertResolvers
+} from '../lib/features/alerts/Alert.graphql';
 
 // ----------------------------------------------------------------------
 // 1. DEFINICIONES BASE DEL SISTEMA
@@ -66,6 +74,8 @@ export const typeDefs = mergeTypeDefs([
   pageTypeDefs,
   blogTypeDefs,
   promoTypeDefs,
+  knowledgeTypeDefs,
+  alertTypeDefs,
 ]);
 
 // ----------------------------------------------------------------------
@@ -80,4 +90,6 @@ export const resolvers = mergeResolvers([
   pageResolvers,
   blogResolvers,
   promoResolvers,
+  knowledgeResolvers,
+  alertResolvers,
 ]);
