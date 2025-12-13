@@ -1,6 +1,7 @@
 // sanity/schemas/index.ts
 
-// Documents - Pages
+// Documents - Site
+import siteSettings from './documents/siteSettings';
 import page from './documents/page';
 
 // Documents - Blog
@@ -24,7 +25,8 @@ import cta from './blocks/cta';
 import richText from './blocks/richText';
 
 export const schemaTypes = [
-  // Documents - Pages
+  // Documents - Site
+  siteSettings,
   page,
   // Documents - Blog
   post,
