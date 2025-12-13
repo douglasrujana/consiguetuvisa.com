@@ -47,6 +47,18 @@ const KNOWLEDGE_BASE = [
     source: 'guia-visa-usa.md',
   },
   {
+    id: 'visa-usa-costos',
+    content: `Costos y precios de la visa americana B1/B2 (turista/negocios):
+    - Tarifa consular MRV: $185 USD (no reembolsable)
+    - Tarifa de reciprocidad (según país): varía
+    - Servicio de asesoría ConsigueTuVisa: desde $50 USD
+    - Fotos profesionales: $5-10 USD
+    - Traducción de documentos: $15-30 USD por página
+    El pago de la tarifa consular se realiza en el banco autorizado antes de agendar la cita.
+    La visa B1/B2 tiene validez de hasta 10 años con entradas múltiples.`,
+    source: 'guia-visa-usa.md',
+  },
+  {
     id: 'visa-usa-entrevista',
     content: `Preparación para la entrevista consular de visa americana:
     - Llegar 15 minutos antes de la cita
@@ -68,6 +80,17 @@ const KNOWLEDGE_BASE = [
     5. Carta de empleo o estados de cuenta bancarios
     6. Itinerario de viaje detallado
     7. Carta de invitación si visitas familia/amigos`,
+    source: 'guia-visa-canada.md',
+  },
+  {
+    id: 'visa-canada-costos',
+    content: `Costos y precios de la visa canadiense (Visitor Visa):
+    - Tarifa de procesamiento: $100 CAD (aproximadamente $75 USD)
+    - Datos biométricos: $85 CAD (una sola vez, válido por 10 años)
+    - Total aproximado: $185 CAD ($140 USD)
+    - Servicio de asesoría ConsigueTuVisa: desde $50 USD
+    El tiempo de procesamiento es de 2-4 semanas aproximadamente.
+    La visa de visitante puede tener validez de hasta 10 años.`,
     source: 'guia-visa-canada.md',
   },
   {
@@ -175,11 +198,12 @@ async function doInitialize(): Promise<InitializedServices> {
     const count = await vectorStore.count();
     console.log(`[Chatbot] ${count} embeddings encontrados en Turso`);
     
-    // Si no hay embeddings, indexar los documentos base
-    if (count === 0) {
-      console.log('[Chatbot] No hay embeddings, indexando knowledge base...');
+    // Si no hay embeddings o hay menos de los esperados, re-indexar
+    if (count < KNOWLEDGE_BASE.length) {
+      console.log(`[Chatbot] Re-indexando knowledge base (${count} < ${KNOWLEDGE_BASE.length})...`);
       await ragEngine.indexDocuments(KNOWLEDGE_BASE);
-      console.log(`[Chatbot] ${KNOWLEDGE_BASE.length} documentos indexados en Turso`);
+      const newCount = await vectorStore.count();
+      console.log(`[Chatbot] ${newCount} documentos indexados en Turso`);
     }
   }
   
