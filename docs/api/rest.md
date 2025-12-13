@@ -4,55 +4,84 @@
 
 ### Chat
 
-#### POST /api/chat
-Envía un mensaje al chatbot.
+#### GET /api/chat
+Health check y pre-warming del chatbot. Carga documentos desde BD e indexa embeddings si es necesario.
 
 **Request:**
 ```bash
-curl -X POST http://localhost:4321/api/chat \
+curl http://localhost:3000/api/chat
+```
+
+**Response:**
+```json
+{
+  "status": "ready",
+  "initialized": true,
+  "warmupTime": 1098
+}
+```
+
+#### POST /api/chat
+Envía un mensaje al chatbot. Soporta streaming via SSE.
+
+**Request:**
+```bash
+curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "¿Qué necesito para visa USA?",
-    "conversationId": "optional-id"
+    "message": "¿Cuánto cuesta la visa USA?",
+    "conversationId": "optional-id",
+    "userId": "optional-user-id"
   }'
 ```
 
 **Response:**
 ```json
 {
-  "conversationId": "conv_abc123",
+  "success": true,
+  "conversationId": "abc123",
   "message": {
+    "id": "msg_xyz",
     "role": "assistant",
-    "content": "Para la visa B1/B2 de USA necesitas...",
-    "sources": [
-      { "title": "Guía Visa USA", "url": "..." }
-    ]
-  }
+    "content": "La tarifa consular para la visa B1/B2 es de $185 USD...",
+    "createdAt": "2025-12-13T03:29:42.613Z"
+  },
+  "sources": [
+    { "content": "Costos visa americana...", "source": "guia-visa-usa.md", "score": 0.83 }
+  ]
 }
 ```
 
-**Streaming:**
+**Streaming (SSE):**
 ```bash
-curl -X POST http://localhost:4321/api/chat \
+curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -H "Accept: text/event-stream" \
-  -d '{"message": "..."}'
+  -d '{"message": "requisitos visa canada"}'
+```
+
+**Response SSE:**
+```
+data: {"type":"content","content":"Para"}
+data: {"type":"content","content":" la visa de turista..."}
+data: {"type":"sources","sources":[...]}
+data: {"type":"done"}
 ```
 
 ### Knowledge
 
 #### POST /api/knowledge/ingest
-Ingesta un documento manualmente.
+Ingesta un documento a la Knowledge Base. Crea chunks y genera embeddings automáticamente.
 
 **Request:**
 ```bash
-curl -X POST http://localhost:4321/api/knowledge/ingest \
+curl -X POST http://localhost:3000/api/knowledge/ingest \
   -H "Content-Type: application/json" \
   -d '{
-    "content": "Contenido del documento...",
-    "sourceId": "source_123",
-    "title": "Mi Documento",
-    "metadata": { "country": "USA" }
+    "title": "Visa de Trabajo H1B",
+    "content": "La visa H1B es para trabajadores especializados en USA...",
+    "sourceId": "kb-visas-main",
+    "metadata": { "country": "USA", "type": "trabajo" }
   }'
 ```
 
@@ -63,25 +92,36 @@ curl -X POST http://localhost:4321/api/knowledge/ingest \
   "document": {
     "id": "doc_xyz",
     "status": "INDEXED",
-    "chunksCount": 5
+    "chunksCount": 3
   }
 }
 ```
 
+**Nota:** El `sourceId` debe existir previamente. Usa `kb-visas-main` para documentos de visas.
+
 ### AI Testing
 
 #### GET /api/ai/test
-Prueba la conexión con el LLM.
+Prueba la conexión con el LLM (Gemini).
 
 ```bash
-curl http://localhost:4321/api/ai/test
+curl http://localhost:3000/api/ai/test
 ```
 
 #### GET /api/ai/rag-test
-Prueba el pipeline RAG completo.
+Prueba el pipeline RAG completo (retrieve → augment → generate).
 
 ```bash
-curl http://localhost:4321/api/ai/rag-test
+curl http://localhost:3000/api/ai/rag-test
+```
+
+### Storage
+
+#### GET /api/storage/test
+Prueba el sistema de almacenamiento configurado.
+
+```bash
+curl http://localhost:3000/api/storage/test
 ```
 
 ### Health
@@ -90,7 +130,7 @@ curl http://localhost:4321/api/ai/rag-test
 Health check básico.
 
 ```bash
-curl http://localhost:4321/api/hello
+curl http://localhost:3000/api/hello
 ```
 
 ## Códigos de Estado
