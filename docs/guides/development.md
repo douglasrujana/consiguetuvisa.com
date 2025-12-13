@@ -5,12 +5,16 @@
 ### Git
 
 ```bash
+
+git status --short
+
 # Pull con rebase (historial limpio)
 git pull --rebase origin main
 
 # Continuar después de resolver conflictos
 git rebase --continue
 ```
+
 
 ### Testing
 
@@ -76,7 +80,12 @@ pnpm prisma migrate dev --name nombre_migracion
 
 # Reset completo
 pnpm prisma migrate reset
+
+pnpm prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script --config ""
+
 ```
+
+powershell -ExecutionPolicy Bypass -File scripts/turso-migrate.ps1
 
 ## Estructura de un Feature
 
