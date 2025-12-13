@@ -14,6 +14,9 @@ git pull --rebase origin main
 # Continuar después de resolver conflictos
 git rebase --continue
 ```
+Write-Host "Esperando deploy..."; Start-Sleep -Seconds 50
+
+Invoke-RestMethod -Uri "https://consiguetuvisa-com.vercel.app/api/chat" -Method GET -TimeoutSec 120 | ConvertTo-Json
 
 
 ### Testing
@@ -82,6 +85,8 @@ pnpm prisma migrate dev --name nombre_migracion
 pnpm prisma migrate reset
 
 pnpm prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script --config ""
+
+pnpm tsx prisma/seed-knowledge.ts
 
 ```
 

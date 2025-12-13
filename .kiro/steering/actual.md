@@ -328,3 +328,34 @@ FACEBOOK_ACCESS_TOKEN=
 8. ~~**Sistema de Alertas** - Notificaciones~~ ✅
 9. **HubSpot CRM** - Integración leads
 10. **Webhooks externos** - Automatizaciones
+
+---
+
+## 🔴 Deuda Técnica / Pendientes
+
+### Knowledge Base Hardcodeada (Prioridad: ALTA)
+**Ubicación:** `src/pages/api/chat/index.ts` - Array `KNOWLEDGE_BASE`
+
+**Problema:** Los documentos del chatbot están hardcodeados en el código:
+- `visa-usa-requisitos` - Requisitos visa USA
+- `visa-usa-costos` - Precios visa USA ($185 USD)
+- `visa-usa-entrevista` - Preparación entrevista
+- `visa-canada-requisitos` - Requisitos visa Canadá
+- `visa-canada-costos` - Precios visa Canadá ($185 CAD)
+- `servicios-asesoria` - Info de contacto
+- `visa-schengen` - Requisitos visa Europa
+
+**Solución propuesta:**
+1. Migrar documentos a **Sanity CMS** (schema `KnowledgeDocument`)
+2. O usar tablas `Source`/`KBDocument` de Prisma
+3. Crear panel admin para gestionar KB sin tocar código
+4. Usar endpoint `/api/knowledge/ingest` para agregar docs dinámicamente
+5. Sincronización automática Sanity → Turso embeddings
+
+**Impacto:** Cada cambio en la KB requiere deploy. No escalable.
+
+### Otros Pendientes
+- [ ] PDFLoader para documentos PDF
+- [ ] WebLoader para scraping de páginas
+- [ ] Panel admin para Knowledge Base
+- [ ] Sync automático Sanity → embeddings

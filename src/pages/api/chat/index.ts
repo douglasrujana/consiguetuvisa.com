@@ -32,94 +32,30 @@ let streamingChatService: StreamingChatService | null = null;
 let isInitialized = false;
 let initializationPromise: Promise<InitializedServices> | null = null;
 
-// Documentos de ejemplo (en producción vendrían de Sanity/DB)
-const KNOWLEDGE_BASE = [
-  {
-    id: 'visa-usa-requisitos',
-    content: `Requisitos para visa de turista B1/B2 a Estados Unidos:
-    1. Pasaporte vigente con mínimo 6 meses de validez
-    2. Formulario DS-160 completado online
-    3. Foto digital reciente (5x5 cm, fondo blanco)
-    4. Comprobante de pago de tarifa consular ($185 USD)
-    5. Carta de invitación (opcional pero recomendada)
-    6. Prueba de solvencia económica (estados de cuenta)
-    7. Prueba de vínculos con tu país (trabajo, propiedades, familia)`,
-    source: 'guia-visa-usa.md',
-  },
-  {
-    id: 'visa-usa-costos',
-    content: `Costos y precios de la visa americana B1/B2 (turista/negocios):
-    - Tarifa consular MRV: $185 USD (no reembolsable)
-    - Tarifa de reciprocidad (según país): varía
-    - Servicio de asesoría ConsigueTuVisa: desde $50 USD
-    - Fotos profesionales: $5-10 USD
-    - Traducción de documentos: $15-30 USD por página
-    El pago de la tarifa consular se realiza en el banco autorizado antes de agendar la cita.
-    La visa B1/B2 tiene validez de hasta 10 años con entradas múltiples.`,
-    source: 'guia-visa-usa.md',
-  },
-  {
-    id: 'visa-usa-entrevista',
-    content: `Preparación para la entrevista consular de visa americana:
-    - Llegar 15 minutos antes de la cita
-    - No se permiten dispositivos electrónicos
-    - Llevar documentos originales y copias
-    - Vestir formal pero cómodo
-    - Responder con honestidad y brevedad
-    - Preguntas típicas: motivo del viaje, duración, financiamiento, lazos con tu país
-    - Mantener contacto visual y actitud positiva`,
-    source: 'guia-visa-usa.md',
-  },
-  {
-    id: 'visa-canada-requisitos',
-    content: `Requisitos para visa de turista a Canadá (Visitor Visa):
-    1. Pasaporte vigente
-    2. Formulario IMM 5257 completado
-    3. Dos fotos tamaño pasaporte
-    4. Prueba de fondos suficientes (mínimo $1000 CAD por semana)
-    5. Carta de empleo o estados de cuenta bancarios
-    6. Itinerario de viaje detallado
-    7. Carta de invitación si visitas familia/amigos`,
-    source: 'guia-visa-canada.md',
-  },
-  {
-    id: 'visa-canada-costos',
-    content: `Costos y precios de la visa canadiense (Visitor Visa):
-    - Tarifa de procesamiento: $100 CAD (aproximadamente $75 USD)
-    - Datos biométricos: $85 CAD (una sola vez, válido por 10 años)
-    - Total aproximado: $185 CAD ($140 USD)
-    - Servicio de asesoría ConsigueTuVisa: desde $50 USD
-    El tiempo de procesamiento es de 2-4 semanas aproximadamente.
-    La visa de visitante puede tener validez de hasta 10 años.`,
-    source: 'guia-visa-canada.md',
-  },
-  {
-    id: 'servicios-asesoria',
-    content: `Servicios de ConsigueTuVisa.com:
-    - Asesoría personalizada para trámites de visa
-    - Revisión completa de documentos
-    - Preparación para entrevista consular
-    - Llenado de formularios (DS-160, IMM 5257, etc.)
-    - Seguimiento del proceso
-    - Atención en español
-    Contacto: +593 99 123 4567 | info@consiguetuvisa.com
-    Horario: Lunes a Viernes 9am-6pm`,
-    source: 'servicios.md',
-  },
-  {
-    id: 'visa-schengen',
-    content: `Requisitos para visa Schengen (Europa):
-    1. Pasaporte con validez mínima de 3 meses después del viaje
-    2. Formulario de solicitud completado
-    3. Fotos tamaño pasaporte
-    4. Seguro de viaje con cobertura mínima de 30,000 EUR
-    5. Reserva de vuelos y hoteles
-    6. Prueba de medios económicos
-    7. Carta de empleo o constancia de estudios
-    La visa Schengen permite visitar 27 países europeos.`,
-    source: 'guia-visa-schengen.md',
-  },
-];
+/**
+ * Carga los documentos de la Knowledge Base desde Prisma
+ * Los documentos se almacenan en las tablas Source -> KBDocument -> Chunk
+ */
+async function loadKnowledgeBaseFromDB(): Promise<Array<{ id: string; content: string; source: string }>> {
+  const chunks = await prisma.chunk.findMany({
+    include: {
+      document: {
+        include: {
+          source: true,
+        },
+      },
+    },
+  });
+
+  return chunks.map((chunk) => {
+    const metadata = chunk.metadata ? JSON.parse(chunk.metadata) : {};
+    return {
+      id: chunk.id,
+      content: chunk.content,
+      source: metadata.source || chunk.document.source.name,
+    };
+  });
+}
 
 interface InitializedServices {
   chatbotService: ChatbotService;
@@ -187,24 +123,20 @@ async function doInitialize(): Promise<InitializedServices> {
   const storeSelector = new StoreSelector(memoryStore, prismaStore, storageMode);
   const repository = new ChatbotRepository(storeSelector);
 
-  // En desarrollo: indexar knowledge base en memoria
-  // En producción: los embeddings ya están en Turso
-  if (!isProduction) {
-    console.log('[Chatbot] Indexando knowledge base en memoria...');
-    await ragEngine.indexDocuments(KNOWLEDGE_BASE);
-    console.log(`[Chatbot] ${KNOWLEDGE_BASE.length} documentos indexados`);
-  } else {
-    // Verificar que hay embeddings en Turso
-    const count = await vectorStore.count();
-    console.log(`[Chatbot] ${count} embeddings encontrados en Turso`);
-    
-    // Si no hay embeddings o hay menos de los esperados, re-indexar
-    if (count < KNOWLEDGE_BASE.length) {
-      console.log(`[Chatbot] Re-indexando knowledge base (${count} < ${KNOWLEDGE_BASE.length})...`);
-      await ragEngine.indexDocuments(KNOWLEDGE_BASE);
-      const newCount = await vectorStore.count();
-      console.log(`[Chatbot] ${newCount} documentos indexados en Turso`);
-    }
+  // Cargar documentos desde la BD
+  const knowledgeBase = await loadKnowledgeBaseFromDB();
+  console.log(`[Chatbot] ${knowledgeBase.length} documentos cargados desde BD`);
+
+  // Verificar embeddings existentes
+  const embeddingCount = await vectorStore.count();
+  console.log(`[Chatbot] ${embeddingCount} embeddings en vector store`);
+
+  // Si no hay embeddings o hay menos documentos que chunks, re-indexar
+  if (embeddingCount < knowledgeBase.length) {
+    console.log(`[Chatbot] Indexando knowledge base (${embeddingCount} < ${knowledgeBase.length})...`);
+    await ragEngine.indexDocuments(knowledgeBase);
+    const newCount = await vectorStore.count();
+    console.log(`[Chatbot] ${newCount} documentos indexados`);
   }
   
   const elapsed = Date.now() - startTime;
