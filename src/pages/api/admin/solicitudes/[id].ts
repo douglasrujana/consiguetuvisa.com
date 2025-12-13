@@ -2,11 +2,11 @@
 // API para detalle y actualización de solicitud
 
 import type { APIRoute } from 'astro';
-import { buildContext } from '../../../../server/lib/core/di/ContextFactory';
+import { getBasicServices } from '../../../../server/lib/core/di/ContextFactory';
 import { UpdateSolicitudSchema } from '../../../../server/lib/features/solicitud/Solicitud.dto';
 import { ZodError } from 'zod';
 
-export const GET: APIRoute = async ({ request, locals, params }) => {
+export const GET: APIRoute = async ({ locals, params }) => {
   try {
     const { auth } = locals;
     const { userId } = auth();
@@ -26,8 +26,8 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       });
     }
 
-    const context = buildContext(request);
-    const solicitud = await context.solicitudService.getSolicitudById(id);
+    const { solicitudService } = getBasicServices();
+    const solicitud = await solicitudService.getSolicitudById(id);
 
     return new Response(JSON.stringify(solicitud), {
       status: 200,
@@ -72,8 +72,8 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
     const body = await request.json();
     const validatedData = UpdateSolicitudSchema.parse(body);
 
-    const context = buildContext(request);
-    const solicitud = await context.solicitudService.updateSolicitud(id, validatedData, userId);
+    const { solicitudService } = getBasicServices();
+    const solicitud = await solicitudService.updateSolicitud(id, validatedData, userId);
 
     return new Response(JSON.stringify(solicitud), {
       status: 200,

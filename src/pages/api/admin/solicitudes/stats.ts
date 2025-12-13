@@ -2,9 +2,9 @@
 // API de estadísticas globales para admin
 
 import type { APIRoute } from 'astro';
-import { buildContext } from '../../../../server/lib/core/di/ContextFactory';
+import { getBasicServices } from '../../../../server/lib/core/di/ContextFactory';
 
-export const GET: APIRoute = async ({ request, locals }) => {
+export const GET: APIRoute = async ({ locals }) => {
   try {
     const { auth } = locals;
     const { userId } = auth();
@@ -16,10 +16,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // TODO: Verificar rol de admin
-
-    const context = buildContext(request);
-    const stats = await context.solicitudService.getDashboardStats();
+    const { solicitudService } = getBasicServices();
+    const stats = await solicitudService.getDashboardStats();
 
     return new Response(JSON.stringify(stats), {
       status: 200,

@@ -13,6 +13,12 @@ export default defineType({
       type: 'string',
     }),
     defineField({
+      name: 'subtitle',
+      title: 'Subtítulo',
+      type: 'text',
+      rows: 2,
+    }),
+    defineField({
       name: 'items',
       title: 'Preguntas',
       type: 'array',

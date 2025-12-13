@@ -3,7 +3,7 @@
 
 import type { APIRoute } from 'astro';
 import { createClerkClient } from '@clerk/astro/server';
-import { getServices } from '@core/di/ContextFactory';
+import { getBasicServices } from '@core/di/ContextFactory';
 import { validateCreateUserFromClerk } from '@features/user';
 
 export const GET: APIRoute = async ({ locals, redirect }) => {
@@ -33,7 +33,7 @@ export const GET: APIRoute = async ({ locals, redirect }) => {
         lastName: clerkUser.lastName,
       });
 
-      const { userService } = getServices();
+      const { userService } = getBasicServices();
       await userService.syncFromClerk(validatedData);
       
       console.log('[Auth Sync] User synced:', email);

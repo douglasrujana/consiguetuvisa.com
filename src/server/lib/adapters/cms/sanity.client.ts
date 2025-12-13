@@ -1,9 +1,7 @@
 // src/server/lib/adapters/cms/sanity.client.ts
 
 /**
- * SANITY CMS CLIENT - Singleton
- * Conexión compartida al CMS. Los repositories de cada feature
- * usan este cliente para sus queries específicas.
+ * SANITY CMS CLIENT - Con soporte para Preview y Publicación
  */
 
 import { createClient, type SanityClient } from '@sanity/client';
@@ -21,28 +19,62 @@ function getEnv(key: string, defaultValue = ''): string {
   return defaultValue;
 }
 
-// Configuración de Sanity
-const config = {
-  projectId: getEnv('SANITY_PROJECT_ID'),
+// Configuración base
+export const sanityConfig = {
+  projectId: getEnv('SANITY_PROJECT_ID', 'zvbggttz'),
   dataset: getEnv('SANITY_DATASET', 'production'),
   apiVersion: '2024-01-01',
   token: getEnv('SANITY_API_TOKEN'),
-  useCdn: getEnv('NODE_ENV') === 'production',
 };
 
 // Validación
-if (!config.projectId) {
-  console.warn('[Sanity] SANITY_PROJECT_ID no configurado. El CMS no funcionará.');
+if (!sanityConfig.projectId) {
+  console.warn('[Sanity] SANITY_PROJECT_ID no configurado.');
 }
 
-// Cliente singleton
+// Cliente para contenido publicado (usa CDN en producción)
 let _client: SanityClient | null = null;
 
 export function getSanityClient(): SanityClient {
   if (!_client) {
-    _client = createClient(config);
+    _client = createClient({
+      ...sanityConfig,
+      useCdn: getEnv('NODE_ENV') === 'production',
+    });
   }
   return _client;
+}
+
+// Cliente para preview (sin CDN, con token para drafts)
+let _previewClient: SanityClient | null = null;
+
+export function getPreviewClient(): SanityClient {
+  if (!_previewClient) {
+    _previewClient = createClient({
+      ...sanityConfig,
+      useCdn: false,
+      token: sanityConfig.token,
+      perspective: 'previewDrafts', // Ver drafts no publicados
+    });
+  }
+  return _previewClient;
+}
+
+// Cliente con permisos de escritura (para publicar)
+let _writeClient: SanityClient | null = null;
+
+export function getWriteClient(): SanityClient {
+  if (!_writeClient) {
+    if (!sanityConfig.token) {
+      throw new Error('[Sanity] SANITY_API_TOKEN requerido para operaciones de escritura');
+    }
+    _writeClient = createClient({
+      ...sanityConfig,
+      useCdn: false,
+      token: sanityConfig.token,
+    });
+  }
+  return _writeClient;
 }
 
 // Image URL builder
@@ -60,6 +92,18 @@ function getImageBuilder() {
  */
 export function urlFor(source: SanityImageSource) {
   return getImageBuilder().image(source);
+}
+
+/**
+ * Helper para queries con soporte de preview
+ */
+export async function sanityFetch<T>(
+  query: string,
+  params: Record<string, unknown> = {},
+  options: { preview?: boolean } = {}
+): Promise<T> {
+  const client = options.preview ? getPreviewClient() : getSanityClient();
+  return client.fetch<T>(query, params);
 }
 
 // Export del cliente para uso directo

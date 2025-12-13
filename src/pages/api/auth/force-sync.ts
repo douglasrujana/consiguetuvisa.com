@@ -3,7 +3,7 @@
 
 import type { APIRoute } from 'astro';
 import { createClerkClient } from '@clerk/astro/server';
-import { getServices } from '@core/di/ContextFactory';
+import { getBasicServices } from '@core/di/ContextFactory';
 import { validateCreateUserFromClerk } from '@features/user';
 
 export const GET: APIRoute = async ({ locals }) => {
@@ -44,7 +44,7 @@ export const GET: APIRoute = async ({ locals }) => {
       lastName: clerkUser.lastName,
     });
 
-    const { userService } = getServices();
+    const { userService } = getBasicServices();
     const user = await userService.syncFromClerk(validatedData);
 
     return new Response(

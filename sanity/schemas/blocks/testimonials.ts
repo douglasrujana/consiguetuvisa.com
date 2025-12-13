@@ -1,16 +1,21 @@
 // sanity/schemas/blocks/testimonials.ts
-
 import { defineType, defineField } from 'sanity';
 
 export default defineType({
   name: 'testimonials',
-  title: 'Testimonials',
+  title: 'Testimonios',
   type: 'object',
   fields: [
     defineField({
       name: 'title',
       title: 'Título',
       type: 'string',
+    }),
+    defineField({
+      name: 'subtitle',
+      title: 'Subtítulo',
+      type: 'text',
+      rows: 2,
     }),
     defineField({
       name: 'items',
@@ -21,22 +26,36 @@ export default defineType({
           type: 'object',
           fields: [
             defineField({
-              name: 'quote',
+              name: 'name',
+              title: 'Nombre',
+              type: 'string',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'text',
               title: 'Testimonio',
               type: 'text',
               rows: 3,
               validation: (Rule) => Rule.required(),
             }),
             defineField({
-              name: 'author',
-              title: 'Autor',
+              name: 'location',
+              title: 'Ciudad',
               type: 'string',
-              validation: (Rule) => Rule.required(),
             }),
             defineField({
-              name: 'role',
-              title: 'Cargo/Rol',
+              name: 'visa',
+              title: 'Tipo de Visa',
               type: 'string',
+            }),
+            defineField({
+              name: 'rating',
+              title: 'Calificación',
+              type: 'number',
+              options: {
+                list: [1, 2, 3, 4, 5],
+              },
+              initialValue: 5,
             }),
             defineField({
               name: 'avatar',
@@ -46,7 +65,7 @@ export default defineType({
             }),
           ],
           preview: {
-            select: { title: 'author', media: 'avatar' },
+            select: { title: 'name', subtitle: 'visa', media: 'avatar' },
           },
         },
       ],

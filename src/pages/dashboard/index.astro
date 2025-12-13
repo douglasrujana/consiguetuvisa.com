@@ -5,7 +5,7 @@ import { SignedIn, SignedOut } from '@clerk/astro/components';
 import { createClerkClient } from '@clerk/astro/server';
 import UserDashboard from '../../components/dashboard/UserDashboard.svelte';
 import Button from '../../components/ui/Button.astro';
-import { getServices } from '@core/di/ContextFactory';
+import { getBasicServices } from '@core/di/ContextFactory';
 import { validateCreateUserFromClerk } from '@features/user';
 
 // Obtener usuario de Clerk
@@ -19,7 +19,7 @@ let isAdmin = false;
 // Si hay usuario autenticado, sincronizar con Turso
 if (userId) {
   try {
-    const { userService } = getServices();
+    const { userService } = getBasicServices();
     
     // Primero buscar si ya existe
     localUser = await userService.getByExternalId(userId);

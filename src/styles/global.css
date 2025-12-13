@@ -6,6 +6,7 @@
 @import "../../design-system/global/themes/light.css";
 @import "../../design-system/global/components.css";
 @import "../../design-system/global/utilities.css";
+@import "../../design-system/global/animations.css";
 
 /* Establece Montserrat como la fuente base para todo el cuerpo del documento */
 body {

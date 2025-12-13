@@ -4,17 +4,43 @@ import Header from './Header.astro';
 import Footer from './Footer.astro';
 import WhatsAppFloat from '../ui/WhatsAppFloat.astro';
 import ScrollToTop from '../ui/ScrollToTop.svelte';
+import SchemaMarkup from '../seo/SchemaMarkup.astro';
+import { getDefaultSEO, type SEOData } from '$lib/sanity/seo.service';
 import '../../styles/global.css';
 
-interface Props {
-  title: string;
-  description?: string;
+interface FAQ {
+  question: string;
+  answer: string;
 }
 
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  faqs?: FAQ[];
+  includeFAQSchema?: boolean;
+}
+
+// Cargar SEO por defecto desde Sanity
+const seoData = await getDefaultSEO();
+
 const { 
-  title, 
-  description = 'Asesoría profesional para visas de turismo. EE.UU, Canadá, México, Europa y más. Acompañamiento experto paso a paso.' 
+  title = seoData.title,
+  description = seoData.description,
+  ogImage = '/og-image.jpg',
+  type = 'website',
+  noindex = false,
+  faqs = [],
+  includeFAQSchema = false,
 } = Astro.props;
+
+const siteUrl = seoData.siteUrl;
+const siteName = seoData.siteName;
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
+const fullOgImage = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`;
+const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
 ---
 
 <!DOCTYPE html>
@@ -22,11 +48,70 @@ const {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  {/* SEO Básico */}
+  <title>{fullTitle}</title>
   <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalUrl} />
+  
+  {/* Robots */}
+  {noindex ? (
+    <meta name="robots" content="noindex, nofollow" />
+  ) : (
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  )}
+  
+  {/* Open Graph / Facebook */}
+  <meta property="og:type" content={type} />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:title" content={fullTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={fullOgImage} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content={siteName} />
+  <meta property="og:locale" content="es_EC" />
+  
+  {/* Twitter Card */}
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content={canonicalUrl} />
+  <meta name="twitter:title" content={fullTitle} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={fullOgImage} />
+  
+  {/* Geo Tags */}
+  <meta name="geo.region" content="EC-P" />
+  <meta name="geo.placename" content="Quito" />
+  <meta name="geo.position" content="-0.1807;-78.4678" />
+  <meta name="ICBM" content="-0.1807, -78.4678" />
+  
+  {/* Idioma */}
+  <meta property="og:locale" content="es_EC" />
+  <meta http-equiv="content-language" content="es" />
+  <link rel="alternate" hreflang="es" href={canonicalUrl} />
+  <link rel="alternate" hreflang="x-default" href={canonicalUrl} />
+  
+  {/* Favicon */}
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  
+  {/* Preconnect */}
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <title>{title} | Consigue Tu Visa</title>
+  
+  {/* Theme Color */}
+  <meta name="theme-color" content="#1e40af" />
+  <meta name="msapplication-TileColor" content="#1e40af" />
+  
+  {/* Schema Markup JSON-LD */}
+  <SchemaMarkup 
+    settings={seoData.settings} 
+    faqs={faqs}
+    includeFAQ={includeFAQSchema}
+    includeLocalBusiness={true}
+    includeRating={true}
+  />
 </head>
 <body class="min-h-screen flex flex-col">
   <Header />
@@ -36,5 +121,10 @@ const {
   <Footer />
   <WhatsAppFloat />
   <ScrollToTop client:load />
+  
+  <script>
+    import { initScrollAnimations } from '../../scripts/scroll-animations';
+    initScrollAnimations();
+  </script>
 </body>
 </html>

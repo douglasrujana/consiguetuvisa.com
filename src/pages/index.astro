@@ -9,12 +9,27 @@ import ServicesGrid from '../components/home/ServicesGrid.astro';
 import Testimonials from '../components/home/Testimonials.astro';
 import StepsFlow from '../components/home/StepsFlow.astro';
 import Trust from '../components/home/Trust.astro';
+import TrustLogos from '../components/home/TrustLogos.astro';
 import FAQ from '../components/home/FAQ.astro';
 import Contact from '../components/home/Contact.astro';
+import { getFAQ, type FAQItem } from '$lib/sanity/faq.service';
+
+// Cargar FAQs para schema markup
+const faqData = await getFAQ();
+const faqsForSchema = faqData.items.map((item: FAQItem) => ({
+  question: item.question,
+  answer: item.answer,
+}));
 ---
 
-<Layout title="Asesoría Profesional para Visas de Turismo">
+<Layout 
+  title="Asesoría Profesional para Visas de Turismo"
+  description="Asesoría profesional para visas de turismo. EE.UU, Canadá, México, Europa y más. Acompañamiento experto paso a paso."
+  faqs={faqsForSchema}
+  includeFAQSchema={true}
+>
   <Hero />
+  <TrustLogos />
   <Benefits />
   <ServicesGrid />
   <Testimonials />

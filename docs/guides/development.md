@@ -72,6 +72,11 @@ pnpm build 2>&1 | Select-Object -First 60
 ### Base de Datos
 
 ```bash
+
+sqlite3 dev.db "SELECT id, email, firstName, lastName, role FROM User LIMIT 5;"
+
+pnpm prisma db execute --stdin --schema prisma/schema.prisma &lt;&lt;&lt; "SELECT id, email, firstName, lastName, role FROM User LIMIT 5;"
+
 # Limpiar DB de test
 if (Test-Path test.db) { Remove-Item test.db -Force }
 

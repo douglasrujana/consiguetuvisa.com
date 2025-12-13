@@ -1,22 +1,27 @@
 // sanity/schemas/documents/page.ts
-
 import { defineType, defineField } from 'sanity';
 
 export default defineType({
   name: 'page',
-  title: 'Landing Page',
+  title: 'Página',
   type: 'document',
+  groups: [
+    { name: 'content', title: 'Contenido', default: true },
+    { name: 'seo', title: 'SEO' },
+  ],
   fields: [
     defineField({
       name: 'title',
       title: 'Título',
       type: 'string',
+      group: 'content',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'slug',
       title: 'Slug (URL)',
       type: 'slug',
+      group: 'content',
       options: {
         source: 'title',
         maxLength: 96,
@@ -24,46 +29,44 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'seo',
-      title: 'SEO',
-      type: 'object',
-      fields: [
-        defineField({
-          name: 'title',
-          title: 'Meta Title',
-          type: 'string',
-        }),
-        defineField({
-          name: 'description',
-          title: 'Meta Description',
-          type: 'text',
-          rows: 3,
-        }),
-        defineField({
-          name: 'ogImage',
-          title: 'Open Graph Image',
-          type: 'image',
-        }),
-      ],
-    }),
-    defineField({
       name: 'sections',
       title: 'Secciones',
       type: 'array',
+      group: 'content',
       of: [
         { type: 'hero' },
         { type: 'features' },
+        { type: 'services' },
+        { type: 'steps' },
+        { type: 'trust' },
         { type: 'testimonials' },
-        { type: 'pricing' },
         { type: 'faq' },
+        { type: 'pricing' },
         { type: 'cta' },
+        { type: 'contact' },
         { type: 'richText' },
       ],
     }),
+    // SEO
     defineField({
-      name: 'publishedAt',
-      title: 'Fecha de publicación',
-      type: 'datetime',
+      name: 'seoTitle',
+      title: 'Meta Title',
+      type: 'string',
+      group: 'seo',
+      description: 'Título para SEO (si es diferente al título)',
+    }),
+    defineField({
+      name: 'seoDescription',
+      title: 'Meta Description',
+      type: 'text',
+      rows: 3,
+      group: 'seo',
+    }),
+    defineField({
+      name: 'ogImage',
+      title: 'Open Graph Image',
+      type: 'image',
+      group: 'seo',
     }),
   ],
   preview: {
@@ -74,7 +77,7 @@ export default defineType({
     prepare({ title, slug }) {
       return {
         title,
-        subtitle: `/${slug}`,
+        subtitle: `/${slug || ''}`,
       };
     },
   },

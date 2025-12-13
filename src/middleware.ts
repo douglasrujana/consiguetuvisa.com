@@ -2,7 +2,7 @@
 // SOLO autenticación y autorización - NO registra usuarios
 
 import { clerkMiddleware, createRouteMatcher } from '@clerk/astro/server';
-import { getServices } from './server/lib/core/di/ContextFactory';
+import { getBasicServices } from './server/lib/core/di/ContextFactory';
 
 // Rutas que requieren autenticación
 const isProtectedRoute = createRouteMatcher([
@@ -47,7 +47,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
       
       if (!user) {
         // Usar servicio (Clean Architecture)
-        const { userService } = getServices();
+        const { userService } = getBasicServices();
         user = await userService.getByExternalId(userId);
         
         if (user) {

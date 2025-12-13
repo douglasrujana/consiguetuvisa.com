@@ -2,7 +2,7 @@
 // Webhook de Clerk para sincronizar usuarios con SQLite
 
 import type { APIRoute } from 'astro';
-import { getServices } from '@core/di/ContextFactory';
+import { getBasicServices } from '@core/di/ContextFactory';
 import { validateCreateUserFromClerk } from '@features/user';
 
 type ClerkWebhookEvent = {
@@ -24,7 +24,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const event: ClerkWebhookEvent = await request.json();
-    const { userService } = getServices();
+    const { userService } = getBasicServices();
 
     console.log(`[Clerk Webhook] Event: ${event.type}`, { userId: event.data.id });
 

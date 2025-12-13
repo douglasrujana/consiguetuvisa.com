@@ -1,49 +1,20 @@
 ---
 // src/components/home/StepsFlow.astro
-import Section from '../ui/Section.astro';
-import Icon from '../ui/Icon.astro';
+// Carga "Nuestro Proceso" desde Sanity
 
-const steps = [
-  {
-    number: '01',
-    title: 'Evaluación de Caso',
-    description: 'Analizamos tu perfil y determinamos la mejor estrategia para tu solicitud.',
-    icon: 'users',
-  },
-  {
-    number: '02',
-    title: 'Recolección de Documentos',
-    description: 'Te guiamos en la preparación y revisión de todos los documentos necesarios.',
-    icon: 'document',
-  },
-  {
-    number: '03',
-    title: 'Llenado de Formulario',
-    description: 'Completamos juntos el DS-160 o formulario equivalente sin errores.',
-    icon: 'document',
-  },
-  {
-    number: '04',
-    title: 'Agendamiento de Cita',
-    description: 'Te ayudamos a conseguir la mejor fecha disponible en el consulado.',
-    icon: 'calendar',
-  },
-  {
-    number: '05',
-    title: 'Preparación para Entrevista',
-    description: 'Simulacros y consejos para que llegues seguro a tu cita consular.',
-    icon: 'shield',
-  },
-];
+import Section from '../ui/Section.astro';
+import { getSteps } from '../../lib/sanity/steps.service';
+
+const data = await getSteps();
 ---
 
 <Section id="proceso" background="white">
-  <div class="text-center mb-12">
+  <div class="text-center mb-12 animate-on-scroll fade-up">
     <div class="accent-line mx-auto mb-4"></div>
-    <h2 class="heading-section mb-4">Nuestro Proceso</h2>
-    <p class="text-body max-w-2xl mx-auto">
-      Un proceso claro y estructurado para que obtengas tu visa sin complicaciones.
-    </p>
+    <h2 class="heading-section mb-4">{data.title}</h2>
+    {data.subtitle && (
+      <p class="text-body max-w-2xl mx-auto">{data.subtitle}</p>
+    )}
   </div>
 
   <div class="relative">
@@ -51,8 +22,8 @@ const steps = [
     <div class="hidden lg:block absolute top-24 left-0 right-0 h-0.5 bg-surface-muted"></div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-      {steps.map((step, index) => (
-        <div class="relative text-center lg:text-center">
+      {data.items.map((step, index) => (
+        <div class={`relative text-center lg:text-center animate-on-scroll fade-up delay-${index + 1}`}>
           <!-- Number circle -->
           <div class="relative z-10 w-16 h-16 bg-brand-secondary text-text-inverse rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">
             {step.number}

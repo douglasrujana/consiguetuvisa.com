@@ -2,11 +2,11 @@
 // API para solicitudes del usuario
 
 import type { APIRoute } from 'astro';
-import { buildContext } from '../../../server/lib/core/di/ContextFactory';
+import { getBasicServices } from '../../../server/lib/core/di/ContextFactory';
 import { CreateSolicitudSchema } from '../../../server/lib/features/solicitud/Solicitud.dto';
 import { ZodError } from 'zod';
 
-export const GET: APIRoute = async ({ request, locals }) => {
+export const GET: APIRoute = async ({ locals }) => {
   try {
     const { auth } = locals;
     const { userId } = auth();
@@ -18,8 +18,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    const context = buildContext(request);
-    const solicitudes = await context.solicitudService.getSolicitudesByUser(userId);
+    const { solicitudService } = getBasicServices();
+    const solicitudes = await solicitudService.getSolicitudesByUser(userId);
 
     return new Response(JSON.stringify({ data: solicitudes }), {
       status: 200,
@@ -49,8 +49,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const body = await request.json();
     const validatedData = CreateSolicitudSchema.parse(body);
     
-    const context = buildContext(request);
-    const solicitud = await context.solicitudService.createSolicitud(validatedData, userId);
+    const { solicitudService } = getBasicServices();
+    const solicitud = await solicitudService.createSolicitud(validatedData, userId);
 
     return new Response(JSON.stringify(solicitud), {
       status: 201,

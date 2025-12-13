@@ -1,67 +1,32 @@
 ---
 // src/components/home/ServicesGrid.astro
+// Carga "Tipos de Visa" desde Sanity
+
 import Section from '../ui/Section.astro';
 import Card from '../ui/Card.astro';
 import Icon from '../ui/Icon.astro';
 import Button from '../ui/Button.astro';
+import { getServices, getFlagUrl } from '../../lib/sanity/services.service';
 
-// Usando flagcdn.com para banderas de alta calidad
-const visas = [
-  {
-    country: 'Estados Unidos',
-    flagUrl: 'https://flagcdn.com/w80/us.png',
-    flagAlt: 'Bandera de Estados Unidos',
-    description: 'Visa B1/B2 de turismo y negocios. Asesoría completa para DS-160.',
-  },
-  {
-    country: 'Canadá',
-    flagUrl: 'https://flagcdn.com/w80/ca.png',
-    flagAlt: 'Bandera de Canadá',
-    description: 'Visa de visitante. Te ayudamos con la aplicación online.',
-  },
-  {
-    country: 'México',
-    flagUrl: 'https://flagcdn.com/w80/mx.png',
-    flagAlt: 'Bandera de México',
-    description: 'Visa de turismo mexicana. Proceso rápido y sencillo.',
-  },
-  {
-    country: 'Schengen',
-    flagUrl: 'https://flagcdn.com/w80/eu.png',
-    flagAlt: 'Bandera de la Unión Europea',
-    description: 'Acceso a 27 países europeos con una sola visa.',
-  },
-  {
-    country: 'Reino Unido',
-    flagUrl: 'https://flagcdn.com/w80/gb.png',
-    flagAlt: 'Bandera del Reino Unido',
-    description: 'Visa de visitante UK. Asesoría especializada.',
-  },
-  {
-    country: 'Otros Destinos',
-    flagUrl: 'https://flagcdn.com/w80/un.png',
-    flagAlt: 'Bandera de las Naciones Unidas',
-    description: 'Australia, Nueva Zelanda, Japón y más. Consulta disponibilidad.',
-  },
-];
+const data = await getServices();
 ---
 
 <Section id="servicios" background="light">
-  <div class="text-center mb-12">
+  <div class="text-center mb-12 animate-on-scroll fade-up">
     <div class="accent-line mx-auto mb-4"></div>
-    <h2 class="heading-section mb-4">Tipos de Visa</h2>
-    <p class="text-body max-w-2xl mx-auto">
-      Escoge tu destino y agenda una asesoría personalizada con nuestros expertos.
-    </p>
+    <h2 class="heading-section mb-4">{data.title}</h2>
+    {data.subtitle && (
+      <p class="text-body max-w-2xl mx-auto">{data.subtitle}</p>
+    )}
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {visas.map(visa => (
-      <Card class="group">
+    {data.items.map((visa, index) => (
+      <Card class={`group hover-lift animate-on-scroll fade-up delay-${(index % 3) + 1}`}>
         <div class="flex items-start gap-4">
           <img 
-            src={visa.flagUrl} 
-            alt={visa.flagAlt}
+            src={getFlagUrl(visa.flagCode || 'un')} 
+            alt={`Bandera de ${visa.country}`}
             width="48"
             height="36"
             loading="lazy"
@@ -73,7 +38,7 @@ const visas = [
             </h3>
             <p class="text-body mb-4">{visa.description}</p>
             <a 
-              href="#contacto" 
+              href={visa.link || '#contacto'} 
               class="inline-flex items-center gap-1 text-brand-secondary font-medium hover:gap-2 transition-all"
             >
               Más información
@@ -85,8 +50,8 @@ const visas = [
     ))}
   </div>
 
-  <div class="text-center mt-10">
-    <Button href="#contacto" size="lg">
+  <div class="text-center mt-10 animate-on-scroll fade-up">
+    <Button href="#contacto" size="lg" class="hover-scale">
       Agenda tu Asesoría
       <Icon name="arrow" size={20} />
     </Button>

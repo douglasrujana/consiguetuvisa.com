@@ -351,3 +351,120 @@ FACEBOOK_ACCESS_TOKEN=
 - [ ] Panel admin para Knowledge Base (CRUD visual)
 - [ ] Sync automático Sanity → embeddings
 - [ ] Endpoint GraphQL para gestionar KB desde frontend
+
+
+---
+
+# 🎨 Mejoras UI/UX Pendientes
+
+## Estado: 🔄 En Progreso
+
+### Evaluación Actual: 7.5/10
+
+---
+
+## Roadmap de Mejoras Visuales
+
+### 1. Microinteracciones ✅ COMPLETADO
+- [x] Animaciones de entrada en scroll (fade-up, slide-left, slide-right, scale-in)
+- [x] Hover effects elaborados (hover-lift, hover-scale, hover-glow)
+- [x] Transiciones suaves entre secciones (staggered delays)
+- [x] Soporte accesibilidad (prefers-reduced-motion)
+- **Archivos:** `design-system/global/animations.css`, `src/scripts/scroll-animations.ts`
+- **Impacto:** Alto | **Esfuerzo:** Bajo
+
+### 2. SEO Técnico ✅ COMPLETADO
+- [x] Meta tags dinámicos desde Sanity (`Layout.astro` + `seo.service.ts`)
+- [x] Schema markup JSON-LD (`SchemaMarkup.astro`)
+  - LocalBusiness, Organization, WebSite
+  - AggregateRating (reviews)
+  - FAQPage (preguntas frecuentes)
+- [x] Open Graph + Twitter Cards completos
+- [x] Sitemap.xml automático (`@astrojs/sitemap`)
+- [x] robots.txt optimizado (`public/robots.txt`)
+- [x] Canonical URLs
+- [x] Geo tags (Ecuador/Quito)
+- [x] Hreflang tags
+- **Impacto:** Medio-Alto | **Esfuerzo:** Bajo
+
+### 3. Social Proof Visual ✅ COMPLETADO
+- [x] Sección "Logos de confianza" (`TrustLogos.astro`)
+- [x] Contadores animados de estadísticas (`AnimatedCounter.svelte`)
+- [x] Badges de verificación (en Trust.astro)
+- [ ] Reviews de Google/Facebook embebidos (futuro)
+- **Archivos:** `src/components/ui/AnimatedCounter.svelte`, `src/components/home/TrustLogos.astro`
+- **Impacto:** Medio | **Esfuerzo:** Bajo
+
+### 4. Identidad Visual (Requiere diseñador)
+- [ ] Logo profesional vectorial
+- [ ] Paleta de colores refinada
+- [ ] Tipografía distintiva
+- [ ] Iconografía custom
+- [ ] Ilustraciones de marca
+- **Impacto:** Alto | **Esfuerzo:** Externo
+
+### 5. Fotografía y Media
+- [ ] Fotos reales del equipo
+- [ ] Fotos de clientes (con permiso)
+- [ ] Video testimoniales
+- [ ] Imágenes de oficina/proceso
+- **Impacto:** Alto | **Esfuerzo:** Externo
+
+---
+
+## Sanity CMS - Migración Completada ✅
+
+### Secciones del Home migradas:
+| Sección | Componente | Servicio | Estado |
+|---------|-----------|----------|--------|
+| Hero | `Hero.astro` | `hero.service.ts` | ✅ |
+| Benefits | `Benefits.astro` | `benefits.service.ts` | ✅ |
+| Services | `ServicesGrid.astro` | `services.service.ts` | ✅ |
+| Testimonials | `Testimonials.astro` | `testimonials.service.ts` | ✅ |
+| Steps | `StepsFlow.astro` | `steps.service.ts` | ✅ |
+| Trust | `Trust.astro` | `trust.service.ts` | ✅ |
+| FAQ | `FAQ.astro` | `faq.service.ts` | ✅ |
+| Contact | `Contact.astro` | `contact.service.ts` | ✅ |
+| Footer | `Footer.astro` | `siteSettings.service.ts` | ✅ |
+| Header (logo) | `Header.astro` | `siteSettings.service.ts` | ✅ |
+
+### Schemas de Sanity:
+```
+sanity/schemas/
+├── documents/
+│   ├── page.ts           # Páginas con secciones
+│   ├── siteSettings.ts   # Config global (singleton)
+│   ├── post.ts           # Blog
+│   ├── author.ts
+│   ├── category.ts
+│   ├── tag.ts
+│   ├── campaign.ts       # Promos
+│   ├── prize.ts
+│   └── cardBrand.ts
+└── blocks/
+    ├── hero.ts
+    ├── features.ts
+    ├── services.ts
+    ├── steps.ts
+    ├── trust.ts
+    ├── testimonials.ts
+    ├── faq.ts
+    ├── pricing.ts
+    ├── cta.ts
+    ├── contact.ts
+    └── richText.ts
+```
+
+### Servicios Sanity:
+```
+src/lib/sanity/
+├── hero.service.ts
+├── benefits.service.ts
+├── services.service.ts
+├── testimonials.service.ts
+├── steps.service.ts
+├── trust.service.ts
+├── faq.service.ts
+├── contact.service.ts
+└── siteSettings.service.ts
+```

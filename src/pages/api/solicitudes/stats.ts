@@ -2,9 +2,9 @@
 // API para estadísticas del usuario
 
 import type { APIRoute } from 'astro';
-import { buildContext } from '../../../server/lib/core/di/ContextFactory';
+import { getBasicServices } from '../../../server/lib/core/di/ContextFactory';
 
-export const GET: APIRoute = async ({ request, locals, url }) => {
+export const GET: APIRoute = async ({ locals, url }) => {
   try {
     const { auth } = locals;
     const { userId } = auth();
@@ -29,8 +29,8 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       });
     }
 
-    const context = buildContext(request);
-    const stats = await context.solicitudService.getUserStats(targetUserId);
+    const { solicitudService } = getBasicServices();
+    const stats = await solicitudService.getUserStats(targetUserId);
 
     return new Response(JSON.stringify(stats), {
       status: 200,

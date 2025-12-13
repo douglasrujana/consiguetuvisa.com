@@ -1,44 +1,27 @@
 ---
 // src/components/home/Benefits.astro
+// Carga "¿Por qué elegirnos?" desde Sanity
+
 import Section from '../ui/Section.astro';
 import Card from '../ui/Card.astro';
 import Icon from '../ui/Icon.astro';
+import { getBenefits } from '../../lib/sanity/benefits.service';
 
-const benefits = [
-  {
-    icon: 'star',
-    title: '97% Satisfacción',
-    description: 'Miles de ecuatorianos han confiado en nuestro servicio con excelentes resultados.',
-  },
-  {
-    icon: 'users',
-    title: 'Asistencia Completa',
-    description: 'Te acompañamos en todo el proceso, desde el diagnóstico hasta la cita consular.',
-  },
-  {
-    icon: 'document',
-    title: 'Revisión Profesional',
-    description: 'Verificamos cada documento para evitar errores que puedan afectar tu solicitud.',
-  },
-  {
-    icon: 'calendar',
-    title: 'Acompañamiento',
-    description: 'Preparación para la entrevista y acompañamiento el día de tu cita.',
-  },
-];
+const data = await getBenefits();
 ---
 
 <Section background="white">
-  <div class="text-center mb-12">
+  <div class="text-center mb-12 animate-on-scroll fade-up">
     <div class="accent-line mx-auto mb-4"></div>
-    <h2 class="heading-section">¿Por qué elegirnos?</h2>
+    <h2 class="heading-section">{data.title}</h2>
+    {data.subtitle && <p class="text-body mt-4">{data.subtitle}</p>}
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    {benefits.map(benefit => (
-      <Card class="text-center">
+    {data.items.map((benefit, index) => (
+      <Card class={`text-center hover-lift animate-on-scroll fade-up delay-${index + 1}`}>
         <div class="w-14 h-14 bg-brand-secondary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-          <Icon name={benefit.icon} size={28} class="text-brand-secondary" />
+          <Icon name={benefit.icon || 'star'} size={28} class="text-brand-secondary" />
         </div>
         <h3 class="heading-card mb-2">{benefit.title}</h3>
         <p class="text-body">{benefit.description}</p>

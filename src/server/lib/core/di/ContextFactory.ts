@@ -169,8 +169,35 @@ export function buildContext(request: Request): AppContext {
 
 
 /**
+ * Servicios básicos sin AI (para dashboard, auth, etc.)
+ */
+let cachedBasicServices: {
+  authService: AuthService;
+  userService: UserService;
+  solicitudService: SolicitudService;
+  prisma: PrismaClient;
+} | null = null;
+
+export function getBasicServices() {
+  if (!cachedBasicServices) {
+    const authProvider: IAuthProvider = new ClerkAuthAdapter();
+    const userRepository: IUserRepository = new UserRepository();
+    const solicitudRepository: ISolicitudRepository = new SolicitudRepository();
+
+    cachedBasicServices = {
+      authService: new AuthService(authProvider),
+      userService: new UserService(userRepository),
+      solicitudService: new SolicitudService(solicitudRepository),
+      prisma,
+    };
+  }
+  return cachedBasicServices;
+}
+
+/**
  * Singleton para contextos que no dependen del request.
  * Útil para middleware y tareas en background.
+ * NOTA: Requiere GEMINI_API_KEY para AI/RAG services.
  */
 let cachedServices: Omit<AppContext, 'authHeader' | 'request'> | null = null;
 

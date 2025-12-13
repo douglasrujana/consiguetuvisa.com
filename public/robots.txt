@@ -1,0 +1,33 @@
+# robots.txt - ConsigueTuVisa.com
+# https://consiguetuvisa.com
+
+User-agent: *
+Allow: /
+
+# Bloquear rutas privadas
+Disallow: /api/
+Disallow: /admin/
+Disallow: /studio/
+Disallow: /_astro/
+Disallow: /preview/
+
+# Bloquear archivos de desarrollo
+Disallow: /*.json$
+Disallow: /*.map$
+
+# Permitir archivos importantes
+Allow: /sitemap.xml
+Allow: /sitemap-index.xml
+
+# Sitemap
+Sitemap: https://consiguetuvisa.com/sitemap-index.xml
+
+# Crawl-delay para bots agresivos
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Crawl-delay: 10

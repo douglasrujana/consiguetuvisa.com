@@ -1,49 +1,30 @@
 ---
 // src/components/home/Testimonials.astro
+// Carga "Casos de Éxito" desde Sanity
+
 import Section from '../ui/Section.astro';
 import Card from '../ui/Card.astro';
 import Icon from '../ui/Icon.astro';
+import { getTestimonials } from '../../lib/sanity/testimonials.service';
 
-const testimonials = [
-  {
-    name: 'María García',
-    location: 'Quito',
-    visa: 'Visa EE.UU',
-    text: 'Excelente servicio. Me ayudaron con todo el proceso del DS-160 y la preparación para la entrevista. ¡Aprobada a la primera!',
-    rating: 5,
-  },
-  {
-    name: 'Carlos Mendoza',
-    location: 'Guayaquil',
-    visa: 'Visa Canadá',
-    text: 'Muy profesionales. Revisaron todos mis documentos y me dieron consejos muy útiles. Recomendado 100%.',
-    rating: 5,
-  },
-  {
-    name: 'Ana Rodríguez',
-    location: 'Cuenca',
-    visa: 'Visa Schengen',
-    text: 'Tenía muchas dudas sobre el proceso para Europa y me explicaron todo paso a paso. Servicio de primera.',
-    rating: 5,
-  },
-];
+const data = await getTestimonials();
 ---
 
 <Section id="testimonios" background="light">
-  <div class="text-center mb-12">
+  <div class="text-center mb-12 animate-on-scroll fade-up">
     <div class="accent-line mx-auto mb-4"></div>
-    <h2 class="heading-section mb-4">Casos de Éxito</h2>
-    <p class="text-body max-w-2xl mx-auto">
-      Miles de ecuatorianos han confiado en nuestro servicio. Estas son sus historias.
-    </p>
+    <h2 class="heading-section mb-4">{data.title}</h2>
+    {data.subtitle && (
+      <p class="text-body max-w-2xl mx-auto">{data.subtitle}</p>
+    )}
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    {testimonials.map(testimonial => (
-      <Card>
+    {data.items.map((testimonial, index) => (
+      <Card class={`hover-lift animate-on-scroll fade-up delay-${index + 1}`}>
         <!-- Rating -->
         <div class="flex gap-1 mb-4">
-          {Array.from({ length: testimonial.rating }).map(() => (
+          {Array.from({ length: testimonial.rating || 5 }).map(() => (
             <Icon name="star" size={18} class="text-warning fill-warning" />
           ))}
         </div>
@@ -60,7 +41,7 @@ const testimonials = [
           </div>
           <div>
             <p class="font-semibold text-brand-primary">{testimonial.name}</p>
-            <p class="text-small">{testimonial.location} • {testimonial.visa}</p>
+            <p class="text-small">{testimonial.location}{testimonial.visa && ` • ${testimonial.visa}`}</p>
           </div>
         </div>
       </Card>

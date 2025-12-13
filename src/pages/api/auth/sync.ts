@@ -3,7 +3,7 @@
 // Se llama desde el frontend después del registro/login
 
 import type { APIRoute } from 'astro';
-import { getServices } from '@core/di/ContextFactory';
+import { getBasicServices } from '@core/di/ContextFactory';
 import { validateCreateUserFromClerk } from '@features/user';
 
 export const POST: APIRoute = async ({ locals }) => {
@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ locals }) => {
     });
 
     // Sincronizar usuario
-    const { userService } = getServices();
+    const { userService } = getBasicServices();
     const user = await userService.syncFromClerk(validatedData);
 
     return new Response(

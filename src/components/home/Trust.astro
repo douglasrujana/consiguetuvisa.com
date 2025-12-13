@@ -1,52 +1,76 @@
 ---
 // src/components/home/Trust.astro
+// Carga "¿Por qué confiar?" desde Sanity con contadores animados
+
 import Section from '../ui/Section.astro';
 import Icon from '../ui/Icon.astro';
+import AnimatedCounter from '../ui/AnimatedCounter.svelte';
+import { getTrust } from '../../lib/sanity/trust.service';
 
-const stats = [
-  { value: '5+', label: 'Años de experiencia' },
-  { value: '2,000+', label: 'Clientes atendidos' },
-  { value: '97%', label: 'Satisfacción' },
-  { value: '24h', label: 'Respuesta promedio' },
+const data = await getTrust();
+
+// Features estáticos (podrían moverse a Sanity después)
+const features = [
+  { text: 'Equipo certificado en trámites migratorios', icon: 'badge-check' },
+  { text: 'Atención personalizada para cada caso', icon: 'user-check' },
+  { text: 'Seguimiento continuo de tu proceso', icon: 'activity' },
+  { text: 'Garantía de confidencialidad', icon: 'shield' },
 ];
 
-const features = [
-  'Equipo certificado en trámites migratorios',
-  'Atención personalizada para cada caso',
-  'Seguimiento continuo de tu proceso',
-  'Garantía de confidencialidad',
+// Badges de verificación
+const badges = [
+  { label: 'Datos Protegidos', icon: 'lock' },
+  { label: 'Pago Seguro', icon: 'credit-card' },
+  { label: 'Soporte Continuo', icon: 'headphones' },
 ];
 ---
 
 <Section background="white">
   <div class="grid lg:grid-cols-2 gap-12 items-center">
     <!-- Content -->
-    <div>
+    <div class="animate-on-scroll slide-left">
       <div class="accent-line mb-4"></div>
-      <h2 class="heading-section mb-6">¿Por qué confiar en nosotros?</h2>
-      <p class="text-body mb-8">
-        Somos un equipo de profesionales especializados en trámites de visa con años de experiencia 
-        ayudando a ecuatorianos a cumplir su sueño de viajar.
-      </p>
+      <h2 class="heading-section mb-6">{data.title}</h2>
+      {data.subtitle && (
+        <p class="text-body mb-8">{data.subtitle}</p>
+      )}
+      {!data.subtitle && (
+        <p class="text-body mb-8">
+          Somos un equipo de profesionales especializados en trámites de visa con años de experiencia 
+          ayudando a ecuatorianos a cumplir su sueño de viajar.
+        </p>
+      )}
 
-      <ul class="space-y-4">
-        {features.map(feature => (
-          <li class="flex items-start gap-3">
-            <div class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Icon name="check" size={14} class="text-success" />
+      <ul class="space-y-4 mb-8">
+        {features.map((feature, index) => (
+          <li class={`flex items-start gap-3 animate-on-scroll fade-up delay-${index + 1}`}>
+            <div class="w-8 h-8 bg-success/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <Icon name="check" size={16} class="text-success" />
             </div>
-            <span class="text-text-secondary">{feature}</span>
+            <span class="text-text-secondary pt-1">{feature.text}</span>
           </li>
         ))}
       </ul>
+
+      <!-- Badges de verificación -->
+      <div class="flex flex-wrap gap-4">
+        {badges.map((badge, index) => (
+          <div class={`flex items-center gap-2 bg-surface-light px-4 py-2 rounded-full animate-on-scroll scale-in delay-${index + 1}`}>
+            <Icon name={badge.icon} size={16} class="text-brand-primary" />
+            <span class="text-sm font-medium text-text-secondary">{badge.label}</span>
+          </div>
+        ))}
+      </div>
     </div>
 
-    <!-- Stats -->
+    <!-- Stats con contadores animados -->
     <div class="grid grid-cols-2 gap-6">
-      {stats.map(stat => (
-        <div class="bg-surface-light rounded-xl p-6 text-center">
-          <p class="text-4xl font-bold text-brand-secondary mb-2">{stat.value}</p>
-          <p class="text-text-secondary">{stat.label}</p>
+      {data.items.map((stat, index) => (
+        <div class={`bg-gradient-to-br from-surface-light to-white rounded-xl p-6 text-center hover-lift animate-on-scroll scale-in delay-${index + 1} border border-border/50 shadow-sm`}>
+          <p class="text-4xl md:text-5xl font-bold text-brand-secondary mb-2">
+            <AnimatedCounter client:visible value={stat.value} duration={2000} />
+          </p>
+          <p class="text-text-secondary text-sm md:text-base">{stat.label}</p>
         </div>
       ))}
     </div>

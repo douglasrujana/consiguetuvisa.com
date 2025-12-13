@@ -2,7 +2,7 @@
 // Endpoint para promover el primer usuario a ADMIN
 
 import type { APIRoute } from 'astro';
-import { getServices } from '@core/di/ContextFactory';
+import { getBasicServices } from '@core/di/ContextFactory';
 
 export const POST: APIRoute = async ({ locals }) => {
   try {
@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ locals }) => {
       });
     }
 
-    const { userService } = getServices();
+    const { userService } = getBasicServices();
     const user = await userService.promoteFirstAdmin(userId);
 
     if (!user) {

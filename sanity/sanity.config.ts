@@ -1,4 +1,7 @@
 // sanity/sanity.config.ts
+/**
+ * SANITY STUDIO CONFIG
+ */
 
 import { defineConfig } from 'sanity';
 import { structureTool } from 'sanity/structure';
@@ -11,7 +14,9 @@ const config = defineConfig({
   projectId: 'zvbggttz',
   dataset: 'production',
 
-  plugins: [structureTool()],
+  plugins: [
+    structureTool(),
+  ],
 
   schema: {
     types: schemaTypes,

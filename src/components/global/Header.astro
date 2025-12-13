@@ -2,6 +2,9 @@
 // src/components/global/Header.astro
 import { SignedIn, SignedOut, UserButton } from '@clerk/astro/components';
 import Button from '../ui/Button.astro';
+import { getSiteSettings } from '../../lib/sanity/siteSettings.service';
+
+const settings = await getSiteSettings();
 
 const navLinks = [
   { label: 'Inicio', href: '/' },
@@ -15,6 +18,12 @@ const navLinks = [
 // Obtener usuario local del middleware (si existe)
 const localUser = (Astro.locals as any).localUser;
 const isAdmin = localUser?.role === 'ADMIN';
+
+// Separar el nombre del sitio para el estilo
+const siteName = settings.siteName || 'ConsigueTuVisa';
+const [firstPart, secondPart] = siteName.includes('TuVisa') 
+  ? [siteName.replace('TuVisa', ''), 'TuVisa']
+  : [siteName, ''];
 ---
 
 <!-- Mobile Menu Toggle (hidden checkbox at top level for CSS :has selector) -->
@@ -26,7 +35,7 @@ const isAdmin = localUser?.role === 'ADMIN';
       <!-- Logo -->
       <a href="/" class="flex items-center gap-2">
         <span class="text-xl md:text-2xl font-bold text-brand-primary">
-          Consigue<span class="text-brand-secondary">TuVisa</span>
+          {firstPart}<span class="text-brand-secondary">{secondPart}</span>
         </span>
       </a>
 
