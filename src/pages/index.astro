@@ -1,13 +1,8 @@
 ---
 // src/pages/index.astro
 // Homepage - consiguetuvisa.com
-// Carga contenido desde Sanity con fallback a componentes estáticos
 
 import Layout from '../components/global/Layout.astro';
-import BlockRenderer from '../components/blocks/BlockRenderer.astro';
-import { getHomePage } from '../lib/sanity/page.service';
-
-// Componentes estáticos del home (fallback)
 import Hero from '../components/home/Hero.astro';
 import Benefits from '../components/home/Benefits.astro';
 import ServicesGrid from '../components/home/ServicesGrid.astro';
@@ -16,37 +11,15 @@ import StepsFlow from '../components/home/StepsFlow.astro';
 import Trust from '../components/home/Trust.astro';
 import FAQ from '../components/home/FAQ.astro';
 import Contact from '../components/home/Contact.astro';
-
-// Intentar cargar desde Sanity
-let page = null;
-let useFallback = true;
-
-try {
-  page = await getHomePage();
-  // Solo usar Sanity si tiene secciones válidas
-  useFallback = !page?.sections?.length;
-} catch (error) {
-  console.warn('[Home] Usando fallback estático');
-  useFallback = true;
-}
-
-const title = page?.seo?.title || 'Asesoría Profesional para Visas de Turismo';
-const description = page?.seo?.description || 'Te ayudamos a obtener tu visa de turista para USA, Canadá, Europa y más.';
 ---
 
-<Layout title={title} description={description}>
-  {useFallback ? (
-    <!-- Fallback: Componentes estáticos -->
-    <Hero />
-    <Benefits />
-    <ServicesGrid />
-    <Testimonials />
-    <StepsFlow />
-    <Trust />
-    <FAQ />
-    <Contact />
-  ) : (
-    <!-- Dinámico: Secciones desde Sanity -->
-    <BlockRenderer sections={page.sections} />
-  )}
+<Layout title="Asesoría Profesional para Visas de Turismo">
+  <Hero />
+  <Benefits />
+  <ServicesGrid />
+  <Testimonials />
+  <StepsFlow />
+  <Trust />
+  <FAQ />
+  <Contact />
 </Layout>
