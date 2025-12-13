@@ -7,6 +7,7 @@ import type { APIRoute } from 'astro';
 import { config } from 'dotenv';
 import { GeminiLLMAdapter, GeminiEmbeddingAdapter } from '@core/ai';
 import { RAGService, MemoryVectorStoreAdapter } from '@core/rag';
+import { TursoVectorStoreAdapter } from '@core/rag/adapters/TursoVectorStore.adapter';
 import { 
   ChatbotService, 
   ChatbotRepository, 
@@ -19,8 +20,11 @@ import { MemoryConversationStore } from '@features/chatbot/stores/MemoryConversa
 import { PrismaConversationStore } from '@features/chatbot/stores/PrismaConversationStore';
 import { prisma } from '@server/db/prisma-singleton';
 import type { ChatStorageMode } from '@features/chatbot/stores/StoreSelector';
+import type { IVectorStore } from '@core/rag/VectorStore.port';
 
 config({ path: '.env.local' });
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Singleton para mantener estado entre requests (desarrollo)
 let chatbotService: ChatbotService | null = null;
@@ -136,8 +140,19 @@ async function doInitialize(): Promise<InitializedServices> {
     throw new Error('GEMINI_API_KEY not configured');
   }
 
-  // Crear componentes (rápido, sin I/O)
-  const vectorStore = new MemoryVectorStoreAdapter();
+  // Seleccionar vector store según entorno
+  // Producción: TursoVectorStore (persistente)
+  // Desarrollo: MemoryVectorStore (rápido para dev)
+  let vectorStore: IVectorStore;
+  
+  if (isProduction) {
+    console.log('[Chatbot] Usando TursoVectorStore (producción)');
+    vectorStore = new TursoVectorStoreAdapter({ prisma });
+  } else {
+    console.log('[Chatbot] Usando MemoryVectorStore (desarrollo)');
+    vectorStore = new MemoryVectorStoreAdapter();
+  }
+
   const llm = new GeminiLLMAdapter(apiKey, 'gemini-2.5-flash-lite');
   const embedding = new GeminiEmbeddingAdapter(apiKey);
   const ragEngine = new RAGService({ vectorStore, llm, embedding });
@@ -149,12 +164,27 @@ async function doInitialize(): Promise<InitializedServices> {
   const storeSelector = new StoreSelector(memoryStore, prismaStore, storageMode);
   const repository = new ChatbotRepository(storeSelector);
 
-  // Indexar knowledge base (esto es lo lento - llamadas a Gemini API)
-  console.log('[Chatbot] Indexando knowledge base...');
-  await ragEngine.indexDocuments(KNOWLEDGE_BASE);
+  // En desarrollo: indexar knowledge base en memoria
+  // En producción: los embeddings ya están en Turso
+  if (!isProduction) {
+    console.log('[Chatbot] Indexando knowledge base en memoria...');
+    await ragEngine.indexDocuments(KNOWLEDGE_BASE);
+    console.log(`[Chatbot] ${KNOWLEDGE_BASE.length} documentos indexados`);
+  } else {
+    // Verificar que hay embeddings en Turso
+    const count = await vectorStore.count();
+    console.log(`[Chatbot] ${count} embeddings encontrados en Turso`);
+    
+    // Si no hay embeddings, indexar los documentos base
+    if (count === 0) {
+      console.log('[Chatbot] No hay embeddings, indexando knowledge base...');
+      await ragEngine.indexDocuments(KNOWLEDGE_BASE);
+      console.log(`[Chatbot] ${KNOWLEDGE_BASE.length} documentos indexados en Turso`);
+    }
+  }
   
   const elapsed = Date.now() - startTime;
-  console.log(`[Chatbot] ${KNOWLEDGE_BASE.length} documentos indexados en ${elapsed}ms`);
+  console.log(`[Chatbot] Inicialización completada en ${elapsed}ms`);
 
   // Initialize both services
   chatbotService = new ChatbotService({ repository, ragEngine });
