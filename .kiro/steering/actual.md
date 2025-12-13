@@ -333,29 +333,21 @@ FACEBOOK_ACCESS_TOKEN=
 
 ## 🔴 Deuda Técnica / Pendientes
 
-### Knowledge Base Hardcodeada (Prioridad: ALTA)
-**Ubicación:** `src/pages/api/chat/index.ts` - Array `KNOWLEDGE_BASE`
+### ~~Knowledge Base Hardcodeada~~ ✅ RESUELTO
+**Solución implementada:**
+- Documentos migrados a tablas Prisma: `Source` → `KBDocument` → `Chunk`
+- Chat API carga documentos desde BD via `loadKnowledgeBaseFromDB()`
+- Scripts de seed: `prisma/seed-knowledge.ts` (local) y `prisma/seed-knowledge-prod.ts` (Turso)
+- Ya no requiere deploy para cambiar contenido de KB
 
-**Problema:** Los documentos del chatbot están hardcodeados en el código:
-- `visa-usa-requisitos` - Requisitos visa USA
-- `visa-usa-costos` - Precios visa USA ($185 USD)
-- `visa-usa-entrevista` - Preparación entrevista
-- `visa-canada-requisitos` - Requisitos visa Canadá
-- `visa-canada-costos` - Precios visa Canadá ($185 CAD)
-- `servicios-asesoria` - Info de contacto
-- `visa-schengen` - Requisitos visa Europa
+**Documentos en BD:**
+- `visa-usa-requisitos`, `visa-usa-costos`, `visa-usa-entrevista`
+- `visa-canada-requisitos`, `visa-canada-costos`
+- `servicios-asesoria`, `visa-schengen`
 
-**Solución propuesta:**
-1. Migrar documentos a **Sanity CMS** (schema `KnowledgeDocument`)
-2. O usar tablas `Source`/`KBDocument` de Prisma
-3. Crear panel admin para gestionar KB sin tocar código
-4. Usar endpoint `/api/knowledge/ingest` para agregar docs dinámicamente
-5. Sincronización automática Sanity → Turso embeddings
-
-**Impacto:** Cada cambio en la KB requiere deploy. No escalable.
-
-### Otros Pendientes
+### Pendientes Restantes
 - [ ] PDFLoader para documentos PDF
 - [ ] WebLoader para scraping de páginas
-- [ ] Panel admin para Knowledge Base
+- [ ] Panel admin para Knowledge Base (CRUD visual)
 - [ ] Sync automático Sanity → embeddings
+- [ ] Endpoint GraphQL para gestionar KB desde frontend
