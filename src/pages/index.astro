@@ -1,6 +1,7 @@
 ---
 // src/pages/index.astro
 // Homepage - consiguetuvisa.com
+// Optimizado: carga todos los datos de Sanity en paralelo
 
 import Layout from '../components/global/Layout.astro';
 import Hero from '../components/home/Hero.astro';
@@ -12,11 +13,14 @@ import Trust from '../components/home/Trust.astro';
 import TrustLogos from '../components/home/TrustLogos.astro';
 import FAQ from '../components/home/FAQ.astro';
 import Contact from '../components/home/Contact.astro';
-import { getFAQ, type FAQItem } from '$lib/sanity/faq.service';
+import { getHomepageData } from '$lib/sanity/homepage.service';
+import type { FAQItem } from '$lib/sanity/faq.service';
 
-// Cargar FAQs para schema markup
-const faqData = await getFAQ();
-const faqsForSchema = faqData.items.map((item: FAQItem) => ({
+// Cargar TODOS los datos en paralelo (antes eran 11 fetches secuenciales)
+const data = await getHomepageData();
+
+// FAQs para schema markup
+const faqsForSchema = data.faq.items.map((item: FAQItem) => ({
   question: item.question,
   answer: item.answer,
 }));
@@ -28,13 +32,13 @@ const faqsForSchema = faqData.items.map((item: FAQItem) => ({
   faqs={faqsForSchema}
   includeFAQSchema={true}
 >
-  <Hero />
-  <TrustLogos />
-  <Benefits />
-  <ServicesGrid />
-  <Testimonials />
-  <StepsFlow />
-  <Trust />
-  <FAQ />
-  <Contact />
+  <Hero data={data.hero} />
+  <TrustLogos data={data.trustLogos} />
+  <Benefits data={data.benefits} />
+  <ServicesGrid data={data.services} />
+  <Testimonials data={data.testimonials} />
+  <StepsFlow data={data.steps} />
+  <Trust data={data.trust} />
+  <FAQ data={data.faq} />
+  <Contact data={{ contact: data.contact, settings: data.settings }} />
 </Layout>

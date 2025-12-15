@@ -1,50 +1,68 @@
 ---
-// src/components/home/Testimonials.astro
-// Carga "Casos de Éxito" desde Sanity
-
+// src/components/home/Testimonials.astro - Estilo Jony Ive
 import Section from '../ui/Section.astro';
-import Card from '../ui/Card.astro';
 import Icon from '../ui/Icon.astro';
-import { getTestimonials } from '../../lib/sanity/testimonials.service';
+import { getTestimonials, type TestimonialsData } from '../../lib/sanity/testimonials.service';
 
-const data = await getTestimonials();
+interface Props { data?: TestimonialsData; }
+const { data: propData } = Astro.props;
+const data = propData ?? await getTestimonials();
 ---
 
 <Section id="testimonios" background="light">
-  <div class="text-center mb-12 animate-on-scroll fade-up">
-    <div class="accent-line mx-auto mb-4"></div>
-    <h2 class="heading-section mb-4">{data.title}</h2>
-    {data.subtitle && (
-      <p class="text-body max-w-2xl mx-auto">{data.subtitle}</p>
-    )}
-  </div>
+  <div class="max-w-6xl mx-auto">
+    <!-- Header minimalista -->
+    <div class="text-center mb-20 animate-on-scroll fade-up">
+      <p class="text-xs font-medium text-text-muted tracking-[0.2em] uppercase mb-4">
+        Casos de Éxito
+      </p>
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-semibold text-text-primary tracking-tight">
+        {data.title}
+      </h2>
+      {data.subtitle && (
+        <p class="text-lg text-text-secondary mt-6 max-w-2xl mx-auto font-light">
+          {data.subtitle}
+        </p>
+      )}
+    </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    {data.items.map((testimonial, index) => (
-      <Card class={`hover-lift animate-on-scroll fade-up delay-${index + 1}`}>
-        <!-- Rating -->
-        <div class="flex gap-1 mb-4">
-          {Array.from({ length: testimonial.rating || 5 }).map(() => (
-            <Icon name="star" size={18} class="text-warning fill-warning" />
-          ))}
-        </div>
-
-        <!-- Quote -->
-        <p class="text-body mb-6 italic">"{testimonial.text}"</p>
-
-        <!-- Author -->
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-brand-secondary/20 rounded-full flex items-center justify-center">
-            <span class="text-brand-secondary font-bold">
-              {testimonial.name.charAt(0)}
-            </span>
+    <!-- Grid de testimonios -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {data.items.map((testimonial, index) => (
+        <div class={`group bg-white rounded-3xl p-8 transition-all duration-500 hover:shadow-xl hover:shadow-slate-200/50 animate-on-scroll fade-up delay-${index + 1}`}>
+          <!-- Rating - Estrellas sutiles -->
+          <div class="flex gap-1 mb-6">
+            {Array.from({ length: testimonial.rating || 5 }).map(() => (
+              <Icon name="star" size={16} class="text-warning fill-warning" />
+            ))}
           </div>
-          <div>
-            <p class="font-semibold text-brand-primary">{testimonial.name}</p>
-            <p class="text-small">{testimonial.location}{testimonial.visa && ` • ${testimonial.visa}`}</p>
+
+          <!-- Quote - Tipografía elegante -->
+          <blockquote class="text-text-secondary mb-8 leading-relaxed font-light text-[15px]">
+            "{testimonial.text}"
+          </blockquote>
+
+          <!-- Author - Avatar minimalista -->
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-secondary/20 to-brand-secondary/10 flex items-center justify-center">
+              <span class="text-brand-secondary font-semibold text-lg">
+                {testimonial.name.charAt(0)}
+              </span>
+            </div>
+            <div>
+              <p class="font-semibold text-text-primary text-sm">{testimonial.name}</p>
+              <p class="text-text-muted text-xs mt-0.5">
+                {testimonial.location}{testimonial.visa && ` · ${testimonial.visa}`}
+              </p>
+            </div>
           </div>
         </div>
-      </Card>
-    ))}
+      ))}
+    </div>
+
+    <!-- Línea decorativa -->
+    <div class="mt-20 flex justify-center">
+      <div class="w-24 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+    </div>
   </div>
 </Section>

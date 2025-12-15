@@ -66,7 +66,7 @@ export interface AppContext {
   solicitudService: SolicitudService;
   pageService: PageService;
   blogService: BlogService;
-  aiService: AIService;
+  aiService: AIService | null;
 
   // Knowledge Base
   sourceRepository: ISourceRepository;
@@ -76,9 +76,9 @@ export interface AppContext {
   // Alerts
   alertRepository: IAlertRepository;
   
-  // RAG & Ingestion
-  ragService: IRAGEngine;
-  ingestionService: PrismaIngestionService;
+  // RAG & Ingestion (optional - require GEMINI_API_KEY)
+  ragService: IRAGEngine | null;
+  ingestionService: PrismaIngestionService | null;
   
   // Prisma (for field resolvers)
   prisma: PrismaClient;
@@ -91,9 +91,16 @@ export type GraphQLContext = AppContext;
 let cachedRagService: IRAGEngine | null = null;
 let cachedIngestionService: PrismaIngestionService | null = null;
 
-function getRagServices() {
+function getRagServices(): { ragService: IRAGEngine | null; ingestionService: PrismaIngestionService | null } {
+  const apiKey = process.env.GEMINI_API_KEY;
+  
+  // Si no hay API key, retornar null (servicios no disponibles)
+  if (!apiKey) {
+    console.warn('[ContextFactory] GEMINI_API_KEY not set - RAG services disabled');
+    return { ragService: null, ingestionService: null };
+  }
+  
   if (!cachedRagService || !cachedIngestionService) {
-    const apiKey = process.env.GEMINI_API_KEY ?? '';
     const vectorStore = new MemoryVectorStoreAdapter();
     const llm = new GeminiLLMAdapter(apiKey);
     const embedding = new GeminiEmbeddingAdapter(apiKey);
@@ -133,7 +140,12 @@ export function buildContext(request: Request): AppContext {
   const solicitudService = new SolicitudService(solicitudRepository);
   const pageService = new PageService(pageRepository);
   const blogService = new BlogService(blogRepository);
-  const aiService = new AIService(); // Usa presets por defecto (Gemini)
+  
+  // AIService es opcional (requiere GEMINI_API_KEY)
+  let aiService: AIService | null = null;
+  if (process.env.GEMINI_API_KEY) {
+    aiService = new AIService();
+  }
 
   // --- 3. KNOWLEDGE BASE ---
   const sourceRepository = new SourceRepository(prisma);
@@ -229,7 +241,7 @@ export function getServices() {
       solicitudService: new SolicitudService(solicitudRepository),
       pageService: new PageService(pageRepository),
       blogService: new BlogService(blogRepository),
-      aiService: new AIService(),
+      aiService: process.env.GEMINI_API_KEY ? new AIService() : null,
       sourceRepository,
       sourceService,
       documentRepository,

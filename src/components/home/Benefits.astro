@@ -1,31 +1,63 @@
 ---
 // src/components/home/Benefits.astro
-// Carga "¿Por qué elegirnos?" desde Sanity
-
+// Estilo Jony Ive - Minimalista, espacioso, premium
 import Section from '../ui/Section.astro';
-import Card from '../ui/Card.astro';
 import Icon from '../ui/Icon.astro';
-import { getBenefits } from '../../lib/sanity/benefits.service';
+import { getBenefits, type BenefitsData } from '../../lib/sanity/benefits.service';
 
-const data = await getBenefits();
+interface Props { data?: BenefitsData; }
+const { data: propData } = Astro.props;
+const data = propData ?? await getBenefits();
 ---
 
 <Section background="white">
-  <div class="text-center mb-12 animate-on-scroll fade-up">
-    <div class="accent-line mx-auto mb-4"></div>
-    <h2 class="heading-section">{data.title}</h2>
-    {data.subtitle && <p class="text-body mt-4">{data.subtitle}</p>}
-  </div>
+  <div class="max-w-6xl mx-auto">
+    <!-- Header minimalista -->
+    <div class="text-center mb-20 animate-on-scroll fade-up">
+      <p class="text-xs font-medium text-text-muted tracking-[0.2em] uppercase mb-4">
+        Nuestras Ventajas
+      </p>
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-semibold text-text-primary tracking-tight">
+        {data.title}
+      </h2>
+      {data.subtitle && (
+        <p class="text-lg text-text-secondary mt-6 max-w-2xl mx-auto font-light">
+          {data.subtitle}
+        </p>
+      )}
+    </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    {data.items.map((benefit, index) => (
-      <Card class={`text-center hover-lift animate-on-scroll fade-up delay-${index + 1}`}>
-        <div class="w-14 h-14 bg-brand-secondary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-          <Icon name={benefit.icon || 'star'} size={28} class="text-brand-secondary" />
+    <!-- Grid de beneficios - Estilo Apple -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+      {data.items.map((benefit, index) => (
+        <div 
+          class={`group text-center animate-on-scroll fade-up delay-${index + 1}`}
+        >
+          <!-- Icono con efecto hover sutil -->
+          <div class="relative mb-8">
+            <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center transition-all duration-500 group-hover:shadow-xl group-hover:shadow-brand-secondary/10 group-hover:scale-105">
+              <Icon 
+                name={benefit.icon || 'star'} 
+                size={32} 
+                class="text-brand-secondary transition-transform duration-500 group-hover:scale-110" 
+              />
+            </div>
+          </div>
+          
+          <!-- Contenido -->
+          <h3 class="text-lg font-semibold text-text-primary mb-3 tracking-tight">
+            {benefit.title}
+          </h3>
+          <p class="text-text-secondary text-sm leading-relaxed font-light">
+            {benefit.description}
+          </p>
         </div>
-        <h3 class="heading-card mb-2">{benefit.title}</h3>
-        <p class="text-body">{benefit.description}</p>
-      </Card>
-    ))}
+      ))}
+    </div>
+
+    <!-- Línea decorativa inferior -->
+    <div class="mt-20 flex justify-center">
+      <div class="w-24 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+    </div>
   </div>
 </Section>

@@ -1,0 +1,27 @@
+---
+// src/pages/admin/alertas.astro
+// Centro de Alertas
+
+import AdminLayout from '../../components/admin/AdminLayout.svelte';
+import AlertsCenter from '../../components/admin/alerts/AlertsCenter.svelte';
+
+const { localUser } = Astro.locals as any;
+
+if (!localUser || localUser.role !== 'ADMIN') {
+  return Astro.redirect('/login?redirect=/admin/alertas');
+}
+---
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alertas | Admin - ConsigueTuVisa</title>
+  <link rel="stylesheet" href="/src/styles/global.css" />
+</head>
+<body class="bg-slate-50">
+  <AdminLayout client:load adminName={localUser.firstName || 'Admin'} currentPage="alertas">
+    <AlertsCenter client:load />
+  </AdminLayout>
+</body>
+</html>

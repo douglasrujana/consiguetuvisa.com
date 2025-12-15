@@ -1,0 +1,27 @@
+---
+// src/pages/admin/chat.astro
+// Gestión de Chatbot
+
+import AdminLayout from '../../components/admin/AdminLayout.svelte';
+import ChatManager from '../../components/admin/chat/ChatManager.svelte';
+
+const { localUser } = Astro.locals as any;
+
+if (!localUser || localUser.role !== 'ADMIN') {
+  return Astro.redirect('/login?redirect=/admin/chat');
+}
+---
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot | Admin - ConsigueTuVisa</title>
+  <link rel="stylesheet" href="/src/styles/global.css" />
+</head>
+<body class="bg-slate-50">
+  <AdminLayout client:load adminName={localUser.firstName || 'Admin'} currentPage="chat">
+    <ChatManager client:load />
+  </AdminLayout>
+</body>
+</html>

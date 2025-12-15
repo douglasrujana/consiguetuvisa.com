@@ -46,6 +46,7 @@ export const knowledgeTypeDefs = gql`
     createdAt: String!
     updatedAt: String!
     documents: [KBDocument!]
+    documentsCount: Int!
   }
 
   type KBDocument {
@@ -60,6 +61,7 @@ export const knowledgeTypeDefs = gql`
     createdAt: String!
     updatedAt: String!
     chunks: [Chunk!]
+    chunksCount: Int!
   }
 
   type Chunk {
@@ -245,11 +247,39 @@ export const knowledgeResolvers = {
     },
 
     knowledgeStats: async (_: unknown, __: unknown, context: GraphQLContext) => {
-      const [sources, activeSources, ingestionStats] = await Promise.all([
+      const [sources, activeSources] = await Promise.all([
         context.sourceRepository.findAll(),
         context.sourceRepository.findActive(),
-        context.ingestionService.getStats(),
       ]);
+
+      // Si ingestionService no está disponible, obtener stats directamente de Prisma
+      let ingestionStats = {
+        totalDocuments: 0,
+        indexedDocuments: 0,
+        pendingDocuments: 0,
+        failedDocuments: 0,
+        totalChunks: 0,
+      };
+
+      if (context.ingestionService) {
+        ingestionStats = await context.ingestionService.getStats();
+      } else {
+        // Fallback: obtener stats directamente de la BD
+        const [totalDocs, indexedDocs, pendingDocs, failedDocs, totalChunks] = await Promise.all([
+          context.prisma.kBDocument.count(),
+          context.prisma.kBDocument.count({ where: { status: 'INDEXED' } }),
+          context.prisma.kBDocument.count({ where: { status: 'PENDING' } }),
+          context.prisma.kBDocument.count({ where: { status: 'FAILED' } }),
+          context.prisma.chunk.count(),
+        ]);
+        ingestionStats = {
+          totalDocuments: totalDocs,
+          indexedDocuments: indexedDocs,
+          pendingDocuments: pendingDocs,
+          failedDocuments: failedDocs,
+          totalChunks: totalChunks,
+        };
+      }
 
       return {
         totalSources: sources.length,
@@ -367,6 +397,9 @@ export const knowledgeResolvers = {
       const documents = await context.documentRepository.findBySourceId(parent.id);
       return documents.map(mapDocumentToGraphQL);
     },
+    documentsCount: async (parent: { id: string }, _: unknown, context: GraphQLContext) => {
+      return context.prisma.kBDocument.count({ where: { sourceId: parent.id } });
+    },
   },
 
   KBDocument: {
@@ -376,6 +409,9 @@ export const knowledgeResolvers = {
         orderBy: { position: 'asc' },
       });
       return chunks.map(mapChunkToGraphQL);
+    },
+    chunksCount: async (parent: { id: string }, _: unknown, context: GraphQLContext) => {
+      return context.prisma.chunk.count({ where: { documentId: parent.id } });
     },
   },
 };

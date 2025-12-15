@@ -18,7 +18,7 @@ export class PrismaConversationStore implements IConversationStore {
   async create(userId?: string, title?: string): Promise<Conversation> {
     const conversation = await this.prisma.conversation.create({
       data: {
-        userId,
+        customerId: userId, // userId es el customerId en el nuevo schema
         title,
       },
       include: {
@@ -45,8 +45,9 @@ export class PrismaConversationStore implements IConversationStore {
   }
 
   async findByUserId(userId: string, limit = 20): Promise<Conversation[]> {
+    // userId es el customerId en el nuevo schema
     const conversations = await this.prisma.conversation.findMany({
-      where: { userId },
+      where: { customerId: userId },
       include: {
         messages: {
           orderBy: { createdAt: 'asc' },
@@ -115,7 +116,7 @@ export class PrismaConversationStore implements IConversationStore {
   private mapConversation(
     prismaConversation: {
       id: string;
-      userId: string | null;
+      customerId: string | null;
       title: string | null;
       createdAt: Date;
       updatedAt: Date;
@@ -131,7 +132,7 @@ export class PrismaConversationStore implements IConversationStore {
   ): Conversation {
     return {
       id: prismaConversation.id,
-      userId: prismaConversation.userId ?? undefined,
+      userId: prismaConversation.customerId ?? undefined, // Mantener compatibilidad con entidad
       title: prismaConversation.title ?? undefined,
       messages: prismaConversation.messages.map((m) => this.mapMessage(m)),
       createdAt: prismaConversation.createdAt,

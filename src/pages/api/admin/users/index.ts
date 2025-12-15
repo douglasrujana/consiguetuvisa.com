@@ -1,14 +1,16 @@
 // src/pages/api/admin/users/index.ts
-// API CRUD de usuarios para admin
+// API CRUD de CUSTOMERS (clientes externos) para admin
+// Para StaffMembers usar /api/admin/staff
 
 import type { APIRoute } from 'astro';
 import { prisma } from '../../../../server/db/prisma-singleton';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
   try {
-    const { localUser } = locals as any;
+    const { localUser, staff } = locals as any;
+    const currentUser = staff || localUser;
     
-    if (!localUser || localUser.role !== 'ADMIN') {
+    if (!currentUser || !['ADMIN', 'DEV', 'SALES'].includes(currentUser.role)) {
       return new Response(JSON.stringify({ error: 'No autorizado' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -17,12 +19,12 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     // Parsear filtros
     const search = url.searchParams.get('search') || '';
-    const role = url.searchParams.get('role') || '';
+    const status = url.searchParams.get('status') || '';
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
 
-    // Construir where
+    // Construir where para Customer
     const where: any = {};
     
     if (search) {
@@ -30,16 +32,17 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
         { email: { contains: search } },
         { firstName: { contains: search } },
         { lastName: { contains: search } },
+        { phone: { contains: search } },
       ];
     }
     
-    if (role) {
-      where.role = role;
+    if (status) {
+      where.status = status;
     }
 
-    // Ejecutar queries
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
+    // Ejecutar queries en Customer (no User)
+    const [customers, total] = await Promise.all([
+      prisma.customer.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip,
@@ -50,16 +53,31 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
           firstName: true,
           lastName: true,
           phone: true,
-          role: true,
+          status: true,
+          source: true,
           isActive: true,
           emailVerified: true,
           createdAt: true,
+          _count: {
+            select: {
+              solicitudes: true,
+              conversations: true,
+            }
+          }
         },
       }),
-      prisma.user.count({ where }),
+      prisma.customer.count({ where }),
     ]);
 
-    return new Response(JSON.stringify({ data: users, total, page, limit }), {
+    // Mapear para compatibilidad con UI existente
+    const data = customers.map(c => ({
+      ...c,
+      role: c.status, // Mapear status a role para UI
+      solicitudesCount: c._count.solicitudes,
+      conversationsCount: c._count.conversations,
+    }));
+
+    return new Response(JSON.stringify({ data, total, page, limit }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -74,9 +92,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const { localUser } = locals as any;
+    const { localUser, staff } = locals as any;
+    const currentUser = staff || localUser;
     
-    if (!localUser || localUser.role !== 'ADMIN') {
+    if (!currentUser || !['ADMIN', 'DEV'].includes(currentUser.role)) {
       return new Response(JSON.stringify({ error: 'No autorizado' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -84,7 +103,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    const { email, firstName, lastName, phone, role, isActive } = body;
+    const { email, firstName, lastName, phone, status, source, isActive } = body;
 
     if (!email) {
       return new Response(JSON.stringify({ error: 'Email requerido' }), {
@@ -93,8 +112,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // Verificar si ya existe
-    const existing = await prisma.user.findUnique({ where: { email } });
+    // Verificar si ya existe en Customer
+    const existing = await prisma.customer.findUnique({ where: { email } });
     if (existing) {
       return new Response(JSON.stringify({ error: 'El email ya está registrado' }), {
         status: 400,
@@ -102,18 +121,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    const user = await prisma.user.create({
+    const customer = await prisma.customer.create({
       data: {
         email,
         firstName: firstName || null,
         lastName: lastName || null,
         phone: phone || null,
-        role: role || 'USER',
+        status: status || 'LEAD',
+        source: source || 'ADMIN',
         isActive: isActive ?? true,
       },
     });
 
-    return new Response(JSON.stringify(user), {
+    return new Response(JSON.stringify(customer), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     });

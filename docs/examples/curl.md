@@ -207,3 +207,5 @@ curl -X POST https://consiguetuvisa-com.vercel.app/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "requisitos visa usa"}'
 ```
+
+curl -X POST http://localhost:3000/api/graphql -H "Content-Type: application/json" -d "{\"query\": \"{ sources { id name } }\"}"

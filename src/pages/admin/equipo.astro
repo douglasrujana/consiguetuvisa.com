@@ -1,0 +1,60 @@
+---
+// src/pages/admin/equipo.astro - Gestión del Equipo (StaffMembers)
+import { SignedIn, SignedOut } from '@clerk/astro/components';
+import AdminLayout from '../../components/admin/AdminLayout.svelte';
+import StaffCrud from '../../components/admin/StaffCrud.svelte';
+import '../../styles/global.css';
+
+const { auth, localUser, staff, authUser } = Astro.locals as any;
+const { userId } = auth();
+
+const currentUser = staff || localUser || authUser;
+const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'DEV';
+const adminName = currentUser?.firstName || currentUser?.email?.split('@')[0] || 'Admin';
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equipo - Admin ConsigueTuVisa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
+  </style>
+</head>
+<body>
+  <SignedOut>
+    <div class="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+      <div class="text-center bg-white p-12 rounded-3xl max-w-md w-full">
+        <h1 class="text-xl font-semibold text-slate-800 mb-2">Acceso Restringido</h1>
+        <p class="text-slate-400 mb-8 text-sm">Debes iniciar sesión como administrador.</p>
+        <a href="/login" class="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-slate-800 transition-colors">
+          Iniciar Sesión
+        </a>
+      </div>
+    </div>
+  </SignedOut>
+
+  <SignedIn>
+    {isAdmin ? (
+      <AdminLayout client:load adminName={adminName} currentPage="equipo">
+        <StaffCrud client:load currentUserId={currentUser?.id} />
+      </AdminLayout>
+    ) : (
+      <div class="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div class="text-center bg-white p-12 rounded-3xl max-w-md w-full">
+          <h1 class="text-xl font-semibold text-red-600 mb-2">Acceso Denegado</h1>
+          <p class="text-slate-400 mb-8 text-sm">No tienes permisos de administrador.</p>
+          <a href="/dashboard" class="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-slate-800 transition-colors">
+            Ir a Mi Panel
+          </a>
+        </div>
+      </div>
+    )}
+  </SignedIn>
+</body>
+</html>

@@ -1,5 +1,6 @@
 ---
 // src/components/global/Layout.astro
+import { ViewTransitions } from 'astro:transitions';
 import Header from './Header.astro';
 import Footer from './Footer.astro';
 import WhatsAppFloat from '../ui/WhatsAppFloat.astro';
@@ -77,6 +78,9 @@ const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
   <meta name="twitter:url" content={canonicalUrl} />
   <meta name="twitter:title" content={fullTitle} />
   <meta name="twitter:description" content={description} />
+  
+  {/* View Transitions para navegación suave */}
+  <ViewTransitions />
   <meta name="twitter:image" content={fullOgImage} />
   
   {/* Geo Tags */}

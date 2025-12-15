@@ -16,6 +16,7 @@ import type {
 import type { IRAGEngine, DocumentChunk } from '../rag/RAG.port';
 import { MarkdownLoader } from './loaders/MarkdownLoader';
 import { TextLoader } from './loaders/TextLoader';
+import { PDFLoader } from './loaders/PDFLoader';
 import { TextChunker } from './chunkers/TextChunker';
 
 export interface IngestionServiceConfig {
@@ -34,7 +35,7 @@ export class IngestionService implements IIngestionService {
     this.chunkingOptions = config.chunkingOptions ?? {};
 
     // Registrar loaders por defecto
-    this.loaders = [new MarkdownLoader(), new TextLoader()];
+    this.loaders = [new MarkdownLoader(), new TextLoader(), new PDFLoader()];
 
     // Chunker por defecto
     this.chunker = new TextChunker();

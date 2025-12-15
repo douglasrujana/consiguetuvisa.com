@@ -258,6 +258,22 @@ export const GET: APIRoute = async () => {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    // Verificar disponibilidad del chat (cuota y horario)
+    const { checkChatAvailability } = await import('../admin/config/index');
+    const availability = await checkChatAvailability();
+    
+    if (!availability.available) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: availability.message,
+          reason: availability.reason,
+          available: false,
+        }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const body = await request.json();
     const input = validateSendMessage(body);
 

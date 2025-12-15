@@ -1,8 +1,6 @@
 <script lang="ts">
-  // AdminLayout.svelte - Layout con sidebar para panel admin
-  // Svelte 5 con runas + Phosphor Icons
+  // AdminLayout.svelte - Estilo Jony Ive
   
-  // Imports directos para mejor tree-shaking
   import Users from 'lucide-svelte/icons/users';
   import FileText from 'lucide-svelte/icons/file-text';
   import Gift from 'lucide-svelte/icons/gift';
@@ -14,6 +12,9 @@
   import PenSquare from 'lucide-svelte/icons/pen-square';
   import Database from 'lucide-svelte/icons/database';
   import ExternalLink from 'lucide-svelte/icons/external-link';
+  import BookOpen from 'lucide-svelte/icons/book-open';
+  import Bell from 'lucide-svelte/icons/bell';
+  import MessageSquare from 'lucide-svelte/icons/message-square';
   
   import type { Snippet } from 'svelte';
   
@@ -28,13 +29,16 @@
   let sidebarOpen = $state(true);
   
   const menuItems = [
-    { id: 'usuarios', label: 'Usuarios', icon: Users, href: '/admin' },
+    { id: 'clientes', label: 'Clientes', icon: Users, href: '/admin' },
+    { id: 'equipo', label: 'Equipo', icon: ShieldCheck, href: '/admin/equipo' },
     { id: 'solicitudes', label: 'Solicitudes', icon: FileText, href: '/admin/solicitudes' },
+    { id: 'knowledge', label: 'Knowledge Base', icon: BookOpen, href: '/admin/knowledge' },
+    { id: 'alertas', label: 'Alertas', icon: Bell, href: '/admin/alertas' },
+    { id: 'chat', label: 'Chatbot', icon: MessageSquare, href: '/admin/chat' },
     { id: 'participaciones', label: 'Sorteos', icon: Gift, href: '/admin/participaciones' },
     { id: 'configuracion', label: 'Configuración', icon: Settings, href: '/admin/config' },
   ];
 
-  // Links externos (abren en nueva pestaña)
   const externalLinks = [
     { id: 'contenido', label: 'Editor CMS', icon: PenSquare, href: '/studio' },
     { id: 'turso', label: 'Turso DB', icon: Database, href: 'https://turso.tech/app' },
@@ -49,7 +53,7 @@
   <!-- Sidebar -->
   <aside class="sidebar" class:collapsed={!sidebarOpen}>
     <div class="sidebar-header">
-      <a href="/" class="logo">
+      <a href="/" class="logo" data-astro-prefetch="viewport">
         {#if sidebarOpen}
           <span class="logo-text">Consigue<span class="accent">TuVisa</span></span>
         {:else}
@@ -58,22 +62,23 @@
       </a>
       <button class="toggle-btn" onclick={toggleSidebar}>
         {#if sidebarOpen}
-          <ChevronLeft size={16} />
+          <ChevronLeft size={14} strokeWidth={1.5} />
         {:else}
-          <ChevronRight size={16} />
+          <ChevronRight size={14} strokeWidth={1.5} />
         {/if}
       </button>
     </div>
     
     <nav class="sidebar-nav">
       {#each menuItems as item}
+        {@const Icon = item.icon}
         <a 
           href={item.href}
           class="nav-item"
           class:active={currentPage === item.id}
         >
           <span class="nav-icon">
-            <item.icon size={20} strokeWidth={currentPage === item.id ? 2.5 : 1.5} />
+            <Icon size={18} strokeWidth={currentPage === item.id ? 2 : 1.5} />
           </span>
           {#if sidebarOpen}
             <span class="nav-label">{item.label}</span>
@@ -81,10 +86,10 @@
         </a>
       {/each}
       
-      <!-- External Links -->
       {#if externalLinks.length > 0}
         <div class="nav-divider"></div>
         {#each externalLinks as link}
+          {@const Icon = link.icon}
           <a 
             href={link.href}
             class="nav-item external"
@@ -92,11 +97,11 @@
             rel="noopener noreferrer"
           >
             <span class="nav-icon">
-              <link.icon size={20} strokeWidth={1.5} />
+              <Icon size={18} strokeWidth={1.5} />
             </span>
             {#if sidebarOpen}
               <span class="nav-label">{link.label}</span>
-              <ExternalLink size={14} class="external-indicator" />
+              <ExternalLink size={12} class="external-indicator" />
             {/if}
           </a>
         {/each}
@@ -106,7 +111,7 @@
     <div class="sidebar-footer">
       <a href="/dashboard" class="nav-item">
         <span class="nav-icon">
-          <Home size={20} />
+          <Home size={18} strokeWidth={1.5} />
         </span>
         {#if sidebarOpen}
           <span class="nav-label">Volver al Panel</span>
@@ -119,11 +124,11 @@
   <main class="main-content">
     <header class="top-bar">
       <div class="top-bar-left">
-        <h1 class="page-title">Panel de Administración</h1>
+        <p class="page-subtitle">Panel de Administración</p>
       </div>
       <div class="top-bar-right">
         <span class="admin-badge">
-          <ShieldCheck size={16} />
+          <ShieldCheck size={14} strokeWidth={1.5} />
           <span>{adminName}</span>
         </span>
       </div>
@@ -139,16 +144,16 @@
   .admin-layout {
     display: flex;
     min-height: 100vh;
-    background: #f3f4f6;
+    background: #f8fafc;
   }
   
-  /* Sidebar */
+  /* Sidebar - Jony Ive style */
   .sidebar {
-    width: 260px;
-    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    width: 240px;
+    background: #0f172a;
     display: flex;
     flex-direction: column;
-    transition: width 0.3s ease;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: fixed;
     top: 0;
     left: 0;
@@ -157,15 +162,14 @@
   }
   
   .sidebar.collapsed {
-    width: 70px;
+    width: 72px;
   }
   
   .sidebar-header {
-    padding: 1rem;
+    padding: 1.5rem 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
   }
   
   .logo {
@@ -173,152 +177,165 @@
   }
   
   .logo-text {
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-size: 1.125rem;
+    font-weight: 600;
     color: white;
+    letter-spacing: -0.02em;
   }
   
   .logo-text .accent {
-    color: #3b82f6;
+    color: #60a5fa;
   }
   
   .logo-icon {
     width: 36px;
     height: 36px;
-    background: #3b82f6;
-    border-radius: 8px;
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-weight: 700;
+    font-weight: 600;
+    font-size: 1rem;
   }
   
   .toggle-btn {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
     border: none;
-    color: white;
+    color: rgba(255,255,255,0.5);
     width: 28px;
     height: 28px;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+  
+  .toggle-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
   }
   
   .sidebar-nav {
     flex: 1;
-    padding: 1rem 0.5rem;
+    padding: 0.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 2px;
   }
   
   .nav-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    color: rgba(255,255,255,0.7);
+    gap: 12px;
+    padding: 12px 14px;
+    color: rgba(255,255,255,0.5);
     text-decoration: none;
-    border-radius: 8px;
-    transition: all 0.2s;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .nav-item:hover {
-    background: rgba(255,255,255,0.1);
-    color: white;
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.9);
   }
   
   .nav-item.active {
-    background: #3b82f6;
+    background: rgba(255,255,255,0.1);
     color: white;
   }
   
   .nav-icon {
-    font-size: 1.25rem;
-    width: 24px;
-    text-align: center;
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .nav-label {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 500;
+    letter-spacing: -0.01em;
   }
   
   .nav-divider {
     height: 1px;
-    background: rgba(255,255,255,0.1);
-    margin: 0.75rem 0.5rem;
+    background: rgba(255,255,255,0.06);
+    margin: 12px 8px;
   }
   
   .nav-item.external {
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.35);
   }
   
   .nav-item.external:hover {
-    color: rgba(255,255,255,0.9);
+    color: rgba(255,255,255,0.7);
   }
   
   .nav-item.external :global(.external-indicator) {
     margin-left: auto;
-    opacity: 0.5;
+    opacity: 0.4;
   }
   
   .sidebar-footer {
-    padding: 1rem 0.5rem;
-    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 0.5rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
   }
   
   /* Main Content */
   .main-content {
     flex: 1;
-    margin-left: 260px;
-    transition: margin-left 0.3s ease;
+    margin-left: 240px;
+    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 100vh;
   }
   
   .sidebar.collapsed + .main-content,
   .sidebar.collapsed ~ .main-content {
-    margin-left: 70px;
+    margin-left: 72px;
   }
   
   .top-bar {
     background: white;
-    padding: 1rem 1.5rem;
+    padding: 1rem 2rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid #e5e7eb;
     position: sticky;
     top: 0;
     z-index: 40;
+    border-bottom: 1px solid #f1f5f9;
   }
   
-  .page-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1f2937;
+  .page-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
   }
   
   .admin-badge {
-    background: #dbeafe;
-    color: #1e40af;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-size: 0.875rem;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 8px 14px;
+    border-radius: 100px;
+    font-size: 0.8125rem;
     font-weight: 500;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 6px;
   }
   
   .content-area {
-    padding: 1.5rem;
+    padding: 2rem;
   }
   
   /* Responsive */
   @media (max-width: 768px) {
     .sidebar {
-      width: 70px;
+      width: 72px;
     }
     .sidebar .nav-label,
     .sidebar .logo-text,
@@ -327,13 +344,14 @@
     }
     .sidebar-header {
       justify-content: center;
+      padding: 1.25rem 0.5rem;
     }
     .main-content {
-      margin-left: 70px;
+      margin-left: 72px;
     }
     .nav-item {
       justify-content: center;
-      padding: 0.75rem;
+      padding: 12px;
     }
     .nav-icon {
       margin: 0;
@@ -342,10 +360,10 @@
       display: none;
     }
     .top-bar {
-      padding: 0.75rem 1rem;
+      padding: 1rem;
     }
-    .page-title {
-      font-size: 1rem;
+    .content-area {
+      padding: 1rem;
     }
   }
 </style>

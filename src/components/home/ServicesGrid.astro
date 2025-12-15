@@ -1,59 +1,75 @@
 ---
 // src/components/home/ServicesGrid.astro
-// Carga "Tipos de Visa" desde Sanity
-
 import Section from '../ui/Section.astro';
-import Card from '../ui/Card.astro';
 import Icon from '../ui/Icon.astro';
 import Button from '../ui/Button.astro';
-import { getServices, getFlagUrl } from '../../lib/sanity/services.service';
+import { getServices, getFlagUrl, type ServicesData } from '../../lib/sanity/services.service';
 
-const data = await getServices();
+interface Props { data?: ServicesData; }
+const { data: propData } = Astro.props;
+const data = propData ?? await getServices();
 ---
 
-<Section id="servicios" background="light">
-  <div class="text-center mb-12 animate-on-scroll fade-up">
-    <div class="accent-line mx-auto mb-4"></div>
+<Section id="servicios" background="white">
+  <!-- Header minimalista -->
+  <div class="text-center mb-16 animate-on-scroll fade-up">
+    <p class="text-xs font-medium text-text-muted tracking-[0.2em] uppercase mb-4">
+      Nuestros Servicios
+    </p>
     <h2 class="heading-section mb-4">{data.title}</h2>
     {data.subtitle && (
-      <p class="text-body max-w-2xl mx-auto">{data.subtitle}</p>
+      <p class="text-body max-w-xl mx-auto">{data.subtitle}</p>
     )}
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <!-- Grid de visas - Diseño limpio -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
     {data.items.map((visa, index) => (
-      <Card class={`group hover-lift animate-on-scroll fade-up delay-${(index % 3) + 1}`}>
-        <div class="flex items-start gap-4">
-          <img 
-            src={getFlagUrl(visa.flagCode || 'un')} 
-            alt={`Bandera de ${visa.country}`}
-            width="48"
-            height="36"
-            loading="lazy"
-            class="w-12 h-9 object-cover rounded shadow-sm flex-shrink-0"
-          />
-          <div class="flex-1">
-            <h3 class="heading-card mb-2 group-hover:text-brand-secondary transition-colors">
-              {visa.country}
-            </h3>
-            <p class="text-body mb-4">{visa.description}</p>
-            <a 
-              href={visa.link || '#contacto'} 
-              class="inline-flex items-center gap-1 text-brand-secondary font-medium hover:gap-2 transition-all"
-            >
-              Más información
-              <Icon name="arrow" size={16} />
-            </a>
+      <a 
+        href={visa.link || '#contacto'}
+        class={`group block animate-on-scroll fade-up delay-${(index % 3) + 1}`}
+      >
+        <div class="relative bg-surface-light rounded-2xl p-8 transition-all duration-500 hover:bg-surface-white hover:shadow-xl hover:-translate-y-1 border border-transparent hover:border-surface-muted">
+          <!-- Bandera -->
+          <div class="mb-6">
+            <div class="w-16 h-12 rounded-lg overflow-hidden shadow-sm">
+              <img 
+                src={getFlagUrl(visa.flagCode || 'un')} 
+                alt={`Bandera de ${visa.country}`}
+                width="64"
+                height="48"
+                loading="lazy"
+                class="w-full h-full object-cover"
+              />
+            </div>
           </div>
+          
+          <!-- Contenido -->
+          <h3 class="text-lg font-semibold text-brand-primary mb-2 group-hover:text-brand-secondary transition-colors">
+            {visa.country}
+          </h3>
+          <p class="text-sm text-text-secondary leading-relaxed mb-4">
+            {visa.description}
+          </p>
+          
+          <!-- Link sutil -->
+          <span class="inline-flex items-center gap-1.5 text-sm font-medium text-brand-secondary opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+            Ver detalles
+            <Icon name="arrow" size={14} class="transition-transform group-hover:translate-x-1" />
+          </span>
         </div>
-      </Card>
+      </a>
     ))}
   </div>
 
-  <div class="text-center mt-10 animate-on-scroll fade-up">
-    <Button href="#contacto" size="lg" class="hover-scale">
-      Agenda tu Asesoría
-      <Icon name="arrow" size={20} />
-    </Button>
+  <!-- CTA minimalista -->
+  <div class="text-center mt-16 animate-on-scroll fade-up">
+    <div class="inline-flex flex-col items-center gap-4">
+      <p class="text-sm text-text-muted">¿No encuentras tu destino?</p>
+      <Button href="#contacto" size="lg" class="hover-scale">
+        Consulta Personalizada
+        <Icon name="arrow" size={18} />
+      </Button>
+    </div>
   </div>
 </Section>

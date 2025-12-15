@@ -1,38 +1,88 @@
 ---
-// src/components/home/StepsFlow.astro
-// Carga "Nuestro Proceso" desde Sanity
-
+// src/components/home/StepsFlow.astro - Estilo Jony Ive Premium
 import Section from '../ui/Section.astro';
-import { getSteps } from '../../lib/sanity/steps.service';
+import { getSteps, type StepsData } from '../../lib/sanity/steps.service';
 
-const data = await getSteps();
+interface Props { data?: StepsData; }
+const { data: propData } = Astro.props;
+const data = propData ?? await getSteps();
 ---
 
 <Section id="proceso" background="white">
-  <div class="text-center mb-12 animate-on-scroll fade-up">
-    <div class="accent-line mx-auto mb-4"></div>
-    <h2 class="heading-section mb-4">{data.title}</h2>
-    {data.subtitle && (
-      <p class="text-body max-w-2xl mx-auto">{data.subtitle}</p>
-    )}
-  </div>
+  <div class="max-w-6xl mx-auto">
+    <!-- Header minimalista -->
+    <div class="text-center mb-20 animate-on-scroll fade-up">
+      <p class="text-xs font-medium text-text-muted tracking-[0.2em] uppercase mb-4">
+        Nuestro Proceso
+      </p>
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-semibold text-text-primary tracking-tight">
+        {data.title}
+      </h2>
+      {data.subtitle && (
+        <p class="text-lg text-text-secondary mt-6 max-w-2xl mx-auto font-light">
+          {data.subtitle}
+        </p>
+      )}
+    </div>
 
-  <div class="relative">
-    <!-- Timeline line (desktop) -->
-    <div class="hidden lg:block absolute top-24 left-0 right-0 h-0.5 bg-surface-muted"></div>
+    <!-- Steps Grid -->
+    <div class="relative">
+      <!-- Línea conectora horizontal (desktop) -->
+      <div class="hidden lg:block absolute top-[60px] left-[12%] right-[12%] h-[1px]">
+        <div class="w-full h-full bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100"></div>
+      </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-      {data.items.map((step, index) => (
-        <div class={`relative text-center lg:text-center animate-on-scroll fade-up delay-${index + 1}`}>
-          <!-- Number circle -->
-          <div class="relative z-10 w-16 h-16 bg-brand-secondary text-text-inverse rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">
-            {step.number}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-4">
+        {data.items.map((step, index) => (
+          <div class={`group relative text-center animate-on-scroll fade-up delay-${index + 1}`}>
+            <!-- Card del número -->
+            <div class="relative z-10 mx-auto mb-8 w-[120px] h-[120px]">
+              <!-- Sombra decorativa -->
+              <div class="absolute inset-0 bg-gradient-to-br from-brand-secondary/20 to-brand-secondary/5 rounded-[28px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <!-- Borde exterior con gradiente -->
+              <div class="absolute inset-0 rounded-[28px] bg-gradient-to-br from-slate-200 via-slate-100 to-slate-200 p-[1px]">
+                <div class="w-full h-full rounded-[27px] bg-white"></div>
+              </div>
+              
+              <!-- Contenido interior -->
+              <div class="relative w-full h-full rounded-[28px] bg-gradient-to-br from-white to-slate-50/80 flex items-center justify-center border border-slate-100/80 shadow-sm transition-all duration-500 group-hover:shadow-xl group-hover:shadow-slate-200/60 group-hover:border-brand-secondary/20 group-hover:scale-[1.02]">
+                <!-- Número -->
+                <span class="text-4xl font-extralight text-brand-secondary tracking-tight">
+                  {step.number}
+                </span>
+              </div>
+              
+              <!-- Indicador de conexión (desktop) -->
+              <div class="hidden lg:block absolute top-1/2 -right-2 w-4 h-4 -translate-y-1/2">
+                <div class="w-2 h-2 rounded-full bg-slate-200 group-hover:bg-brand-secondary/40 transition-colors duration-300"></div>
+              </div>
+            </div>
+            
+            <!-- Contenido de texto -->
+            <div class="px-2">
+              <h3 class="text-base font-semibold text-text-primary mb-2 tracking-tight">
+                {step.title}
+              </h3>
+              <p class="text-text-secondary text-sm leading-relaxed font-light">
+                {step.description}
+              </p>
+            </div>
           </div>
-          
-          <h3 class="heading-card mb-2">{step.title}</h3>
-          <p class="text-body text-sm">{step.description}</p>
-        </div>
-      ))}
+        ))}
+      </div>
+    </div>
+
+    <!-- Línea decorativa inferior -->
+    <div class="mt-20 flex justify-center">
+      <div class="w-24 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
     </div>
   </div>
 </Section>
+
+<style>
+  /* Efecto de brillo sutil en hover */
+  .group:hover .rounded-\[28px\]::before {
+    opacity: 1;
+  }
+</style>

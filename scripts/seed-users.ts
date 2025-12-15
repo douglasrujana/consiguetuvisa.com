@@ -1,6 +1,6 @@
 /**
  * Seed de usuarios para desarrollo/testing
- * Crea usuarios de prueba incluyendo Admin
+ * Crea StaffMembers (equipo interno) y Customers (clientes)
  * 
  * Ejecutar: npx tsx scripts/seed-users.ts
  */
@@ -22,76 +22,99 @@ const config = dbUrl.startsWith('libsql://')
 const adapter = new PrismaLibSql(config);
 const prisma = new PrismaClient({ adapter });
 
-const mockUsers = [
+// Equipo interno (StaffMember)
+const staffMembers = [
   {
     email: 'admin@consiguetuvisa.com',
     firstName: 'Admin',
     lastName: 'Sistema',
-    phone: '+593999000001',
     role: 'ADMIN',
+    department: 'Tecnología',
     isActive: true,
-    emailVerified: true,
   },
   {
-    email: 'agente1@consiguetuvisa.com',
+    email: 'ventas@consiguetuvisa.com',
     firstName: 'María',
     lastName: 'González',
-    phone: '+593999000002',
-    role: 'AGENT',
+    role: 'SALES',
+    department: 'Ventas',
     isActive: true,
-    emailVerified: true,
   },
   {
-    email: 'agente2@consiguetuvisa.com',
+    email: 'soporte@consiguetuvisa.com',
     firstName: 'Carlos',
     lastName: 'Rodríguez',
-    phone: '+593999000003',
-    role: 'AGENT',
+    role: 'SUPPORT',
+    department: 'Soporte',
     isActive: true,
-    emailVerified: true,
   },
   {
-    email: 'usuario1@gmail.com',
+    email: 'community@consiguetuvisa.com',
+    firstName: 'Ana',
+    lastName: 'Martínez',
+    role: 'COMMUNITY',
+    department: 'Marketing',
+    isActive: true,
+  },
+  {
+    email: 'dev@consiguetuvisa.com',
+    firstName: 'Pedro',
+    lastName: 'López',
+    role: 'DEV',
+    department: 'Tecnología',
+    isActive: true,
+  },
+];
+
+// Clientes externos (Customer)
+const customers = [
+  {
+    email: 'juan.perez@gmail.com',
     firstName: 'Juan',
     lastName: 'Pérez',
     phone: '+593987654321',
-    role: 'USER',
+    source: 'web',
+    status: 'ACTIVE',
     isActive: true,
     emailVerified: true,
   },
   {
-    email: 'usuario2@gmail.com',
+    email: 'ana.martinez@gmail.com',
     firstName: 'Ana',
     lastName: 'Martínez',
     phone: '+593912345678',
-    role: 'USER',
+    source: 'referral',
+    status: 'ACTIVE',
+    isActive: true,
+    emailVerified: true,
+  },
+  {
+    email: 'roberto.sanchez@empresa.com',
+    firstName: 'Roberto',
+    lastName: 'Sánchez',
+    phone: '+593911223344',
+    source: 'ads',
+    status: 'LEAD',
     isActive: true,
     emailVerified: false,
   },
   {
-    email: 'usuario3@hotmail.com',
-    firstName: 'Pedro',
-    lastName: 'López',
+    email: 'maria.garcia@hotmail.com',
+    firstName: 'María',
+    lastName: 'García',
     phone: '+593998877665',
-    role: 'USER',
-    isActive: false,
-    emailVerified: true,
-  },
-  {
-    email: 'cliente.vip@empresa.com',
-    firstName: 'Roberto',
-    lastName: 'Sánchez',
-    phone: '+593911223344',
-    role: 'USER',
+    source: 'social',
+    status: 'LEAD',
     isActive: true,
-    emailVerified: true,
+    emailVerified: false,
   },
   {
     email: 'test@test.com',
     firstName: 'Test',
     lastName: 'Usuario',
     phone: '+593900000000',
-    role: 'USER',
+    source: 'web',
+    status: 'LEAD',
     isActive: true,
     emailVerified: false,
   },
@@ -100,49 +123,95 @@ const mockUsers = [
 async function main() {
   console.log('🌱 Iniciando seed de usuarios...\n');
 
-  for (const userData of mockUsers) {
+  // Crear StaffMembers
+  console.log('👥 Creando equipo interno (StaffMember)...');
+  for (const staffData of staffMembers) {
     try {
-      // Verificar si ya existe
-      const existing = await prisma.user.findUnique({
-        where: { email: userData.email },
+      const existing = await prisma.staffMember.findUnique({
+        where: { email: staffData.email },
       });
 
       if (existing) {
-        console.log(`⏭️  Usuario ya existe: ${userData.email}`);
+        console.log(`⏭️  Staff ya existe: ${staffData.email}`);
         continue;
       }
 
-      // Crear usuario
-      const user = await prisma.user.create({
-        data: userData,
+      const staff = await prisma.staffMember.create({
+        data: staffData,
       });
 
-      const roleEmoji = userData.role === 'ADMIN' ? '👑' : userData.role === 'AGENT' ? '🎯' : '👤';
-      console.log(`✅ ${roleEmoji} Creado: ${user.email} (${user.role})`);
+      const roleEmoji = {
+        ADMIN: '👑',
+        SALES: '💼',
+        SUPPORT: '🎧',
+        COMMUNITY: '📱',
+        DEV: '💻',
+      }[staff.role] || '👤';
+      
+      console.log(`✅ ${roleEmoji} Creado: ${staff.email} (${staff.role})`);
     } catch (error) {
-      console.error(`❌ Error creando ${userData.email}:`, error);
+      console.error(`❌ Error creando staff ${staffData.email}:`, error);
+    }
+  }
+
+  // Crear Customers
+  console.log('\n👤 Creando clientes (Customer)...');
+  for (const customerData of customers) {
+    try {
+      const existing = await prisma.customer.findUnique({
+        where: { email: customerData.email },
+      });
+
+      if (existing) {
+        console.log(`⏭️  Cliente ya existe: ${customerData.email}`);
+        continue;
+      }
+
+      const customer = await prisma.customer.create({
+        data: customerData,
+      });
+
+      const statusEmoji = customer.status === 'ACTIVE' ? '✅' : '🔵';
+      console.log(`${statusEmoji} Creado: ${customer.email} (${customer.status})`);
+    } catch (error) {
+      console.error(`❌ Error creando cliente ${customerData.email}:`, error);
     }
   }
 
   // Mostrar resumen
-  const counts = await prisma.user.groupBy({
+  console.log('\n📊 Resumen:');
+  
+  const staffCounts = await prisma.staffMember.groupBy({
     by: ['role'],
     _count: true,
   });
-
-  console.log('\n📊 Resumen de usuarios:');
-  counts.forEach((c) => {
-    const emoji = c.role === 'ADMIN' ? '👑' : c.role === 'AGENT' ? '🎯' : '👤';
+  console.log('\n   Equipo interno:');
+  staffCounts.forEach((c) => {
+    const emoji = { ADMIN: '👑', SALES: '💼', SUPPORT: '🎧', COMMUNITY: '📱', DEV: '💻' }[c.role] || '👤';
     console.log(`   ${emoji} ${c.role}: ${c._count}`);
   });
+  
+  const staffTotal = await prisma.staffMember.count();
+  console.log(`   📦 Total Staff: ${staffTotal}`);
 
-  const total = await prisma.user.count();
-  console.log(`   📦 Total: ${total}`);
+  const customerCounts = await prisma.customer.groupBy({
+    by: ['status'],
+    _count: true,
+  });
+  console.log('\n   Clientes:');
+  customerCounts.forEach((c) => {
+    const emoji = c.status === 'ACTIVE' ? '✅' : c.status === 'LEAD' ? '🔵' : '⚪';
+    console.log(`   ${emoji} ${c.status}: ${c._count}`);
+  });
+  
+  const customerTotal = await prisma.customer.count();
+  console.log(`   📦 Total Clientes: ${customerTotal}`);
 
   console.log('\n✨ Seed completado!');
-  console.log('\n🔐 Credenciales Admin:');
-  console.log('   Email: admin@consiguetuvisa.com');
-  console.log('   (Usa Clerk para autenticación, el rol se asigna en la DB)');
+  console.log('\n🔐 Para acceder como Admin:');
+  console.log('   1. Registra admin@consiguetuvisa.com en Clerk');
+  console.log('   2. Actualiza el clerkId en la tabla StaffMember');
+  console.log('   3. O usa: UPDATE StaffMember SET clerkId = "user_xxx" WHERE email = "admin@consiguetuvisa.com"');
 }
 
 main()

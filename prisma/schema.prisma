@@ -7,7 +7,60 @@ datasource db {
 }
 
 // ============================================
-// USUARIOS Y AUTENTICACIÓN
+// USUARIOS EXTERNOS (Clientes/Leads)
+// ============================================
+
+model Customer {
+  id            String   @id @default(uuid())
+  clerkId       String?  @unique // Clerk ID para auth
+  email         String   @unique
+  firstName     String?
+  lastName      String?
+  phone         String?
+  source        String?  // 'web' | 'referral' | 'social' | 'ads' | 'whatsapp'
+  status        String   @default("LEAD") // LEAD | ACTIVE | INACTIVE
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  solicitudes   Solicitud[]
+  appointments  Appointment[]
+  documents     Document[]
+  notes         Note[]         @relation("CustomerNotes")
+  conversations Conversation[]
+}
+
+// ============================================
+// USUARIOS INTERNOS (Equipo/Staff)
+// ============================================
+
+model StaffMember {
+  id            String   @id @default(uuid())
+  clerkId       String?  @unique // Clerk ID para auth (opcional para seed)
+  email         String   @unique
+  firstName     String
+  lastName      String
+  role          String   // ADMIN | SALES | COMMUNITY | DEV | SUPPORT
+  department    String?
+  permissions   String?  // JSON array de permisos específicos
+  isActive      Boolean  @default(true)
+  invitedBy     String?  // ID del StaffMember que lo invitó
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  assignedSolicitudes Solicitud[]     @relation("AssignedAgent")
+  createdNotes        Note[]          @relation("NoteCreator")
+  createdAlerts       Alert[]         @relation("AlertCreator")
+  acknowledgedAlerts  Alert[]         @relation("AlertAcknowledger")
+  reviewedDocuments   Document[]      @relation("DocumentReviewer")
+  statusChanges       StatusHistory[] @relation("StatusChanger")
+}
+
+// ============================================
+// USUARIOS LEGACY (Deprecado - migrar a Customer/StaffMember)
 // ============================================
 
 model User {
@@ -20,15 +73,9 @@ model User {
   role          String   @default("USER") // USER, ADMIN, AGENT
   isActive      Boolean  @default(true)
   emailVerified Boolean  @default(false)
+  migratedTo    String?  // 'customer' | 'staff' - indica si ya fue migrado
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-
-  // Relaciones
-  solicitudes  Solicitud[]
-  appointments Appointment[]
-  documents    Document[]
-  notes        Note[]        @relation("UserNotes")
-  createdNotes Note[]        @relation("NoteCreator")
 }
 
 // ============================================
@@ -36,9 +83,9 @@ model User {
 // ============================================
 
 model Solicitud {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
 
   // Tipo de visa
   visaType           String // USA_TURISMO, CANADA_VISITANTE, SCHENGEN, UK, MEXICO, OTRO
@@ -83,6 +130,7 @@ model Solicitud {
   // Metadata
   source          String? // WEB, WHATSAPP, REFERIDO, LANDING_NAVIDAD
   assignedAgentId String?
+  assignedAgent   StaffMember? @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
   priority        String  @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
 
   createdAt DateTime @default(now())
@@ -103,10 +151,11 @@ model StatusHistory {
   solicitudId String
   solicitud   Solicitud @relation(fields: [solicitudId], references: [id])
 
-  fromStatus String?
-  toStatus   String
-  changedBy  String? // User ID que hizo el cambio
-  reason     String?
+  fromStatus  String?
+  toStatus    String
+  changedById String?
+  changedBy   StaffMember? @relation("StatusChanger", fields: [changedById], references: [id])
+  reason      String?
 
   createdAt DateTime @default(now())
 }
@@ -119,8 +168,8 @@ model Document {
   id          String     @id @default(uuid())
   solicitudId String?
   solicitud   Solicitud? @relation(fields: [solicitudId], references: [id])
-  userId      String
-  user        User       @relation(fields: [userId], references: [id])
+  customerId  String
+  customer    Customer   @relation(fields: [customerId], references: [id])
 
   name     String
   type     String // PASAPORTE, FOTO, COMPROBANTE_INGRESOS, CARTA_TRABAJO, DS160, OTRO
@@ -129,10 +178,11 @@ model Document {
   fileSize Int?
   mimeType String?
 
-  status      String    @default("PENDIENTE") // PENDIENTE, RECIBIDO, APROBADO, RECHAZADO
-  reviewNotes String?
-  reviewedBy  String?
-  reviewedAt  DateTime?
+  status       String       @default("PENDIENTE") // PENDIENTE, RECIBIDO, APROBADO, RECHAZADO
+  reviewNotes  String?
+  reviewedById String?
+  reviewedBy   StaffMember? @relation("DocumentReviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -146,16 +196,16 @@ model Note {
   id          String     @id @default(uuid())
   solicitudId String?
   solicitud   Solicitud? @relation(fields: [solicitudId], references: [id])
-  userId      String?
-  user        User?      @relation("UserNotes", fields: [userId], references: [id])
+  customerId  String?
+  customer    Customer?  @relation("CustomerNotes", fields: [customerId], references: [id])
 
   content    String
   type       String  @default("GENERAL") // GENERAL, INTERNO, CLIENTE, SISTEMA
-  isInternal Boolean @default(false) // Solo visible para admins
+  isInternal Boolean @default(false) // Solo visible para staff
 
   createdById String
-  createdBy   User     @relation("NoteCreator", fields: [createdById], references: [id])
-  createdAt   DateTime @default(now())
+  createdBy   StaffMember @relation("NoteCreator", fields: [createdById], references: [id])
+  createdAt   DateTime    @default(now())
 }
 
 // ============================================
@@ -164,8 +214,8 @@ model Note {
 
 model Appointment {
   id            String   @id @default(uuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id])
   serviceType   String
   scheduledDate DateTime
   status        String   @default("PENDING")
@@ -355,16 +405,18 @@ model Embedding {
 // ============================================
 
 model Conversation {
-  id        String    @id @default(uuid())
-  userId    String?
-  title     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String    @id @default(uuid())
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  title      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   // Relaciones
   messages ChatMessage[]
 
-  @@index([userId])
+  @@index([customerId])
+  @@index([createdAt])
 }
 
 // ============================================
@@ -414,20 +466,27 @@ model SocialMention {
 // ============================================
 
 model Alert {
-  id             String         @id @default(uuid())
-  type           AlertType
-  priority       AlertPriority
-  title          String
-  content        String
-  context        String?        // JSON context
-  sourceId       String?
-  mentionId      String?
-  mention        SocialMention? @relation(fields: [mentionId], references: [id])
-  acknowledgedAt DateTime?
-  acknowledgedBy String?
-  createdAt      DateTime       @default(now())
+  id               String         @id @default(uuid())
+  type             AlertType
+  priority         AlertPriority
+  domain           String         @default("operations") // operations | business | social
+  targetRoles      String?        // JSON array: ['ADMIN'] | ['SALES', 'ADMIN'] | ['COMMUNITY']
+  channels         String?        // JSON array: ['email', 'slack', 'dashboard']
+  title            String
+  content          String
+  context          String?        // JSON context
+  sourceId         String?
+  mentionId        String?
+  mention          SocialMention? @relation(fields: [mentionId], references: [id])
+  createdById      String?
+  createdBy        StaffMember?   @relation("AlertCreator", fields: [createdById], references: [id])
+  acknowledgedAt   DateTime?
+  acknowledgedById String?
+  acknowledgedBy   StaffMember?   @relation("AlertAcknowledger", fields: [acknowledgedById], references: [id])
+  createdAt        DateTime       @default(now())
 
   @@index([type])
   @@index([priority])
+  @@index([domain])
   @@index([acknowledgedAt])
 }

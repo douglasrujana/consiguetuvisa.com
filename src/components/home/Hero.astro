@@ -1,49 +1,49 @@
 ---
-// src/components/home/Hero.astro
-// Carga Hero desde Sanity con fallback
-
+// src/components/home/Hero.astro - Estilo Jony Ive
 import Button from '../ui/Button.astro';
 import Icon from '../ui/Icon.astro';
-import { getHero } from '../../lib/sanity/hero.service';
+import { getHero, type HeroData } from '../../lib/sanity/hero.service';
 
-const hero = await getHero();
+interface Props { data?: HeroData; }
+const { data } = Astro.props;
+const hero = data ?? await getHero();
 ---
 
-<section class="gradient-hero py-16 md:py-24 lg:py-32">
+<section class="gradient-hero py-20 md:py-28 lg:py-36">
   <div class="container-main">
     <div class="max-w-4xl mx-auto text-center">
-      <!-- Badge -->
+      <!-- Badge - Pill minimalista -->
       {hero.badge && (
-        <div class="inline-flex items-center gap-2 bg-brand-secondary/10 text-brand-secondary px-4 py-2 rounded-full text-sm font-medium mb-6">
+        <div class="inline-flex items-center gap-2 bg-brand-secondary/10 text-brand-secondary px-5 py-2 rounded-full text-sm font-medium mb-8 backdrop-blur-sm">
           <Icon name="shield" size={16} />
           <span>{hero.badge}</span>
         </div>
       )}
 
-      <!-- Headline -->
-      <h1 class="heading-hero mb-6">
+      <!-- Headline - Tipografía premium -->
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-semibold text-text-primary tracking-tight leading-[1.1] mb-6">
         {hero.title}
         {hero.titleHighlight && (
-          <span class="text-brand-secondary block">{hero.titleHighlight}</span>
+          <span class="text-brand-secondary block mt-2">{hero.titleHighlight}</span>
         )}
       </h1>
 
-      <!-- Subheadline -->
+      <!-- Subheadline - Ligera y espaciosa -->
       {hero.subtitle && (
-        <p class="text-xl md:text-2xl text-text-secondary mb-4 max-w-2xl mx-auto">
+        <p class="text-xl md:text-2xl text-text-secondary mb-4 max-w-2xl mx-auto font-light leading-relaxed">
           {hero.subtitle}
         </p>
       )}
 
       <!-- Destinations -->
       {hero.destinations && (
-        <p class="text-text-muted mb-8">
+        <p class="text-text-muted mb-10 text-sm tracking-wide">
           {hero.destinations}
         </p>
       )}
 
-      <!-- CTAs -->
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <!-- CTAs - Botones pill con más espacio -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
         <Button href={hero.ctaPrimaryUrl || '#contacto'} size="lg">
           {hero.ctaPrimaryText || 'Evaluación Gratuita'}
           <Icon name="arrow" size={20} />
@@ -54,13 +54,15 @@ const hero = await getHero();
         </Button>
       </div>
 
-      <!-- Trust indicators -->
+      <!-- Trust indicators - Más sutiles -->
       {hero.trustItems && hero.trustItems.length > 0 && (
-        <div class="flex flex-wrap justify-center gap-8 mt-12 text-text-secondary">
+        <div class="flex flex-wrap justify-center gap-x-10 gap-y-4 text-text-secondary">
           {hero.trustItems.map((item) => (
-            <div class="flex items-center gap-2">
-              <Icon name="check" size={20} class="text-success" />
-              <span>{item}</span>
+            <div class="flex items-center gap-2.5 text-sm">
+              <div class="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center">
+                <Icon name="check" size={12} class="text-success" />
+              </div>
+              <span class="font-light">{item}</span>
             </div>
           ))}
         </div>

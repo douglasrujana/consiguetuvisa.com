@@ -1,31 +1,40 @@
 ---
-// src/components/home/Contact.astro
-// Carga datos desde Sanity
-
+// src/components/home/Contact.astro - Estilo Jony Ive
 import Section from '../ui/Section.astro';
 import Icon from '../ui/Icon.astro';
 import LeadCaptureForm from '../forms/LeadCaptureForm.svelte';
-import { getContact } from '../../lib/sanity/contact.service';
-import { getSiteSettings } from '../../lib/sanity/siteSettings.service';
+import { getContact, type ContactData } from '../../lib/sanity/contact.service';
+import { getSiteSettings, type SiteSettings } from '../../lib/sanity/siteSettings.service';
 
-const contact = await getContact();
-const settings = await getSiteSettings();
+interface Props { 
+  data?: { contact: ContactData; settings: SiteSettings }; 
+}
+const { data } = Astro.props;
+const contact = data?.contact ?? await getContact();
+const settings = data?.settings ?? await getSiteSettings();
 ---
 
 <Section id="contacto" background="white">
-  <div class="max-w-4xl mx-auto">
-    <div class="text-center mb-12 animate-on-scroll fade-up">
-      <div class="accent-line mx-auto mb-4"></div>
-      <h2 class="heading-section mb-4">{contact.title}</h2>
+  <div class="max-w-5xl mx-auto">
+    <!-- Header minimalista -->
+    <div class="text-center mb-16 animate-on-scroll fade-up">
+      <p class="text-xs font-medium text-text-muted tracking-[0.2em] uppercase mb-4">
+        Contáctanos
+      </p>
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-semibold text-text-primary tracking-tight">
+        {contact.title}
+      </h2>
       {contact.subtitle && (
-        <p class="text-body max-w-2xl mx-auto">{contact.subtitle}</p>
+        <p class="text-lg text-text-secondary mt-6 max-w-2xl mx-auto font-light">
+          {contact.subtitle}
+        </p>
       )}
     </div>
 
-    <div class="grid lg:grid-cols-5 gap-8">
-      <!-- Form -->
+    <div class="grid lg:grid-cols-5 gap-10">
+      <!-- Form - Card elegante -->
       <div class="lg:col-span-3 animate-on-scroll slide-left">
-        <div class="bg-surface-light rounded-xl p-6 md:p-8">
+        <div class="bg-slate-50 rounded-3xl p-8 md:p-10">
           <LeadCaptureForm 
             client:load
             formId="contact-main"
@@ -38,62 +47,69 @@ const settings = await getSiteSettings();
         </div>
       </div>
 
-      <!-- Contact Info -->
+      <!-- Contact Info - Diseño premium -->
       <div class="lg:col-span-2 space-y-6 animate-on-scroll slide-right">
-        <div class="bg-brand-secondary text-text-inverse rounded-xl p-6 hover-lift">
-          <h3 class="font-semibold text-lg mb-4">¿Prefieres contacto directo?</h3>
-          <p class="text-text-inverse/80 mb-6">
+        <!-- WhatsApp CTA - Card destacada -->
+        <div class="bg-brand-secondary rounded-3xl p-8 text-white">
+          <h3 class="font-semibold text-xl mb-3">¿Prefieres contacto directo?</h3>
+          <p class="text-white/80 mb-6 font-light text-sm leading-relaxed">
             Escríbenos por WhatsApp y te respondemos en minutos.
           </p>
           <a 
             href={`https://wa.me/${settings.whatsapp || '593999999999'}?text=Hola,%20quiero%20información%20sobre%20asesoría%20de%20visa`}
             target="_blank"
             rel="noopener"
-            class="w-full bg-whatsapp text-white text-center py-3 px-6 rounded-lg font-semibold hover:brightness-110 transition-all flex items-center justify-center gap-2"
+            class="w-full bg-whatsapp text-white text-center py-3.5 px-6 rounded-2xl font-medium hover:brightness-110 transition-all flex items-center justify-center gap-2.5"
           >
             <Icon name="whatsapp" size={20} />
             Escribir por WhatsApp
           </a>
         </div>
 
-        <div class="space-y-4">
+        <!-- Info items - Minimalista -->
+        <div class="space-y-5 pt-2">
           {settings.phone && (
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-brand-secondary/10 rounded-lg flex items-center justify-center">
+            <div class="flex items-center gap-4 group">
+              <div class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:bg-brand-secondary/10">
                 <Icon name="phone" size={20} class="text-brand-secondary" />
               </div>
               <div>
-                <p class="text-small">Teléfono</p>
-                <p class="font-medium text-brand-primary">{settings.phone}</p>
+                <p class="text-xs text-text-muted uppercase tracking-wider">Teléfono</p>
+                <p class="font-medium text-text-primary mt-0.5">{settings.phone}</p>
               </div>
             </div>
           )}
 
           {settings.email && (
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-brand-secondary/10 rounded-lg flex items-center justify-center">
+            <div class="flex items-center gap-4 group">
+              <div class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:bg-brand-secondary/10">
                 <Icon name="mail" size={20} class="text-brand-secondary" />
               </div>
               <div>
-                <p class="text-small">Email</p>
-                <p class="font-medium text-brand-primary">{settings.email}</p>
+                <p class="text-xs text-text-muted uppercase tracking-wider">Email</p>
+                <p class="font-medium text-text-primary mt-0.5">{settings.email}</p>
               </div>
             </div>
           )}
 
           {settings.location && (
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-brand-secondary/10 rounded-lg flex items-center justify-center">
+            <div class="flex items-center gap-4 group">
+              <div class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:bg-brand-secondary/10">
                 <Icon name="location" size={20} class="text-brand-secondary" />
               </div>
               <div>
-                <p class="text-small">Ubicación</p>
-                <p class="font-medium text-brand-primary">{settings.location}</p>
+                <p class="text-xs text-text-muted uppercase tracking-wider">Ubicación</p>
+                <p class="font-medium text-text-primary mt-0.5">{settings.location}</p>
               </div>
             </div>
           )}
         </div>
       </div>
+    </div>
+
+    <!-- Línea decorativa -->
+    <div class="mt-20 flex justify-center">
+      <div class="w-24 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
     </div>
   </div>
 </Section>

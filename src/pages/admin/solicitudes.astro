@@ -20,14 +20,19 @@ const adminName = localUser?.firstName || localUser?.email?.split('@')[0] || 'Ad
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Solicitudes - Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
+  </style>
 </head>
 <body>
   <SignedOut>
-    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f3f4f6;">
-      <div style="text-align: center; background: white; padding: 3rem; border-radius: 12px;">
-        <h1 style="color: #1f2937; margin-bottom: 1rem;">Acceso Restringido</h1>
-        <a href="/login" style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none;">
+    <div class="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+      <div class="text-center bg-white p-12 rounded-3xl max-w-md w-full">
+        <h1 class="text-xl font-semibold text-slate-800 mb-2">Acceso Restringido</h1>
+        <p class="text-slate-400 mb-8 text-sm">Debes iniciar sesión como administrador.</p>
+        <a href="/login" class="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-slate-800 transition-colors">
           Iniciar Sesión
         </a>
       </div>
@@ -40,10 +45,11 @@ const adminName = localUser?.firstName || localUser?.email?.split('@')[0] || 'Ad
         <AdminDashboard client:load adminName={adminName} />
       </AdminLayout>
     ) : (
-      <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f3f4f6;">
-        <div style="text-align: center; background: white; padding: 3rem; border-radius: 12px;">
-          <h1 style="color: #dc2626; margin-bottom: 1rem;">Acceso Denegado</h1>
-          <a href="/dashboard" style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none;">
+      <div class="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div class="text-center bg-white p-12 rounded-3xl max-w-md w-full">
+          <h1 class="text-xl font-semibold text-red-600 mb-2">Acceso Denegado</h1>
+          <p class="text-slate-400 mb-8 text-sm">No tienes permisos de administrador.</p>
+          <a href="/dashboard" class="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-slate-800 transition-colors">
             Ir a Mi Panel
           </a>
         </div>

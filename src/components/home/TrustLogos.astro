@@ -1,19 +1,16 @@
 ---
 // src/components/home/TrustLogos.astro
-// Wrapper para el carrusel de logos de confianza
-
 import TrustLogosCarousel from './TrustLogos.svelte';
-import { getTrustLogos } from '../../lib/sanity/trustLogos.service';
+import { getTrustLogos, type TrustLogo } from '../../lib/sanity/trustLogos.service';
 
 interface Props {
+  data?: TrustLogo[];
   autoplay?: boolean;
   autoplayDelay?: number;
 }
 
-const { autoplay = true, autoplayDelay = 3000 } = Astro.props;
-
-// Cargar logos desde Sanity (con fallback)
-const logos = await getTrustLogos();
+const { data, autoplay = true, autoplayDelay = 3000 } = Astro.props;
+const logos = data ?? await getTrustLogos();
 ---
 
 <TrustLogosCarousel 

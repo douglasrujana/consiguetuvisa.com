@@ -60,7 +60,6 @@ npx astro check --minimumSeverity error
 # Svelte check
 npx svelte-check --workspace src/components/chat
 
-
 npx astro check --minimumSeverity error 2>&1 | Select-Object -First 50
 ```
 
@@ -93,6 +92,11 @@ pnpm prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script 
 
 pnpm tsx prisma/seed-knowledge.ts
 
+pnpm prisma migrate dev --name separate_customer_staff 2>&1
+
+pnpm prisma generate 2>&1
+
+pnpm prisma migrate dev --name staff_clerkid_optional 2>&1
 ```
 
 powershell -ExecutionPolicy Bypass -File scripts/turso-migrate.ps1

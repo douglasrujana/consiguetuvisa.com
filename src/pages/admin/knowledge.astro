@@ -1,0 +1,28 @@
+---
+// src/pages/admin/knowledge.astro
+// Panel de administración de Knowledge Base
+
+import AdminLayout from '../../components/admin/AdminLayout.svelte';
+import KnowledgeManager from '../../components/admin/knowledge/KnowledgeManager.svelte';
+
+// Verificar autenticación y rol admin
+const { localUser } = Astro.locals as any;
+
+if (!localUser || localUser.role !== 'ADMIN') {
+  return Astro.redirect('/login?redirect=/admin/knowledge');
+}
+---
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Knowledge Base | Admin - ConsigueTuVisa</title>
+  <link rel="stylesheet" href="/src/styles/global.css" />
+</head>
+<body class="bg-slate-50">
+  <AdminLayout client:load adminName={localUser.firstName || 'Admin'} currentPage="knowledge">
+    <KnowledgeManager client:load />
+  </AdminLayout>
+</body>
+</html>

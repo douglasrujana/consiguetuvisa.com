@@ -1,14 +1,15 @@
 // src/pages/api/admin/users/[id].ts
-// API para operaciones individuales de usuario
+// API para operaciones individuales de CUSTOMER (cliente)
 
 import type { APIRoute } from 'astro';
 import { prisma } from '../../../../server/db/prisma-singleton';
 
 export const GET: APIRoute = async ({ params, locals }) => {
   try {
-    const { localUser } = locals as any;
+    const { localUser, staff } = locals as any;
+    const currentUser = staff || localUser;
     
-    if (!localUser || localUser.role !== 'ADMIN') {
+    if (!currentUser || !['ADMIN', 'DEV', 'SALES'].includes(currentUser.role)) {
       return new Response(JSON.stringify({ error: 'No autorizado' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -17,30 +18,27 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
     const { id } = params;
 
-    const user = await prisma.user.findUnique({
+    const customer = await prisma.customer.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        role: true,
-        isActive: true,
-        emailVerified: true,
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        _count: {
+          select: {
+            solicitudes: true,
+            conversations: true,
+            documents: true,
+          }
+        }
       },
     });
 
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Usuario no encontrado' }), {
+    if (!customer) {
+      return new Response(JSON.stringify({ error: 'Cliente no encontrado' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    return new Response(JSON.stringify(user), {
+    return new Response(JSON.stringify(customer), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -55,9 +53,10 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   try {
-    const { localUser } = locals as any;
+    const { localUser, staff } = locals as any;
+    const currentUser = staff || localUser;
     
-    if (!localUser || localUser.role !== 'ADMIN') {
+    if (!currentUser || !['ADMIN', 'DEV'].includes(currentUser.role)) {
       return new Response(JSON.stringify({ error: 'No autorizado' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -66,37 +65,30 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 
     const { id } = params;
     const body = await request.json();
-    const { firstName, lastName, phone, role, isActive } = body;
+    const { firstName, lastName, phone, status, source, isActive } = body;
 
     // Verificar que existe
-    const existing = await prisma.user.findUnique({ where: { id } });
+    const existing = await prisma.customer.findUnique({ where: { id } });
     if (!existing) {
-      return new Response(JSON.stringify({ error: 'Usuario no encontrado' }), {
+      return new Response(JSON.stringify({ error: 'Cliente no encontrado' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // No permitir que un admin se quite el rol a sí mismo
-    if (existing.id === localUser.id && role && role !== 'ADMIN') {
-      return new Response(JSON.stringify({ error: 'No puedes quitarte el rol de admin' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const user = await prisma.user.update({
+    const customer = await prisma.customer.update({
       where: { id },
       data: {
         ...(firstName !== undefined && { firstName }),
         ...(lastName !== undefined && { lastName }),
         ...(phone !== undefined && { phone }),
-        ...(role !== undefined && { role }),
+        ...(status !== undefined && { status }),
+        ...(source !== undefined && { source }),
         ...(isActive !== undefined && { isActive }),
       },
     });
 
-    return new Response(JSON.stringify(user), {
+    return new Response(JSON.stringify(customer), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -111,9 +103,10 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 
 export const DELETE: APIRoute = async ({ params, locals }) => {
   try {
-    const { localUser } = locals as any;
+    const { localUser, staff } = locals as any;
+    const currentUser = staff || localUser;
     
-    if (!localUser || localUser.role !== 'ADMIN') {
+    if (!currentUser || !['ADMIN', 'DEV'].includes(currentUser.role)) {
       return new Response(JSON.stringify({ error: 'No autorizado' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -122,24 +115,30 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
 
     const { id } = params;
 
-    // No permitir auto-eliminación
-    if (id === localUser.id) {
-      return new Response(JSON.stringify({ error: 'No puedes eliminarte a ti mismo' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
     // Verificar que existe
-    const existing = await prisma.user.findUnique({ where: { id } });
+    const existing = await prisma.customer.findUnique({ where: { id } });
     if (!existing) {
-      return new Response(JSON.stringify({ error: 'Usuario no encontrado' }), {
+      return new Response(JSON.stringify({ error: 'Cliente no encontrado' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    await prisma.user.delete({ where: { id } });
+    // Verificar que no tiene solicitudes activas
+    const activeSolicitudes = await prisma.solicitud.count({
+      where: { customerId: id, status: { notIn: ['CANCELADA', 'RECHAZADA', 'APROBADA'] } }
+    });
+    
+    if (activeSolicitudes > 0) {
+      return new Response(JSON.stringify({ 
+        error: `No se puede eliminar: tiene ${activeSolicitudes} solicitud(es) activa(s)` 
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    await prisma.customer.delete({ where: { id } });
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

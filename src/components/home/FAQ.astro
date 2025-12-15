@@ -1,40 +1,55 @@
 ---
-// src/components/home/FAQ.astro
-// Carga FAQ desde Sanity con fallback
-
+// src/components/home/FAQ.astro - Estilo Jony Ive
 import Section from '../ui/Section.astro';
 import Icon from '../ui/Icon.astro';
-import { getFAQ } from '../../lib/sanity/faq.service';
+import { getFAQ, type FAQData } from '../../lib/sanity/faq.service';
 
-const faqData = await getFAQ();
+interface Props { data?: FAQData; }
+const { data } = Astro.props;
+const faqData = data ?? await getFAQ();
 ---
 
 <Section id="faq" background="light">
   <div class="max-w-3xl mx-auto">
-    <div class="text-center mb-12 animate-on-scroll fade-up">
-      <div class="accent-line mx-auto mb-4"></div>
-      <h2 class="heading-section mb-4">{faqData.title}</h2>
+    <!-- Header minimalista -->
+    <div class="text-center mb-16 animate-on-scroll fade-up">
+      <p class="text-xs font-medium text-text-muted tracking-[0.2em] uppercase mb-4">
+        Preguntas Frecuentes
+      </p>
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-semibold text-text-primary tracking-tight">
+        {faqData.title}
+      </h2>
       {faqData.subtitle && (
-        <p class="text-body">{faqData.subtitle}</p>
+        <p class="text-lg text-text-secondary mt-6 font-light">
+          {faqData.subtitle}
+        </p>
       )}
     </div>
 
+    <!-- Acordeón elegante -->
     <div class="space-y-4">
       {faqData.items.map((faq, index) => (
-        <details class={`group bg-surface-white rounded-xl shadow-sm animate-on-scroll fade-up delay-${(index % 5) + 1}`}>
-          <summary class="flex items-center justify-between p-6 cursor-pointer list-none">
-            <h3 class="font-semibold text-brand-primary pr-4">{faq.question}</h3>
-            <Icon 
-              name="chevron" 
-              size={20} 
-              class="text-text-muted group-open:rotate-180 transition-transform flex-shrink-0" 
-            />
+        <details class={`group bg-white rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-slate-200/50 animate-on-scroll fade-up delay-${(index % 5) + 1}`}>
+          <summary class="flex items-center justify-between p-6 cursor-pointer list-none select-none">
+            <h3 class="font-medium text-text-primary pr-6 text-[15px]">{faq.question}</h3>
+            <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-open:bg-brand-secondary/10 group-open:rotate-180">
+              <Icon 
+                name="chevron" 
+                size={16} 
+                class="text-text-muted transition-colors group-open:text-brand-secondary" 
+              />
+            </div>
           </summary>
           <div class="px-6 pb-6 pt-0">
-            <p class="text-body">{faq.answer}</p>
+            <p class="text-text-secondary font-light leading-relaxed text-[15px]">{faq.answer}</p>
           </div>
         </details>
       ))}
+    </div>
+
+    <!-- Línea decorativa -->
+    <div class="mt-16 flex justify-center">
+      <div class="w-24 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
     </div>
   </div>
 </Section>

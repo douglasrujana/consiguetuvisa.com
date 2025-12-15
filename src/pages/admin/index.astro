@@ -1,16 +1,22 @@
 ---
-// src/pages/admin/index.astro - Dashboard Admin con Sidebar
+// src/pages/admin/index.astro - Dashboard Admin
 import { SignedIn, SignedOut } from '@clerk/astro/components';
 import AdminLayout from '../../components/admin/AdminLayout.svelte';
 import UsersCrud from '../../components/admin/UsersCrud.svelte';
-import Button from '../../components/ui/Button.astro';
+import '../../styles/global.css';
 
-// Obtener usuario local desde middleware (ya verificado como ADMIN)
-const { auth, localUser } = Astro.locals as any;
+const { auth, localUser, staff, authUser } = Astro.locals as any;
 const { userId } = auth();
 
-const isAdmin = localUser?.role === 'ADMIN';
-const adminName = localUser?.firstName || localUser?.email?.split('@')[0] || 'Admin';
+// Compatibilidad: usar staff (nuevo) o localUser (legacy)
+const currentUser = staff || localUser || authUser;
+const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'DEV';
+const adminName = currentUser?.firstName || currentUser?.email?.split('@')[0] || 'Admin';
+
+// Debug (remover en producción)
+console.log('[Admin Page] userId:', userId);
+console.log('[Admin Page] currentUser:', currentUser);
+console.log('[Admin Page] isAdmin:', isAdmin);
 ---
 
 <!DOCTYPE html>
@@ -20,19 +26,19 @@ const adminName = localUser?.firstName || localUser?.email?.split('@')[0] || 'Ad
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin - ConsigueTuVisa</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
   </style>
 </head>
 <body>
   <SignedOut>
-    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f3f4f6;">
-      <div style="text-align: center; background: white; padding: 3rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <h1 style="font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem;">Acceso Restringido</h1>
-        <p style="color: #6b7280; margin-bottom: 1.5rem;">Debes iniciar sesión como administrador.</p>
-        <a href="/login" style="display: inline-block; background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 500;">
+    <div class="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+      <div class="text-center bg-white p-12 rounded-3xl max-w-md w-full">
+        <h1 class="text-xl font-semibold text-slate-800 mb-2">Acceso Restringido</h1>
+        <p class="text-slate-400 mb-8 text-sm">Debes iniciar sesión como administrador.</p>
+        <a href="/login" class="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-slate-800 transition-colors">
           Iniciar Sesión
         </a>
       </div>
@@ -41,15 +47,15 @@ const adminName = localUser?.firstName || localUser?.email?.split('@')[0] || 'Ad
 
   <SignedIn>
     {isAdmin ? (
-      <AdminLayout client:load adminName={adminName} currentPage="usuarios">
+      <AdminLayout client:load adminName={adminName} currentPage="clientes">
         <UsersCrud client:load />
       </AdminLayout>
     ) : (
-      <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f3f4f6;">
-        <div style="text-align: center; background: white; padding: 3rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-          <h1 style="font-size: 1.5rem; font-weight: 700; color: #dc2626; margin-bottom: 1rem;">Acceso Denegado</h1>
-          <p style="color: #6b7280; margin-bottom: 1.5rem;">No tienes permisos de administrador.</p>
-          <a href="/dashboard" style="display: inline-block; background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 500;">
+      <div class="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div class="text-center bg-white p-12 rounded-3xl max-w-md w-full">
+          <h1 class="text-xl font-semibold text-red-600 mb-2">Acceso Denegado</h1>
+          <p class="text-slate-400 mb-8 text-sm">No tienes permisos de administrador.</p>
+          <a href="/dashboard" class="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-slate-800 transition-colors">
             Ir a Mi Panel
           </a>
         </div>

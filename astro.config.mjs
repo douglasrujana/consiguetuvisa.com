@@ -12,6 +12,10 @@ export default defineConfig({
     site: 'https://consiguetuvisa.com',
     output: 'server',
     adapter: vercel(),
+    prefetch: {
+        prefetchAll: false,
+        defaultStrategy: 'viewport',
+    },
     integrations: [
         svelte(),
         react(),

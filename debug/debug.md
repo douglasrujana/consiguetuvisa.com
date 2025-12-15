@@ -1,3 +1,5 @@
-An error occurred.
-src/components/home/TrustLogos.svelte:63:12 {@const} must be the immediate child of {#snippet}, {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment>, <svelte:boundary or <Component>
-https://svelte.dev/e/const_tag_invalid_placement
+23:37:45 [ERROR] C:/MyCode/javascript/consiguetuvisa.com/src/components/admin/alerts/AlertsCenter.svelte:64:4 Unexpected token
+https://svelte.dev/e/js_parse_error
+16:06:03 [200] / 43302ms
+[Sanity] SiteSettings cargado desde CMS
+[S
