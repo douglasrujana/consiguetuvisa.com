@@ -1,178 +1,122 @@
 // scripts/migrate-turso.ts
-// Script para aplicar el schema a Turso
+// Ejecuta migraciones en Turso usando @libsql/client
+// Uso: pnpm exec tsx scripts/migrate-turso.ts
 
 import 'dotenv/config';
+import { config } from 'dotenv';
 import { createClient } from '@libsql/client';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 
-const dbUrl = process.env.DATABASE_URL!;
-const authToken = process.env.TURSO_AUTH_TOKEN!;
+// Cargar .env.local explícitamente
+config({ path: '.env.local' });
 
-if (!dbUrl.startsWith('libsql://')) {
-  console.error('❌ DATABASE_URL debe ser una URL de Turso (libsql://)');
-  process.exit(1);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const TURSO_URL = process.env.DATABASE_URL || '';
+const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN || '';
+
+// Extraer URL y token del DATABASE_URL si tiene formato con authToken
+function parseConnectionString(connStr: string): { url: string; authToken?: string } {
+  // Formato: libsql://host?authToken=xxx
+  const urlObj = new URL(connStr);
+  const authToken = urlObj.searchParams.get('authToken');
+  
+  // Reconstruir URL sin el authToken
+  urlObj.searchParams.delete('authToken');
+  const cleanUrl = urlObj.toString();
+  
+  return { 
+    url: cleanUrl, 
+    authToken: authToken || TURSO_TOKEN || undefined 
+  };
 }
 
-const client = createClient({ url: dbUrl, authToken });
+async function main() {
+  console.log('🚀 Iniciando migración a Turso...\n');
 
-const schema = `
--- Users table
-CREATE TABLE IF NOT EXISTS User (
-  id TEXT PRIMARY KEY,
-  externalId TEXT UNIQUE,
-  email TEXT UNIQUE NOT NULL,
-  firstName TEXT,
-  lastName TEXT,
-  phone TEXT,
-  role TEXT DEFAULT 'USER',
-  isActive INTEGER DEFAULT 1,
-  emailVerified INTEGER DEFAULT 0,
-  createdAt TEXT DEFAULT (datetime('now')),
-  updatedAt TEXT DEFAULT (datetime('now'))
-);
-
--- Solicitud table
-CREATE TABLE IF NOT EXISTS Solicitud (
-  id TEXT PRIMARY KEY,
-  userId TEXT NOT NULL,
-  visaType TEXT NOT NULL,
-  destinationCountry TEXT NOT NULL,
-  status TEXT DEFAULT 'NUEVA',
-  currentStep INTEGER DEFAULT 1,
-  totalSteps INTEGER DEFAULT 5,
-  fullName TEXT NOT NULL,
-  birthDate TEXT,
-  nationality TEXT,
-  passportNumber TEXT,
-  passportExpiry TEXT,
-  phone TEXT NOT NULL,
-  email TEXT NOT NULL,
-  city TEXT,
-  travelPurpose TEXT,
-  travelDate TEXT,
-  returnDate TEXT,
-  hasVisaHistory INTEGER DEFAULT 0,
-  visaHistoryNotes TEXT,
-  hasDenials INTEGER DEFAULT 0,
-  denialNotes TEXT,
-  bitrixLeadId TEXT,
-  bitrixDealId TEXT,
-  appointmentDate TEXT,
-  interviewDate TEXT,
-  source TEXT,
-  assignedAgentId TEXT,
-  priority TEXT DEFAULT 'NORMAL',
-  createdAt TEXT DEFAULT (datetime('now')),
-  updatedAt TEXT DEFAULT (datetime('now')),
-  FOREIGN KEY (userId) REFERENCES User(id)
-);
-
-
--- StatusHistory table
-CREATE TABLE IF NOT EXISTS StatusHistory (
-  id TEXT PRIMARY KEY,
-  solicitudId TEXT NOT NULL,
-  fromStatus TEXT,
-  toStatus TEXT NOT NULL,
-  changedBy TEXT,
-  reason TEXT,
-  createdAt TEXT DEFAULT (datetime('now')),
-  FOREIGN KEY (solicitudId) REFERENCES Solicitud(id)
-);
-
--- Document table
-CREATE TABLE IF NOT EXISTS Document (
-  id TEXT PRIMARY KEY,
-  solicitudId TEXT,
-  userId TEXT NOT NULL,
-  name TEXT NOT NULL,
-  type TEXT NOT NULL,
-  fileUrl TEXT,
-  fileName TEXT,
-  fileSize INTEGER,
-  mimeType TEXT,
-  status TEXT DEFAULT 'PENDIENTE',
-  reviewNotes TEXT,
-  reviewedBy TEXT,
-  reviewedAt TEXT,
-  createdAt TEXT DEFAULT (datetime('now')),
-  updatedAt TEXT DEFAULT (datetime('now')),
-  FOREIGN KEY (solicitudId) REFERENCES Solicitud(id),
-  FOREIGN KEY (userId) REFERENCES User(id)
-);
-
--- Note table
-CREATE TABLE IF NOT EXISTS Note (
-  id TEXT PRIMARY KEY,
-  solicitudId TEXT,
-  userId TEXT,
-  content TEXT NOT NULL,
-  type TEXT DEFAULT 'GENERAL',
-  isInternal INTEGER DEFAULT 0,
-  createdById TEXT NOT NULL,
-  createdAt TEXT DEFAULT (datetime('now')),
-  FOREIGN KEY (solicitudId) REFERENCES Solicitud(id),
-  FOREIGN KEY (userId) REFERENCES User(id),
-  FOREIGN KEY (createdById) REFERENCES User(id)
-);
-
--- Appointment table
-CREATE TABLE IF NOT EXISTS Appointment (
-  id TEXT PRIMARY KEY,
-  userId TEXT NOT NULL,
-  serviceType TEXT NOT NULL,
-  scheduledDate TEXT NOT NULL,
-  status TEXT DEFAULT 'PENDING',
-  notes TEXT,
-  createdAt TEXT DEFAULT (datetime('now')),
-  updatedAt TEXT DEFAULT (datetime('now')),
-  FOREIGN KEY (userId) REFERENCES User(id)
-);
-
--- SystemConfig table
-CREATE TABLE IF NOT EXISTS SystemConfig (
-  id TEXT PRIMARY KEY,
-  key TEXT UNIQUE NOT NULL,
-  value TEXT NOT NULL,
-  type TEXT DEFAULT 'STRING',
-  createdAt TEXT DEFAULT (datetime('now')),
-  updatedAt TEXT DEFAULT (datetime('now'))
-);
-
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_user_external_id ON User(externalId);
-CREATE INDEX IF NOT EXISTS idx_user_email ON User(email);
-CREATE INDEX IF NOT EXISTS idx_solicitud_user_id ON Solicitud(userId);
-CREATE INDEX IF NOT EXISTS idx_solicitud_status ON Solicitud(status);
-CREATE INDEX IF NOT EXISTS idx_document_solicitud_id ON Document(solicitudId);
-CREATE INDEX IF NOT EXISTS idx_note_solicitud_id ON Note(solicitudId);
-`;
-
-async function migrate() {
-  console.log('🚀 Conectando a Turso...');
-  console.log(`   URL: ${dbUrl}`);
-
-  try {
-    // Ejecutar cada statement por separado
-    const statements = schema
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-
-    console.log(`📦 Ejecutando ${statements.length} statements...`);
-
-    for (const statement of statements) {
-      await client.execute(statement);
-      const tableName = statement.match(/(?:CREATE TABLE|CREATE INDEX).*?(\w+)/i)?.[1];
-      if (tableName) {
-        console.log(`   ✅ ${tableName}`);
-      }
-    }
-
-    console.log('\n✅ Migración completada exitosamente!');
-  } catch (error) {
-    console.error('❌ Error en migración:', error);
+  if (!TURSO_URL) {
+    console.error('❌ DATABASE_URL no configurado');
     process.exit(1);
   }
+
+  const { url, authToken } = parseConnectionString(TURSO_URL);
+  
+  console.log(`📡 Conectando a: ${url.substring(0, 50)}...`);
+  console.log(`🔑 Token presente: ${authToken ? 'Sí (' + authToken.substring(0, 20) + '...)' : 'No'}`);
+
+  const client = createClient({
+    url,
+    authToken,
+  });
+
+  // Leer el archivo SQL de migración
+  // Permitir especificar archivo de migración como argumento
+const migrationFile = process.argv[2] || 'turso-migration.sql';
+const sqlPath = path.join(__dirname, '../prisma', migrationFile);
+  
+  if (!fs.existsSync(sqlPath)) {
+    console.error('❌ Archivo prisma/turso-migration.sql no encontrado');
+    process.exit(1);
+  }
+
+  const sql = fs.readFileSync(sqlPath, 'utf-8');
+  
+  // Remover comentarios de línea completa
+  const sqlClean = sql
+    .split('\n')
+    .filter(line => !line.trim().startsWith('--'))
+    .join('\n');
+  
+  // Dividir en statements individuales (por ;)
+  const statements = sqlClean
+    .split(';')
+    .map(s => s.trim().replace(/\n/g, ' ').replace(/\s+/g, ' '))
+    .filter(s => s.length > 5);
+
+  console.log(`📝 ${statements.length} statements a ejecutar\n`);
+
+  let success = 0;
+  let errors = 0;
+
+  for (const statement of statements) {
+    // Saltar comentarios y líneas vacías
+    if (statement.startsWith('--') || statement.length < 5) continue;
+    
+    const preview = statement.substring(0, 60).replace(/\n/g, ' ');
+    
+    try {
+      await client.execute(statement);
+      console.log(`✅ ${preview}...`);
+      success++;
+    } catch (error: any) {
+      // Ignorar errores de "ya existe"
+      if (error.message?.includes('already exists') || 
+          error.message?.includes('duplicate column')) {
+        console.log(`⏭️  ${preview}... (ya existe)`);
+      } else {
+        console.error(`❌ ${preview}...`);
+        console.error(`   Error: ${error.message}`);
+        errors++;
+      }
+    }
+  }
+
+  console.log('\n' + '='.repeat(50));
+  console.log(`✅ Exitosos: ${success}`);
+  console.log(`❌ Errores: ${errors}`);
+  
+  // Verificar tablas creadas
+  console.log('\n📊 Verificando tablas...');
+  const tables = await client.execute(
+    "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+  );
+  console.log('Tablas:', tables.rows.map(r => r.name).join(', '));
+
+  client.close();
+  console.log('\n🎉 Migración completada!');
 }
 
-migrate();
+main().catch(console.error);

@@ -97,6 +97,8 @@ pnpm prisma migrate dev --name separate_customer_staff 2>&1
 pnpm prisma generate 2>&1
 
 pnpm prisma migrate dev --name staff_clerkid_optional 2>&1
+
+pnpm exec tsx scripts/migrate-turso.ts
 ```
 
 powershell -ExecutionPolicy Bypass -File scripts/turso-migrate.ps1

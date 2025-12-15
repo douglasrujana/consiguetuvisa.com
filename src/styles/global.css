@@ -2,6 +2,7 @@
 /* 2. ESTILO BASE GLOBAL */
 
 @import "tailwindcss";
+@import "./shadcn.css"; /* Variables de shadcn-svelte para componentes UI */
 @import "../../design-system/global/tokens.css";
 @import "../../design-system/global/themes/light.css";
 @import "../../design-system/global/components.css";
