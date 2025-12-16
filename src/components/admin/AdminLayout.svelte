@@ -15,6 +15,7 @@
   import BookOpen from 'lucide-svelte/icons/book-open';
   import Bell from 'lucide-svelte/icons/bell';
   import MessageSquare from 'lucide-svelte/icons/message-square';
+  import Radio from 'lucide-svelte/icons/radio';
   
   import type { Snippet } from 'svelte';
   
@@ -33,7 +34,8 @@
     { id: 'equipo', label: 'Equipo', icon: ShieldCheck, href: '/admin/equipo' },
     { id: 'solicitudes', label: 'Solicitudes', icon: FileText, href: '/admin/solicitudes' },
     { id: 'knowledge', label: 'Knowledge Base', icon: BookOpen, href: '/admin/knowledge' },
-    { id: 'alertas', label: 'Alertas', icon: Bell, href: '/admin/alertas' },
+    { id: 'social', label: 'Social Listening', icon: Radio, href: '/admin/social' },
+    { id: 'alertas', label: 'Alertas Sistema', icon: Bell, href: '/admin/alertas' },
     { id: 'chat', label: 'Chatbot', icon: MessageSquare, href: '/admin/chat' },
     { id: 'participaciones', label: 'Sorteos', icon: Gift, href: '/admin/participaciones' },
     { id: 'configuracion', label: 'Configuración', icon: Settings, href: '/admin/config' },

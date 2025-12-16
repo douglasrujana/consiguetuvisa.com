@@ -80,11 +80,17 @@ src/server/lib/
     │   ├── Knowledge.graphql.ts
     │   └── index.ts
     │
-    ├── social/                    # ✅ NUEVO - Social Listening
+    ├── social/                    # ✅ COMPLETADO - Social Listening
     │   ├── SocialMention.entity.ts
+    │   ├── SocialMention.port.ts
     │   ├── SocialMention.repository.ts
     │   ├── SocialListener.service.ts
+    │   ├── SocialSync.service.ts     # ✅ NUEVO - Sincronización
     │   ├── SentimentClassifier.ts
+    │   ├── Social.graphql.ts         # ✅ NUEVO - GraphQL
+    │   ├── adapters/
+    │   │   ├── TwitterAdapter.ts     # ✅ NUEVO
+    │   │   └── FacebookAdapter.ts    # ✅ NUEVO
     │   └── index.ts
     │
     └── alerts/                    # ✅ NUEVO - Sistema de Alertas
@@ -186,6 +192,9 @@ src/server/lib/
 | `/api/storage/test` | Test del sistema de Storage |
 | `/api/knowledge/ingest` | Ingesta manual de documentos (POST) |
 | `/api/graphql` | GraphQL API unificada |
+| `/api/admin/social` | Social Listening - Lista menciones + stats |
+| `/api/admin/social/config` | Configuración de APIs sociales |
+| `/api/admin/social/sync` | Sincronizar menciones desde APIs |
 
 ---
 
@@ -1394,24 +1403,33 @@ model StaffMember {
 ### Admin/Dev (`/admin/*`)
 ```
 /admin
-├── /                    → ✅ Clientes (CustomersCrud) - ACTUALIZADO
-├── /equipo              → ✅ StaffCrud (Admin, Sales, Community, Dev, Support) - NUEVO
-├── /solicitudes         → ✅ AdminDashboard solicitudes (completado)
-├── /knowledge           → ✅ Knowledge Base Manager (completado)
-├── /alertas             → ✅ Alertas de Operaciones (refactorizar)
-├── /chat                → ✅ Gestión Chatbot (completado)
-├── /config              → ✅ Configuración (completado)
+├── /                    → ✅ Clientes (CustomersCrud)
+├── /equipo              → ✅ StaffCrud (Admin, Sales, Community, Dev, Support)
+├── /solicitudes         → ✅ AdminDashboard solicitudes
+├── /knowledge           → ✅ Knowledge Base Manager
+├── /social              → ✅ Social Listening (Dashboard + Config APIs) - NUEVO
+├── /alertas             → ✅ Alertas de Sistema (errores, cuotas, seguridad)
+├── /chat                → ✅ Gestión Chatbot
+├── /config              → ✅ Configuración
 ├── /participaciones     → Sorteos (Ruleta Loca)
 ├── /seguridad           → 🟢 FUTURO - Anti-abuso, IPs bloqueadas
 └── /consumo             → 🟢 FUTURO - Monitor de cuotas
 ```
 
-### APIs de Usuarios (Refactorizadas)
+### APIs de Social Listening (NUEVO)
+```
+/api/admin/social        → GET: Lista menciones + stats + tendencia
+/api/admin/social/[id]   → GET/PUT/DELETE: Operaciones individuales
+/api/admin/social/config → GET/PUT: Configuración de APIs
+/api/admin/social/sync   → POST: Sincronizar menciones
+```
+
+### APIs de Usuarios
 ```
 /api/admin/users         → CRUD de Customer (clientes externos)
 /api/admin/users/[id]    → Operaciones individuales de Customer
-/api/admin/staff         → CRUD de StaffMember (equipo interno) - NUEVO
-/api/admin/staff/[id]    → Operaciones individuales de StaffMember - NUEVO
+/api/admin/staff         → CRUD de StaffMember (equipo interno)
+/api/admin/staff/[id]    → Operaciones individuales de StaffMember
 ```
 
 ### Sales (`/admin/*` limitado)
@@ -1423,12 +1441,9 @@ model StaffMember {
 └── /chat                → Solo lectura de conversaciones
 ```
 
-### Community Manager (`/social/*`)
+### Community Manager (`/admin/social`)
 ```
-/social
-├── /dashboard           → 🟢 FUTURO - Menciones y sentimiento
-├── /alertas             → 🟢 FUTURO - Alertas sociales
-├── /tendencias          → 🟢 FUTURO - Keywords y trends
+/admin/social            → ✅ Dashboard de menciones + Configuración APIs
 └── /respuestas          → 🟢 FUTURO - Respuesta rápida
 ```
 
@@ -1947,36 +1962,106 @@ async function validateRequest(userId: string): Promise<ValidationResult> {
 
 ---
 
-## Módulo 5: Social Listening 🟢 FUTURO
+## Módulo 5: Social Listening ✅ COMPLETADO
 
-**Ruta:** `/social/dashboard` (NO `/admin/social`)
-**Audiencia:** Community Manager (rol COMMUNITY)
-**Prioridad:** Media - Requiere integración con APIs externas
+**Ruta:** `/admin/social`
+**Audiencia:** ADMIN, DEV, COMMUNITY
+**Estado:** Implementado con UI y APIs de sincronización
 
-### Separación de Responsabilidades
+### Separación de Dominios
 
-| Aspecto | Admin | Community Manager |
-|---------|-------|-------------------|
-| Ruta base | `/admin/*` | `/social/*` |
-| Alertas | Operaciones + Negocio | Solo Social |
-| Acciones | CRUD completo | Ver + Responder |
-| Métricas | Sistema + Negocio | Engagement + Sentimiento |
+| Módulo | Propósito | Audiencia |
+|--------|-----------|-----------|
+| **Alertas Sistema** (`/admin/alertas`) | Errores, cuotas, seguridad | ADMIN, DEV |
+| **Social Listening** (`/admin/social`) | Menciones, sentimiento, engagement | ADMIN, COMMUNITY |
 
-### Funcionalidades Futuras:
-- [ ] Dashboard de menciones en tiempo real
-- [ ] Análisis de sentimiento (positivo/negativo/neutro)
-- [ ] Tendencias y keywords
-- [ ] Alertas por sentimiento negativo (dominio: social)
-- [ ] Respuesta rápida desde dashboard
-- [ ] Métricas de engagement
+### Funcionalidades Implementadas:
+- [x] Dashboard de menciones con stats y gráficos
+- [x] Análisis de sentimiento (POSITIVE/NEUTRAL/NEGATIVE/COMPLAINT)
+- [x] Tendencia de sentimiento (últimos 7 días)
+- [x] Distribución por plataforma (Twitter, Facebook, Instagram)
+- [x] Filtros (plataforma, sentimiento, revisadas)
+- [x] Modal de detalle con respuesta sugerida
+- [x] Marcar como revisada
+- [x] Configuración de APIs (movido a `/admin/config` → Tab "Social APIs")
+- [x] Sincronización manual desde UI
+- [x] Clasificación automática con AI (Gemini)
+
+### Funcionalidades Pendientes:
+- [ ] Sincronización automática (cron job)
+- [ ] Respuesta directa desde dashboard
 - [ ] Monitoreo de competencia
 - [ ] Detección de influencers
+- [ ] Alertas automáticas por quejas
 
-### Integraciones Requeridas:
-- Twitter/X API (Bearer Token)
-- Facebook Graph API
-- Instagram Basic Display API
-- Google Alerts (RSS)
+### Arquitectura
+
+```
+src/server/lib/features/social/
+├── SocialMention.entity.ts      # Entidades
+├── SocialMention.port.ts        # Interfaces
+├── SocialMention.repository.ts  # CRUD Prisma
+├── SentimentClassifier.ts       # Clasificación con AI
+├── SocialListener.service.ts    # Procesamiento de menciones
+├── SocialSync.service.ts        # ✅ NUEVO - Sincronización
+├── Social.graphql.ts            # ✅ NUEVO - GraphQL schema
+├── adapters/
+│   ├── TwitterAdapter.ts        # ✅ NUEVO - Twitter API v2
+│   └── FacebookAdapter.ts       # ✅ NUEVO - Meta Graph API
+└── index.ts
+```
+
+### APIs REST
+
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/api/admin/social` | GET | Lista menciones + stats + tendencia |
+| `/api/admin/social/[id]` | GET/PUT/DELETE | Operaciones individuales |
+| `/api/admin/social/config` | GET/PUT | Configuración de APIs |
+| `/api/admin/social/sync` | POST | Ejecutar sincronización |
+| `/api/admin/social/sync?test=twitter` | GET | Probar conexión |
+
+### GraphQL Operations
+
+| Operación | Tipo | Descripción |
+|-----------|------|-------------|
+| `socialMentions` | Query | Lista con filtros |
+| `pendingMentions` | Query | Pendientes de revisión |
+| `complaints` | Query | Solo quejas |
+| `socialStats` | Query | Estadísticas |
+| `sentimentTrend` | Query | Tendencia por día |
+| `reviewMention` | Mutation | Marcar revisada |
+| `updateMention` | Mutation | Actualizar sentimiento/respuesta |
+| `deleteMention` | Mutation | Eliminar |
+
+### Variables de Entorno
+
+```env
+# Twitter/X API v2 (Basic: $100/mes, Free: muy limitado)
+TWITTER_BEARER_TOKEN=
+
+# Meta Graph API (Gratis con limitaciones)
+FACEBOOK_ACCESS_TOKEN=
+FACEBOOK_PAGE_ID=
+FACEBOOK_INSTAGRAM_ACCOUNT_ID=
+```
+
+### Configuración desde UI
+
+1. Ir a `/admin/config` → Tab "Social APIs"
+2. Habilitar Twitter y/o Facebook
+3. Ingresar tokens de API
+4. Probar conexión
+5. Guardar configuración
+6. Ir a `/admin/social` y click "Sincronizar" para extraer menciones
+
+### Script de Seed
+
+```bash
+pnpm exec tsx scripts/seed-social.ts
+```
+
+Crea 14 menciones de prueba con diferentes sentimientos y plataformas.
 
 ---
 
@@ -1986,7 +2071,7 @@ async function validateRequest(userId: string): Promise<ValidationResult> {
 2. ~~**Centro de Alertas**~~ ✅ COMPLETADO
 3. ~~**Gestión de Chatbot**~~ ✅ COMPLETADO
 4. ~~**Configuración**~~ ✅ COMPLETADO
-5. **Social Listening** - Cuando se integren APIs sociales
+5. ~~**Social Listening**~~ ✅ COMPLETADO
 
 ---
 

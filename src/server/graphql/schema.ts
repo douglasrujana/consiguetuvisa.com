@@ -40,6 +40,10 @@ import {
     alertTypeDefs,
     alertResolvers
 } from '../lib/features/alerts/Alert.graphql';
+import {
+    socialTypeDefs,
+    socialResolvers
+} from '../lib/features/social/Social.graphql';
 
 // ----------------------------------------------------------------------
 // 1. DEFINICIONES BASE DEL SISTEMA
@@ -76,6 +80,7 @@ export const typeDefs = mergeTypeDefs([
   promoTypeDefs,
   knowledgeTypeDefs,
   alertTypeDefs,
+  socialTypeDefs,
 ]);
 
 // ----------------------------------------------------------------------
@@ -92,4 +97,5 @@ export const resolvers = mergeResolvers([
   promoResolvers,
   knowledgeResolvers,
   alertResolvers,
+  socialResolvers,
 ]);

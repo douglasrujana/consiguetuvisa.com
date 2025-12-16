@@ -1,0 +1,28 @@
+---
+// src/pages/admin/social.astro
+// Dashboard de Social Listening
+
+import AdminLayout from '../../components/admin/AdminLayout.svelte';
+import SocialDashboard from '../../components/admin/social/SocialDashboard.svelte';
+import '../../styles/global.css';
+
+const { localUser, staff } = Astro.locals as any;
+const currentUser = staff || localUser;
+
+if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'DEV' && currentUser.role !== 'COMMUNITY')) {
+  return Astro.redirect('/login?redirect=/admin/social');
+}
+---
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Social Listening | Admin - ConsigueTuVisa</title>
+</head>
+<body class="bg-slate-50">
+  <AdminLayout client:load adminName={currentUser?.firstName || 'Admin'} currentPage="social">
+    <SocialDashboard client:load />
+  </AdminLayout>
+</body>
+</html>

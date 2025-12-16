@@ -31,3 +31,11 @@ export {
   type ProcessedMention,
   type SocialListenerConfig,
 } from './SocialListener.service';
+export { SocialSyncService, type SocialSyncConfig, type SyncResult } from './SocialSync.service';
+
+// Adapters
+export { TwitterAdapter, type TwitterConfig } from './adapters/TwitterAdapter';
+export { FacebookAdapter, type FacebookConfig } from './adapters/FacebookAdapter';
+
+// GraphQL
+export { socialTypeDefs, socialResolvers } from './Social.graphql';

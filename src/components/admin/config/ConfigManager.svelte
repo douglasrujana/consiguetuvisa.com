@@ -25,6 +25,9 @@
   import Shield from 'lucide-svelte/icons/shield';
   import Gauge from 'lucide-svelte/icons/gauge';
   import Eye from 'lucide-svelte/icons/eye';
+  import Radio from 'lucide-svelte/icons/radio';
+  import Twitter from 'lucide-svelte/icons/twitter';
+  import Facebook from 'lucide-svelte/icons/facebook';
 
   interface Banner { id: string; type: string; message: string; link?: string; linkText?: string; dismissible: boolean; startDate?: string; endDate?: string; targetPages: string[]; targetRoles: string[]; bgColor?: string; textColor?: string; enabled: boolean; }
   interface DaySchedule { enabled: boolean; start: string; end: string; }
@@ -42,12 +45,20 @@
   let showBannerModal = $state(false);
   let editingBanner = $state<Banner | null>(null);
   let schedule = $state<Record<string, DaySchedule>>({});
+  
+  // Social APIs config
+  let socialConfig = $state({
+    twitter: { enabled: false, hasToken: false, searchQuery: '@ConsigueTuVisa', bearerToken: '' },
+    facebook: { enabled: false, hasToken: false, pageId: '', accessToken: '', instagramAccountId: '' },
+  });
+  let socialLoading = $state(false);
+  let syncMessage = $state<string | null>(null);
 
   const DAYS = [{ key: 'monday', label: 'Lun' }, { key: 'tuesday', label: 'Mar' }, { key: 'wednesday', label: 'Mié' }, { key: 'thursday', label: 'Jue' }, { key: 'friday', label: 'Vie' }, { key: 'saturday', label: 'Sáb' }, { key: 'sunday', label: 'Dom' }];
   const BANNER_TYPES = [{ value: 'maintenance', label: 'Mantenimiento', color: 'bg-orange-500' }, { value: 'environment', label: 'Entorno', color: 'bg-purple-500' }, { value: 'promotion', label: 'Promoción', color: 'bg-green-500' }, { value: 'warning', label: 'Advertencia', color: 'bg-yellow-500' }, { value: 'announcement', label: 'Anuncio', color: 'bg-blue-500' }, { value: 'scheduled', label: 'Programado', color: 'bg-slate-500' }];
   const TIMEZONES = ['America/Guayaquil', 'America/Bogota', 'America/Lima', 'America/Mexico_City', 'America/New_York', 'Europe/Madrid'];
 
-  onMount(() => { loadConfig(); loadHealth(); const interval = setInterval(loadHealth, 30000); return () => clearInterval(interval); });
+  onMount(() => { loadConfig(); loadHealth(); loadSocialConfig(); const interval = setInterval(loadHealth, 30000); return () => clearInterval(interval); });
 
   async function loadConfig() {
     loading = true;
@@ -84,6 +95,57 @@
   }
 
   function handleChange() { hasChanges = true; }
+  
+  // Social APIs functions
+  async function loadSocialConfig() {
+    socialLoading = true;
+    try {
+      const res = await fetch('/api/admin/social/config', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        socialConfig.twitter = { ...socialConfig.twitter, ...data.twitter };
+        socialConfig.facebook = { ...socialConfig.facebook, ...data.facebook };
+      }
+    } catch (e) { console.error('Error loading social config:', e); }
+    finally { socialLoading = false; }
+  }
+
+  async function saveSocialConfig() {
+    socialLoading = true;
+    try {
+      const payload: any = {};
+      if (socialConfig.twitter.bearerToken || socialConfig.twitter.enabled !== undefined) {
+        payload.twitter = { enabled: socialConfig.twitter.enabled, bearerToken: socialConfig.twitter.bearerToken || undefined, searchQuery: socialConfig.twitter.searchQuery };
+      }
+      if (socialConfig.facebook.accessToken || socialConfig.facebook.enabled !== undefined) {
+        payload.facebook = { enabled: socialConfig.facebook.enabled, accessToken: socialConfig.facebook.accessToken || undefined, pageId: socialConfig.facebook.pageId, instagramAccountId: socialConfig.facebook.instagramAccountId || undefined };
+      }
+      const res = await fetch('/api/admin/social/config', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) { syncMessage = 'Configuración guardada'; setTimeout(() => syncMessage = null, 3000); loadSocialConfig(); }
+    } catch (e) { console.error('Error saving social config:', e); }
+    finally { socialLoading = false; }
+  }
+
+  async function testSocialConnection(platform: 'twitter' | 'facebook') {
+    try {
+      const res = await fetch(`/api/admin/social/sync?test=${platform}`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) alert(`✅ Conexión exitosa${data.pageName ? `: ${data.pageName}` : ''}`);
+      else alert(`❌ Error: ${data.error}`);
+    } catch (e) { alert('Error de conexión'); }
+  }
+
+  async function runSocialSync(platform?: string) {
+    socialLoading = true; syncMessage = null;
+    try {
+      const res = await fetch('/api/admin/social/sync', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform }) });
+      const data = await res.json();
+      if (res.ok) syncMessage = `Sincronizado: ${data.summary.totalNew} nuevas menciones`;
+      else syncMessage = `Error: ${data.error}`;
+      setTimeout(() => syncMessage = null, 5000);
+    } catch (e) { syncMessage = 'Error de conexión'; console.error('Error syncing:', e); }
+    finally { socialLoading = false; }
+  }
   function statusColor(s: string) { return s === 'up' ? 'text-emerald-500 bg-emerald-50' : s === 'down' ? 'text-red-500 bg-red-50' : 'text-amber-500 bg-amber-50'; }
   function addBanner() { editingBanner = { id: crypto.randomUUID(), type: 'announcement', message: '', dismissible: true, targetPages: ['*'], targetRoles: ['*'], enabled: true }; showBannerModal = true; }
   function editBannerFn(b: Banner) { editingBanner = { ...b }; showBannerModal = true; }
@@ -122,6 +184,7 @@
           <Tabs.Trigger value="storage" class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"><HardDrive size={16} strokeWidth={1.5} />Storage</Tabs.Trigger>
           <Tabs.Trigger value="alerts" class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"><Bell size={16} strokeWidth={1.5} />Alertas</Tabs.Trigger>
           <Tabs.Trigger value="banners" class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"><Megaphone size={16} strokeWidth={1.5} />Banners</Tabs.Trigger>
+          <Tabs.Trigger value="social" class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"><Radio size={16} strokeWidth={1.5} />Social APIs</Tabs.Trigger>
           <Tabs.Trigger value="integrations" class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"><Plug size={16} strokeWidth={1.5} />Integraciones</Tabs.Trigger>
         </Tabs.List>
 
@@ -370,6 +433,110 @@
               {/each}
             </div>
           {/if}
+        </Tabs.Content>
+
+        <!-- Tab: Social APIs -->
+        <Tabs.Content value="social" class="p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-lg font-semibold text-slate-800">APIs de Redes Sociales</h2>
+              <p class="text-sm text-slate-500">Conecta tus cuentas para extraer menciones en Social Listening</p>
+            </div>
+            <div class="flex items-center gap-3">
+              {#if syncMessage}<span class="text-sm text-emerald-600">{syncMessage}</span>{/if}
+              <button onclick={() => saveSocialConfig()} disabled={socialLoading} class="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-full text-sm disabled:opacity-50">
+                <Save size={16} />{socialLoading ? 'Guardando...' : 'Guardar APIs'}
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <!-- Twitter/X -->
+            <div class="border border-slate-200 rounded-xl p-5">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center">
+                    <Twitter size={20} class="text-sky-500" />
+                  </div>
+                  <div>
+                    <h3 class="font-medium text-slate-800">Twitter / X</h3>
+                    <p class="text-xs text-slate-400">API v2 - Requiere Bearer Token</p>
+                  </div>
+                </div>
+                <button onclick={() => socialConfig.twitter.enabled = !socialConfig.twitter.enabled} class="w-12 h-6 rounded-full transition-colors {socialConfig.twitter.enabled ? 'bg-sky-500' : 'bg-slate-300'}">
+                  <div class="w-5 h-5 bg-white rounded-full shadow transform transition-transform {socialConfig.twitter.enabled ? 'translate-x-6' : 'translate-x-0.5'}"></div>
+                </button>
+              </div>
+              
+              {#if socialConfig.twitter.enabled}
+                <div class="space-y-4 pt-4 border-t border-slate-100">
+                  <div>
+                    <label class="text-sm text-slate-600 mb-1 block">Bearer Token</label>
+                    <input type="password" bind:value={socialConfig.twitter.bearerToken} placeholder={socialConfig.twitter.hasToken ? '••••••••••••••••' : 'Ingresa tu Bearer Token'} class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm" />
+                    <p class="text-xs text-slate-400 mt-1">Obtén tu token en <a href="https://developer.twitter.com" target="_blank" class="text-sky-500 hover:underline">developer.twitter.com</a></p>
+                  </div>
+                  <div>
+                    <label class="text-sm text-slate-600 mb-1 block">Query de búsqueda</label>
+                    <input type="text" bind:value={socialConfig.twitter.searchQuery} placeholder="@ConsigueTuVisa OR #ConsigueTuVisa" class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm" />
+                  </div>
+                  <div class="flex gap-2">
+                    <button onclick={() => testSocialConnection('twitter')} class="px-3 py-1.5 text-sm text-sky-600 hover:bg-sky-50 rounded-lg">Probar conexión</button>
+                    <button onclick={() => runSocialSync('twitter')} disabled={socialLoading} class="px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Sincronizar ahora</button>
+                  </div>
+                </div>
+              {/if}
+            </div>
+
+            <!-- Facebook/Instagram -->
+            <div class="border border-slate-200 rounded-xl p-5">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <Facebook size={20} class="text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 class="font-medium text-slate-800">Facebook & Instagram</h3>
+                    <p class="text-xs text-slate-400">Meta Graph API - Requiere App y Page Token</p>
+                  </div>
+                </div>
+                <button onclick={() => socialConfig.facebook.enabled = !socialConfig.facebook.enabled} class="w-12 h-6 rounded-full transition-colors {socialConfig.facebook.enabled ? 'bg-blue-500' : 'bg-slate-300'}">
+                  <div class="w-5 h-5 bg-white rounded-full shadow transform transition-transform {socialConfig.facebook.enabled ? 'translate-x-6' : 'translate-x-0.5'}"></div>
+                </button>
+              </div>
+              
+              {#if socialConfig.facebook.enabled}
+                <div class="space-y-4 pt-4 border-t border-slate-100">
+                  <div>
+                    <label class="text-sm text-slate-600 mb-1 block">Access Token</label>
+                    <input type="password" bind:value={socialConfig.facebook.accessToken} placeholder={socialConfig.facebook.hasToken ? '••••••••••••••••' : 'Ingresa tu Access Token'} class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm" />
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="text-sm text-slate-600 mb-1 block">Page ID</label>
+                      <input type="text" bind:value={socialConfig.facebook.pageId} placeholder="123456789" class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm" />
+                    </div>
+                    <div>
+                      <label class="text-sm text-slate-600 mb-1 block">Instagram Account ID (opcional)</label>
+                      <input type="text" bind:value={socialConfig.facebook.instagramAccountId} placeholder="987654321" class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm" />
+                    </div>
+                  </div>
+                  <p class="text-xs text-slate-400">Configura tu app en <a href="https://developers.facebook.com" target="_blank" class="text-blue-500 hover:underline">developers.facebook.com</a></p>
+                  <div class="flex gap-2">
+                    <button onclick={() => testSocialConnection('facebook')} class="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg">Probar conexión</button>
+                    <button onclick={() => runSocialSync('facebook')} disabled={socialLoading} class="px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Sincronizar ahora</button>
+                  </div>
+                </div>
+              {/if}
+            </div>
+
+            <!-- Info -->
+            <div class="bg-amber-50 border border-amber-100 rounded-xl p-4">
+              <p class="text-sm text-amber-800">
+                <strong>Nota:</strong> Las APIs de redes sociales requieren cuentas de desarrollador y pueden tener costos asociados.
+                Twitter API Basic: $100/mes. Meta Graph API: Gratis con limitaciones.
+              </p>
+            </div>
+          </div>
         </Tabs.Content>
 
         <!-- Tab: Integraciones -->
