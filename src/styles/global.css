@@ -2,11 +2,6 @@
 /* 2. ESTILO BASE GLOBAL */
 
 @import "tailwindcss";
-
-/* Asegurar que Tailwind escanee todos los componentes UI */
-@source "../lib/components/ui/**/*.svelte";
-@source "../components/**/*.svelte";
-
 @import "../../design-system/global/tokens.css";
 @import "../../design-system/global/themes/light.css";
 @import "../../design-system/global/components.css";

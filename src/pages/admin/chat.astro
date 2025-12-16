@@ -4,10 +4,12 @@
 
 import AdminLayout from '../../components/admin/AdminLayout.svelte';
 import ChatManager from '../../components/admin/chat/ChatManager.svelte';
+import '../../styles/global.css';
 
-const { localUser } = Astro.locals as any;
+const { localUser, staff } = Astro.locals as any;
+const currentUser = staff || localUser;
 
-if (!localUser || localUser.role !== 'ADMIN') {
+if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'DEV')) {
   return Astro.redirect('/login?redirect=/admin/chat');
 }
 ---
@@ -17,7 +19,6 @@ if (!localUser || localUser.role !== 'ADMIN') {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chatbot | Admin - ConsigueTuVisa</title>
-  <link rel="stylesheet" href="/src/styles/global.css" />
 </head>
 <body class="bg-slate-50">
   <AdminLayout client:load adminName={localUser.firstName || 'Admin'} currentPage="chat">
