@@ -5,9 +5,13 @@ import Header from './Header.astro';
 import Footer from './Footer.astro';
 import WhatsAppFloat from '../ui/WhatsAppFloat.astro';
 import ScrollToTop from '../ui/ScrollToTop.svelte';
+import Banners from '../ui/Banners.svelte';
 import SchemaMarkup from '../seo/SchemaMarkup.astro';
 import { getDefaultSEO, type SEOData } from '$lib/sanity/seo.service';
 import '../../styles/global.css';
+
+// Obtener la página actual para filtrar banners
+const currentPage = Astro.url.pathname;
 
 interface FAQ {
   question: string;
@@ -118,6 +122,7 @@ const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
   />
 </head>
 <body class="min-h-screen flex flex-col">
+  <Banners client:load currentPage={currentPage} />
   <Header />
   <main class="flex-1">
     <slot />
