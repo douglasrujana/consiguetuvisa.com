@@ -28,12 +28,27 @@ export enum AlertPriority {
 }
 
 /**
+ * Dominio de alerta (catálogo normalizado)
+ */
+export interface AlertDomain {
+  id: string;
+  name: string;
+  displayName: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  allowedRoles: string[];
+  isActive: boolean;
+}
+
+/**
  * Entidad Alert - Alerta del sistema
  */
 export interface Alert {
   id: string;
   type: AlertType;
   priority: AlertPriority;
+  domain?: AlertDomain;
   title: string;
   content: string;
   context?: Record<string, unknown>;
@@ -50,6 +65,7 @@ export interface Alert {
 export interface CreateAlertInput {
   type: AlertType;
   priority: AlertPriority;
+  domainName?: string; // 'operations' | 'business' | 'social'
   title: string;
   content: string;
   context?: Record<string, unknown>;
@@ -72,6 +88,7 @@ export interface UpdateAlertInput {
 export interface AlertFilters {
   type?: AlertType;
   priority?: AlertPriority;
+  domainName?: string;
   acknowledged?: boolean;
   sourceId?: string;
   mentionId?: string;

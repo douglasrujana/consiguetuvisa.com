@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Skeleton } from '$lib/components/ui/skeleton';
+  import * as Table from '$lib/components/ui/table';
   import Bell from 'lucide-svelte/icons/bell';
   import AlertTriangle from 'lucide-svelte/icons/alert-triangle';
   import AlertCircle from 'lucide-svelte/icons/alert-circle';
@@ -8,17 +9,52 @@
   import CheckCircle from 'lucide-svelte/icons/check-circle';
   import RefreshCw from 'lucide-svelte/icons/refresh-cw';
   import Filter from 'lucide-svelte/icons/filter';
-  import Check from 'lucide-svelte/icons/check';
+  import Server from 'lucide-svelte/icons/server';
+  import Briefcase from 'lucide-svelte/icons/briefcase';
+  import MessageCircle from 'lucide-svelte/icons/message-circle';
+  import Eye from 'lucide-svelte/icons/eye';
   import Trash2 from 'lucide-svelte/icons/trash-2';
+  import X from 'lucide-svelte/icons/x';
+  import Check from 'lucide-svelte/icons/check';
+
+  interface AlertDomain { id: string; name: string; displayName: string; icon?: string; color?: string; }
 
   let loading = $state(true);
   let alerts = $state<any[]>([]);
+  let domains = $state<AlertDomain[]>([]);
   let stats = $state({ total: 0, pending: 0, acknowledged: 0 });
-  let selectedAlert = $state<any>(null);
+  let filterDomain = $state('');
   let filterType = $state('');
   let filterPriority = $state('');
-  let showAcknowledged = $state(false);
-  let acknowledging = $state<string | null>(null);
+
+  // Panel lateral
+  let selectedAlert = $state<any>(null);
+  let acknowledging = $state(false);
+
+  // KPIs calculados
+  let criticalOpen = $derived(alerts.filter(a => a.priority === 'CRITICAL' && !a.acknowledgedAt).length);
+  let resolutionRate = $derived(stats.total > 0 ? Math.round((stats.acknowledged / stats.total) * 100) : 0);
+  
+  let domainStats = $derived.by(() => {
+    const counts: Record<string, number> = {};
+    alerts.forEach(a => { counts[a.domain?.name || 'unknown'] = (counts[a.domain?.name || 'unknown'] || 0) + 1; });
+    const total = alerts.length || 1;
+    return domains.map(d => ({
+      name: d.name,
+      displayName: d.displayName,
+      color: d.color || '#64748b',
+      count: counts[d.name] || 0,
+      percent: Math.round(((counts[d.name] || 0) / total) * 100)
+    }));
+  });
+
+  let typeStats = $derived.by(() => {
+    const counts: Record<string, number> = {};
+    alerts.forEach(a => { counts[a.type] = (counts[a.type] || 0) + 1; });
+    return Object.entries(counts)
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count);
+  });
 
   const priorityColors: Record<string, string> = {
     CRITICAL: 'bg-red-100 text-red-700',
@@ -27,8 +63,8 @@
     LOW: 'bg-blue-100 text-blue-700',
   };
   const priorityIcons: Record<string, typeof Bell> = { CRITICAL: AlertTriangle, HIGH: AlertCircle, MEDIUM: Info, LOW: Bell };
-  const typeLabels: Record<string, string> = { COMPLAINT: 'Queja', POLICY_CHANGE: 'Cambio Política', SYSTEM_ERROR: 'Error Sistema', MENTION: 'Mención' };
-  const skeletonItems = [1, 2, 3, 4, 5];
+  const domainIcons: Record<string, typeof Server> = { operations: Server, business: Briefcase, social: MessageCircle };
+  const typeLabels: Record<string, string> = { COMPLAINT: 'Queja', POLICY_CHANGE: 'Cambio', SYSTEM_ERROR: 'Error', MENTION: 'Mención' };
 
   onMount(() => loadData());
 
@@ -39,28 +75,36 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query: `query($f: AlertFiltersInput, $l: Int) { alerts(filters: $f, limit: $l) { id type priority title content acknowledgedAt acknowledgedBy createdAt } alertStats { total pending acknowledged } }`,
-          variables: { f: { type: filterType || null, priority: filterPriority || null, acknowledged: showAcknowledged ? null : false }, l: 100 }
+          query: `query($f: AlertFiltersInput, $l: Int) { 
+            alertDomains { id name displayName icon color }
+            alerts(filters: $f, limit: $l) { id type priority title content acknowledgedAt createdAt domain { id name displayName color } } 
+            alertStats { total pending acknowledged } 
+          }`,
+          variables: { f: { type: filterType || null, priority: filterPriority || null, domainName: filterDomain || null, acknowledged: null }, l: 100 }
         })
       });
       const { data } = await res.json();
-      if (data) { alerts = data.alerts || []; stats = data.alertStats || stats; }
+      if (data) { 
+        alerts = data.alerts || []; 
+        stats = data.alertStats || stats; 
+        domains = data.alertDomains || [];
+      }
     } catch (e) { console.error('Error:', e); }
     finally { loading = false; }
   }
 
   async function ackAlert(id: string) {
-    acknowledging = id;
+    acknowledging = true;
     try {
       await fetch('/api/graphql', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: `mutation($id: ID!, $by: String!) { acknowledgeAlert(id: $id, acknowledgedBy: $by) { id } }`, variables: { id, by: 'admin' } })
       });
-      loadData(); if (selectedAlert?.id === id) selectedAlert = null;
-    } catch (e) { console.error(e); } finally { acknowledging = null; }
+      loadData(); selectedAlert = null;
+    } catch (e) { console.error(e); } finally { acknowledging = false; }
   }
 
   async function delAlert(id: string) {
-    if (!confirm('¿Eliminar?')) return;
+    if (!confirm('¿Eliminar esta alerta?')) return;
     try {
       await fetch('/api/graphql', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: `mutation($id: ID!) { deleteAlert(id: $id) }`, variables: { id } })
@@ -74,8 +118,8 @@
   }
 </script>
 
-
-<div class="space-y-8">
+<div class="space-y-6">
+  <!-- Header -->
   <div class="flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-semibold text-slate-800">Centro de Alertas</h1>
@@ -86,31 +130,79 @@
     </button>
   </div>
 
-  {#if loading}
-    <div class="grid grid-cols-3 gap-6">
-      {#each skeletonItems.slice(0,3) as _}
-        <div class="bg-white rounded-3xl p-6 shadow-sm"><Skeleton class="h-4 w-24 mb-3" /><Skeleton class="h-8 w-16" /></div>
-      {/each}
+  <!-- Stats Row 1 -->
+  <div class="grid grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl p-5 shadow-sm">
+      <div class="flex items-center gap-2 text-slate-500 mb-1"><Bell size={16} strokeWidth={1.5} /><span class="font-light text-xs">Total</span></div>
+      <p class="text-2xl font-semibold text-slate-800">{stats.total}</p>
     </div>
-  {:else}
-    <div class="grid grid-cols-3 gap-6">
-      <div class="bg-white rounded-3xl p-6 shadow-sm">
-        <div class="flex items-center gap-3 text-slate-500 mb-2"><Bell size={20} strokeWidth={1.5} /><span class="font-light text-sm">Total</span></div>
-        <p class="text-3xl font-semibold text-slate-800">{stats.total}</p>
-      </div>
-      <div class="bg-white rounded-3xl p-6 shadow-sm border-l-4 border-orange-400">
-        <div class="flex items-center gap-3 text-orange-500 mb-2"><AlertCircle size={20} strokeWidth={1.5} /><span class="font-light text-sm">Pendientes</span></div>
-        <p class="text-3xl font-semibold text-orange-600">{stats.pending}</p>
-      </div>
-      <div class="bg-white rounded-3xl p-6 shadow-sm">
-        <div class="flex items-center gap-3 text-green-500 mb-2"><CheckCircle size={20} strokeWidth={1.5} /><span class="font-light text-sm">Reconocidas</span></div>
-        <p class="text-3xl font-semibold text-green-600">{stats.acknowledged}</p>
-      </div>
+    <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-orange-400">
+      <div class="flex items-center gap-2 text-orange-500 mb-1"><AlertCircle size={16} strokeWidth={1.5} /><span class="font-light text-xs">Pendientes</span></div>
+      <p class="text-2xl font-semibold text-orange-600">{stats.pending}</p>
     </div>
-  {/if}
+    <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-green-400">
+      <div class="flex items-center gap-2 text-green-500 mb-1"><CheckCircle size={16} strokeWidth={1.5} /><span class="font-light text-xs">Reconocidas</span></div>
+      <p class="text-2xl font-semibold text-green-600">{stats.acknowledged}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-red-400">
+      <div class="flex items-center gap-2 text-red-500 mb-1"><AlertTriangle size={16} strokeWidth={1.5} /><span class="font-light text-xs">Críticas abiertas</span></div>
+      <p class="text-2xl font-semibold text-red-600">{criticalOpen}</p>
+    </div>
+  </div>
 
-  <div class="bg-white rounded-3xl p-5 shadow-sm flex items-center gap-4 flex-wrap">
-    <div class="flex items-center gap-2 text-slate-500"><Filter size={18} strokeWidth={1.5} /><span class="font-light text-sm">Filtros:</span></div>
+  <!-- KPIs Row 2 -->
+  <div class="grid grid-cols-3 gap-4">
+    <!-- Tasa de resolución -->
+    <div class="bg-white rounded-2xl p-5 shadow-sm">
+      <p class="text-xs text-slate-400 mb-3">Tasa de resolución</p>
+      <div class="flex items-end gap-3">
+        <p class="text-3xl font-semibold text-slate-800">{resolutionRate}%</p>
+        <div class="flex-1">
+          <div class="w-full bg-slate-100 rounded-full h-2">
+            <div class="bg-green-500 h-2 rounded-full transition-all" style="width: {resolutionRate}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Distribución por dominio -->
+    <div class="bg-white rounded-2xl p-5 shadow-sm">
+      <p class="text-xs text-slate-400 mb-3">Por dominio</p>
+      <div class="space-y-2">
+        {#each domainStats as ds}
+          {@const DIcon = domainIcons[ds.name] || Bell}
+          <div class="flex items-center gap-2">
+            <DIcon size={14} style="color: {ds.color}" />
+            <span class="text-xs text-slate-600 w-20">{ds.displayName}</span>
+            <div class="flex-1 bg-slate-100 rounded-full h-1.5">
+              <div class="h-1.5 rounded-full" style="width: {ds.percent}%; background-color: {ds.color}"></div>
+            </div>
+            <span class="text-xs text-slate-500 w-6 text-right">{ds.count}</span>
+          </div>
+        {/each}
+      </div>
+    </div>
+    <!-- Top tipos -->
+    <div class="bg-white rounded-2xl p-5 shadow-sm">
+      <p class="text-xs text-slate-400 mb-3">Tipos más frecuentes</p>
+      <div class="space-y-2">
+        {#each typeStats.slice(0, 4) as ts, i}
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 w-4">{i + 1}.</span>
+            <span class="text-xs text-slate-600 flex-1">{typeLabels[ts.type] || ts.type}</span>
+            <span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">{ts.count}</span>
+          </div>
+        {/each}
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4 flex-wrap">
+    <div class="flex items-center gap-2 text-slate-500"><Filter size={16} strokeWidth={1.5} /><span class="font-light text-sm">Filtros:</span></div>
+    <select bind:value={filterDomain} onchange={() => loadData()} class="px-4 py-2 rounded-full border border-slate-200 text-sm font-light">
+      <option value="">Todos los dominios</option>
+      {#each domains as d}<option value={d.name}>{d.displayName}</option>{/each}
+    </select>
     <select bind:value={filterType} onchange={() => loadData()} class="px-4 py-2 rounded-full border border-slate-200 text-sm font-light">
       <option value="">Todos los tipos</option>
       <option value="COMPLAINT">Quejas</option>
@@ -119,7 +211,7 @@
       <option value="MENTION">Menciones</option>
     </select>
     <select bind:value={filterPriority} onchange={() => loadData()} class="px-4 py-2 rounded-full border border-slate-200 text-sm font-light">
-      <option value="">Todas</option>
+      <option value="">Todas las prioridades</option>
       <option value="CRITICAL">Crítica</option>
       <option value="HIGH">Alta</option>
       <option value="MEDIUM">Media</option>
@@ -127,68 +219,115 @@
     </select>
   </div>
 
-
-  <div class="grid grid-cols-12 gap-6">
-    <div class="col-span-7 bg-white rounded-3xl shadow-sm overflow-hidden">
-      <div class="p-5 border-b border-slate-100"><h2 class="font-semibold text-slate-800">Alertas ({alerts.length})</h2></div>
-      {#if loading}
-        <div class="p-4 space-y-3">
-          {#each skeletonItems as _}
-            <div class="p-4 rounded-2xl bg-slate-50"><Skeleton class="h-4 w-48 mb-2" /><Skeleton class="h-3 w-32" /></div>
+  <!-- DataTable -->
+  <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <Table.Root>
+      <Table.Header>
+        <Table.Row class="bg-slate-50">
+          <Table.Head class="font-semibold">Dominio</Table.Head>
+          <Table.Head class="font-semibold">Título</Table.Head>
+          <Table.Head class="font-semibold text-center">Prioridad</Table.Head>
+          <Table.Head class="font-semibold text-center">Tipo</Table.Head>
+          <Table.Head class="font-semibold">Fecha</Table.Head>
+          <Table.Head class="font-semibold text-right">Acciones</Table.Head>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {#if loading}
+          {#each [1,2,3,4,5] as _}
+            <Table.Row><Table.Cell colspan={6}><Skeleton class="h-8 w-full" /></Table.Cell></Table.Row>
           {/each}
-        </div>
-      {:else if alerts.length === 0}
-        <div class="p-12 text-center text-slate-400">
-          <CheckCircle size={40} strokeWidth={1} class="mx-auto mb-3 opacity-50" />
-          <p class="font-light">No hay alertas</p>
-        </div>
-      {:else}
-        <div class="p-4 space-y-2 max-h-96 overflow-y-auto">
+        {:else if alerts.length === 0}
+          <Table.Row><Table.Cell colspan={6} class="text-center py-12 text-slate-400">No hay alertas</Table.Cell></Table.Row>
+        {:else}
           {#each alerts as alert}
-            {@const Icon = priorityIcons[alert.priority] || Bell}
-            <button onclick={() => selectedAlert = alert} class="w-full p-4 rounded-2xl text-left transition-all {selectedAlert?.id === alert.id ? 'bg-slate-800 text-white' : 'bg-slate-50 hover:bg-slate-100'}">
-              <div class="flex items-start gap-3">
-                <Icon size={18} strokeWidth={1.5} />
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <p class="font-medium truncate">{alert.title}</p>
-                    {#if alert.acknowledgedAt}<CheckCircle size={14} class="text-green-500" />{/if}
-                  </div>
-                  <div class="flex items-center gap-2 text-xs {selectedAlert?.id === alert.id ? 'text-slate-300' : 'text-slate-400'}">
-                    <span class="px-2 py-0.5 rounded-full {selectedAlert?.id === alert.id ? 'bg-slate-700' : priorityColors[alert.priority]}">{alert.priority}</span>
-                    <span>•</span><span>{typeLabels[alert.type]}</span><span>•</span><span>{fmtDate(alert.createdAt)}</span>
-                  </div>
+            {@const DomainIcon = domainIcons[alert.domain?.name] || Bell}
+            {@const PriorityIcon = priorityIcons[alert.priority] || Bell}
+            <Table.Row class="hover:bg-slate-50 cursor-pointer" onclick={() => selectedAlert = alert}>
+              <Table.Cell>
+                {#if alert.domain}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style="background-color: {alert.domain.color}15; color: {alert.domain.color}">
+                    <DomainIcon size={12} strokeWidth={1.5} />{alert.domain.displayName}
+                  </span>
+                {:else}
+                  <span class="text-slate-400 text-xs">-</span>
+                {/if}
+              </Table.Cell>
+              <Table.Cell>
+                <div class="flex items-center gap-2">
+                  {#if alert.acknowledgedAt}<CheckCircle size={14} class="text-green-500 flex-shrink-0" />{/if}
+                  <p class="font-medium text-sm truncate max-w-[250px]">{alert.title}</p>
                 </div>
-              </div>
-            </button>
+              </Table.Cell>
+              <Table.Cell class="text-center">
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs {priorityColors[alert.priority]}">
+                  <PriorityIcon size={12} strokeWidth={1.5} />{alert.priority}
+                </span>
+              </Table.Cell>
+              <Table.Cell class="text-center">
+                <span class="px-2 py-1 rounded-full text-xs bg-slate-100 text-slate-600">{typeLabels[alert.type] || alert.type}</span>
+              </Table.Cell>
+              <Table.Cell class="text-sm text-slate-500">{fmtDate(alert.createdAt)}</Table.Cell>
+              <Table.Cell class="text-right">
+                <button onclick={(e) => { e.stopPropagation(); selectedAlert = alert; }} class="p-2 hover:bg-blue-50 rounded-full text-blue-600"><Eye size={16} /></button>
+                <button onclick={(e) => { e.stopPropagation(); delAlert(alert.id); }} class="p-2 hover:bg-red-50 rounded-full text-red-500"><Trash2 size={16} /></button>
+              </Table.Cell>
+            </Table.Row>
           {/each}
-        </div>
-      {/if}
-    </div>
-
-    <div class="col-span-5 bg-white rounded-3xl shadow-sm overflow-hidden">
-      <div class="p-5 border-b border-slate-100"><h2 class="font-semibold text-slate-800">Detalle</h2></div>
-      {#if !selectedAlert}
-        <div class="p-12 text-center text-slate-400">
-          <Bell size={40} strokeWidth={1} class="mx-auto mb-3 opacity-50" />
-          <p class="font-light">Selecciona una alerta</p>
-        </div>
-      {:else}
-        <div class="p-6 space-y-6">
-          <div>
-            <div class="flex items-center gap-2 mb-2">
-              <span class="px-3 py-1 rounded-full text-xs font-medium {priorityColors[selectedAlert.priority]}">{selectedAlert.priority}</span>
-              <span class="px-3 py-1 rounded-full text-xs bg-slate-100 text-slate-600">{typeLabels[selectedAlert.type]}</span>
-            </div>
-            <h3 class="text-lg font-semibold text-slate-800">{selectedAlert.title}</h3>
-            <p class="text-sm text-slate-400 font-light mt-1">{fmtDate(selectedAlert.createdAt)}</p>
-          </div>
-          <div>
-            <p class="text-sm font-light text-slate-500 mb-2">Contenido</p>
-            <p class="text-slate-700 font-light">{selectedAlert.content}</p>
-          </div>
-        </div>
-      {/if}
-    </div>
+        {/if}
+      </Table.Body>
+    </Table.Root>
+    <div class="px-4 py-3 border-t border-slate-100 text-sm text-slate-500">{alerts.length} alertas</div>
   </div>
 </div>
+
+<!-- Panel lateral de detalle -->
+{#if selectedAlert}
+  <div class="fixed inset-0 bg-black/20 z-40" onclick={() => selectedAlert = null}></div>
+  <div class="fixed right-0 top-0 h-full w-96 bg-white shadow-xl z-50 overflow-y-auto">
+    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+      <h2 class="font-semibold text-slate-800">Detalle de Alerta</h2>
+      <button onclick={() => selectedAlert = null} class="p-2 hover:bg-slate-100 rounded-full"><X size={18} /></button>
+    </div>
+    <div class="p-6 space-y-6">
+      <!-- Badges -->
+      <div class="flex items-center gap-2 flex-wrap">
+        {#if selectedAlert.domain}
+          {@const DIcon = domainIcons[selectedAlert.domain?.name] || Bell}
+          <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium" style="background-color: {selectedAlert.domain.color}15; color: {selectedAlert.domain.color}">
+            <DIcon size={14} strokeWidth={1.5} />{selectedAlert.domain.displayName}
+          </span>
+        {/if}
+        <span class="px-3 py-1 rounded-full text-xs font-medium {priorityColors[selectedAlert.priority]}">{selectedAlert.priority}</span>
+        <span class="px-3 py-1 rounded-full text-xs bg-slate-100 text-slate-600">{typeLabels[selectedAlert.type]}</span>
+      </div>
+      <!-- Título -->
+      <div>
+        <h3 class="text-lg font-semibold text-slate-800">{selectedAlert.title}</h3>
+        <p class="text-sm text-slate-400 font-light mt-1">{fmtDate(selectedAlert.createdAt)}</p>
+      </div>
+      <!-- Contenido -->
+      <div>
+        <p class="text-sm font-light text-slate-500 mb-2">Contenido</p>
+        <p class="text-slate-700 font-light">{selectedAlert.content}</p>
+      </div>
+      <!-- Estado -->
+      {#if selectedAlert.acknowledgedAt}
+        <div class="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-3 rounded-xl">
+          <CheckCircle size={18} /><span class="text-sm">Reconocida</span>
+        </div>
+      {/if}
+      <!-- Acciones -->
+      <div class="flex gap-2 pt-4 border-t border-slate-100">
+        {#if !selectedAlert.acknowledgedAt}
+          <button onclick={() => ackAlert(selectedAlert.id)} disabled={acknowledging} class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-500 text-white rounded-full text-sm hover:bg-green-600 disabled:opacity-50">
+            <Check size={16} strokeWidth={1.5} />Reconocer
+          </button>
+        {/if}
+        <button onclick={() => delAlert(selectedAlert.id)} class="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-100 text-red-600 rounded-full text-sm hover:bg-red-200">
+          <Trash2 size={16} strokeWidth={1.5} />Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}

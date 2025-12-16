@@ -8,6 +8,7 @@
 
 import type {
   Alert,
+  AlertDomain,
   CreateAlertInput,
   UpdateAlertInput,
   AlertFilters,
@@ -46,6 +47,16 @@ export interface IAlertRepository {
    * Busca alertas por prioridad
    */
   findByPriority(priority: string, limit?: number): Promise<Alert[]>;
+
+  /**
+   * Obtiene todos los dominios de alertas
+   */
+  findAllDomains(): Promise<AlertDomain[]>;
+
+  /**
+   * Busca alertas por dominio
+   */
+  findByDomain(domainName: string, limit?: number): Promise<Alert[]>;
 
   /**
    * Actualiza una alerta

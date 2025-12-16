@@ -462,6 +462,26 @@ model SocialMention {
 }
 
 // ============================================
+// ALERT DOMAINS (Catálogo normalizado)
+// ============================================
+
+model AlertDomain {
+  id           String  @id @default(uuid())
+  name         String  @unique // 'operations', 'business', 'social'
+  displayName  String  // 'Operaciones', 'Negocio', 'Social'
+  description  String?
+  icon         String? // 'server', 'briefcase', 'message-circle'
+  color        String? // '#ef4444', '#3b82f6', '#10b981'
+  allowedRoles String  // JSON: ['ADMIN', 'DEV']
+  isActive     Boolean @default(true)
+  sortOrder    Int     @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  alerts Alert[]
+}
+
+// ============================================
 // ALERTS
 // ============================================
 
@@ -469,8 +489,8 @@ model Alert {
   id               String         @id @default(uuid())
   type             AlertType
   priority         AlertPriority
-  domain           String         @default("operations") // operations | business | social
-  targetRoles      String?        // JSON array: ['ADMIN'] | ['SALES', 'ADMIN'] | ['COMMUNITY']
+  domainId         String
+  domain           AlertDomain    @relation(fields: [domainId], references: [id])
   channels         String?        // JSON array: ['email', 'slack', 'dashboard']
   title            String
   content          String
@@ -487,6 +507,6 @@ model Alert {
 
   @@index([type])
   @@index([priority])
-  @@index([domain])
+  @@index([domainId])
   @@index([acknowledgedAt])
 }

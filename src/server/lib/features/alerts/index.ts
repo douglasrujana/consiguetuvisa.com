@@ -10,6 +10,7 @@ export {
   AlertType,
   AlertPriority,
   type Alert,
+  type AlertDomain,
   type CreateAlertInput,
   type UpdateAlertInput,
   type AlertFilters,

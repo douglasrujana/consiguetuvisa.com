@@ -209,3 +209,7 @@ curl -X POST https://consiguetuvisa-com.vercel.app/api/chat \
 ```
 
 curl -X POST http://localhost:3000/api/graphql -H "Content-Type: application/json" -d "{\"query\": \"{ sources { id name } }\"}"
+
+curl -s "https://consiguetuvisa-com.vercel.app/api/banners" | ConvertFrom-Json | ConvertTo-Json
+
+Invoke-RestMethod -Uri "https://consiguetuvisa-com.vercel.app/api/banners"

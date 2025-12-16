@@ -32,10 +32,22 @@ export const alertTypeDefs = gql`
   }
 
   # Types
+  type AlertDomain {
+    id: ID!
+    name: String!
+    displayName: String!
+    description: String
+    icon: String
+    color: String
+    allowedRoles: [String!]!
+    isActive: Boolean!
+  }
+
   type Alert {
     id: ID!
     type: AlertType!
     priority: AlertPriority!
+    domain: AlertDomain!
     title: String!
     content: String!
     context: String
@@ -72,6 +84,7 @@ export const alertTypeDefs = gql`
   input AlertFiltersInput {
     type: AlertType
     priority: AlertPriority
+    domainName: String
     acknowledged: Boolean
     sourceId: String
     mentionId: String
@@ -82,6 +95,7 @@ export const alertTypeDefs = gql`
   input CreateAlertInput {
     type: AlertType!
     priority: AlertPriority!
+    domainName: String!
     title: String!
     content: String!
     context: String
@@ -108,6 +122,12 @@ export const alertTypeDefs = gql`
     
     "Estadísticas de alertas"
     alertStats(fromDate: String, toDate: String): AlertStats!
+    
+    "Obtiene todos los dominios de alertas"
+    alertDomains: [AlertDomain!]!
+    
+    "Obtiene alertas por dominio"
+    alertsByDomain(domainName: String!, limit: Int): [Alert!]!
   }
 
   extend type Mutation {
@@ -203,6 +223,19 @@ export const alertResolvers = {
         },
       };
     },
+
+    alertDomains: async (_: unknown, __: unknown, context: GraphQLContext) => {
+      return context.alertRepository.findAllDomains();
+    },
+
+    alertsByDomain: async (
+      _: unknown,
+      { domainName, limit = 50 }: { domainName: string; limit?: number },
+      context: GraphQLContext
+    ) => {
+      const alerts = await context.alertRepository.findByDomain(domainName, limit);
+      return alerts.map(mapAlertToGraphQL);
+    },
   },
 
   Mutation: {
@@ -214,6 +247,7 @@ export const alertResolvers = {
       const alert = await context.alertRepository.create({
         type: input.type,
         priority: input.priority,
+        domainName: input.domainName,
         title: input.title,
         content: input.content,
         context: input.context ? JSON.parse(input.context) : undefined,
@@ -260,6 +294,7 @@ interface AlertFiltersInput {
 interface CreateAlertInput {
   type: string;
   priority: string;
+  domainName: string;
   title: string;
   content: string;
   context?: string;
@@ -279,26 +314,48 @@ function parseAlertFilters(input: AlertFiltersInput) {
   };
 }
 
-function mapAlertToGraphQL(alert: {
+interface AlertWithDomain {
   id: string;
   type: string;
   priority: string;
   title: string;
   content: string;
-  context?: Record<string, unknown>;
-  sourceId?: string;
-  mentionId?: string;
-  acknowledgedAt?: Date;
-  acknowledgedBy?: string;
+  context?: Record<string, unknown> | string | null;
+  sourceId?: string | null;
+  mentionId?: string | null;
+  acknowledgedAt?: Date | null;
+  acknowledgedBy?: string | null;
   createdAt: Date;
-}) {
+  domain?: {
+    id: string;
+    name: string;
+    displayName: string;
+    description?: string | null;
+    icon?: string | null;
+    color?: string | null;
+    allowedRoles: string[]; // Already parsed by repository
+    isActive: boolean;
+  };
+}
+
+function mapAlertToGraphQL(alert: AlertWithDomain) {
   return {
     id: alert.id,
     type: alert.type,
     priority: alert.priority,
+    domain: alert.domain ? {
+      id: alert.domain.id,
+      name: alert.domain.name,
+      displayName: alert.domain.displayName,
+      description: alert.domain.description,
+      icon: alert.domain.icon,
+      color: alert.domain.color,
+      allowedRoles: alert.domain.allowedRoles, // Already parsed by repository
+      isActive: alert.domain.isActive,
+    } : null,
     title: alert.title,
     content: alert.content,
-    context: alert.context ? JSON.stringify(alert.context) : null,
+    context: typeof alert.context === 'string' ? alert.context : (alert.context ? JSON.stringify(alert.context) : null),
     sourceId: alert.sourceId ?? null,
     mentionId: alert.mentionId ?? null,
     acknowledgedAt: alert.acknowledgedAt?.toISOString() ?? null,
