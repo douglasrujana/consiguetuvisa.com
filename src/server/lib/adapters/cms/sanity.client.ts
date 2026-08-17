@@ -95,16 +95,61 @@ export function urlFor(source: SanityImageSource) {
 }
 
 /**
- * Helper para queries con soporte de preview
+ * Helper para queries con soporte de preview.
+ * Blindado con try/catch: nunca propaga errores hacia afuera.
  */
 export async function sanityFetch<T>(
   query: string,
   params: Record<string, unknown> = {},
   options: { preview?: boolean } = {}
+): Promise<T | null> {
+  try {
+    const client = options.preview ? getPreviewClient() : getSanityClient();
+    return await client.fetch<T>(query, params);
+  } catch (error) {
+    console.warn('[Sanity] Error en sanityFetch:', (error as Error).message);
+    return null;
+  }
+}
+
+/**
+ * FUNCIÓN CENTRAL DE FALLBACK - DRY, SOLID (Single Responsibility)
+ *
+ * Encapsula el patrón try/catch + fallback en un solo lugar.
+ * Todos los servicios usan esta función en lugar de repetir lógica.
+ *
+ * @param query  - GROQ query de Sanity
+ * @param fallback - Datos estáticos de respaldo
+ * @param validator - Función opcional para validar que los datos son útiles
+ * @param params - Parámetros opcionales para la query
+ */
+export async function withSanityFallback<T>(
+  query: string,
+  fallback: T,
+  validator?: (data: T) => boolean,
+  params: Record<string, unknown> = {}
 ): Promise<T> {
-  const client = options.preview ? getPreviewClient() : getSanityClient();
-  return client.fetch<T>(query, params);
+  try {
+    const data = await sanityFetch<T>(query, params);
+
+    if (data === null || data === undefined) {
+      return fallback;
+    }
+
+    // Si hay validador, úsalo; si no, cualquier dato no-nulo es válido
+    const isValid = validator ? validator(data) : true;
+    if (!isValid) {
+      console.warn('[Sanity] Datos inválidos o vacíos, usando fallback.');
+      return fallback;
+    }
+
+    return data;
+  } catch {
+    console.warn('[Sanity] Error inesperado, usando fallback.');
+    return fallback;
+  }
 }
 
 // Export del cliente para uso directo
 export const sanityClient = getSanityClient();
+

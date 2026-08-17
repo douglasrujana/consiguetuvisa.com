@@ -6,6 +6,7 @@ import { prisma } from '@server/db/prisma-singleton';
 
 interface ServiceStatus {
   status: 'up' | 'down' | 'degraded';
+  mode?: 'live_cms' | 'local_fallback' | 'cloud' | 'local';
   latency?: number;
   error?: string;
   provider?: string;
@@ -127,17 +128,54 @@ async function checkCMS(): Promise<ServiceStatus> {
   const projectId = import.meta.env.SANITY_PROJECT_ID;
   const dataset = import.meta.env.SANITY_DATASET || 'production';
   
-  if (!projectId) return { status: 'down', provider: 'sanity', error: 'No project ID configured' };
+  if (!projectId) {
+    return { 
+      status: 'degraded', 
+      mode: 'local_fallback',
+      provider: 'sanity', 
+      error: 'SANITY_PROJECT_ID no configurado. Operando con fallback local.' 
+    };
+  }
   
   const start = Date.now();
   try {
-    // Query simple a Sanity
-    const url = `https://${projectId}.api.sanity.io/v2021-10-21/data/query/${dataset}?query=*[_type=="siteSettings"][0]{_id}`;
+    // Consulta real para verificar si existen documentos publicados en Sanity
+    const url = `https://${projectId}.api.sanity.io/v2021-10-21/data/query/${dataset}?query={%22hasSettings%22:defined(*[_type==%22siteSettings%22][0]._id),%22hasHome%22:defined(*[_type==%22page%22%26%26slug.current==%22home%22][0]._id)}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     const latency = Date.now() - start;
-    return { status: res.ok ? 'up' : 'degraded', provider: 'sanity', latency };
+
+    if (!res.ok) {
+      return { 
+        status: 'down', 
+        mode: 'local_fallback',
+        provider: 'sanity', 
+        error: `Sanity HTTP ${res.status}: ${res.statusText}`, 
+        latency 
+      };
+    }
+
+    const data = await res.json();
+    const hasData = Boolean(data?.result?.hasSettings || data?.result?.hasHome);
+
+    return {
+      status: hasData ? 'up' : 'degraded',
+      mode: hasData ? 'live_cms' : 'local_fallback',
+      provider: 'sanity',
+      latency,
+      details: {
+        dataset,
+        hasPublishedDocuments: hasData,
+        source: hasData ? 'Sanity CMS (Datos en vivo)' : 'Fallback Estático Local (Dataset vacío o sin publicar)',
+      }
+    };
   } catch (e) {
-    return { status: 'down', provider: 'sanity', error: (e as Error).message, latency: Date.now() - start };
+    return { 
+      status: 'down', 
+      mode: 'local_fallback',
+      provider: 'sanity', 
+      error: (e as Error).message, 
+      latency: Date.now() - start 
+    };
   }
 }
 

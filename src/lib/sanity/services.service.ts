@@ -1,9 +1,10 @@
 // src/lib/sanity/services.service.ts
 /**
  * SERVICES SERVICE - Carga "Tipos de Visa" desde Sanity
+ * Usa withSanityFallback centralizado (DRY)
  */
 
-import { sanityFetch } from '@server/lib/adapters/cms/sanity.client';
+import { withSanityFallback } from '@server/lib/adapters/cms/sanity.client';
 
 export interface ServiceItem {
   _key?: string;
@@ -19,20 +20,15 @@ export interface ServicesData {
   items: ServiceItem[];
 }
 
-// Query: busca la sección services dentro de la página home
 const SERVICES_QUERY = `*[_type == "page" && slug.current == "home"][0].sections[_type == "services"][0]{
-  title,
-  subtitle,
-  items[]{ _key, country, description, flagCode, link }
+  title, subtitle, items[]{ _key, country, description, flagCode, link }
 }`;
 
-// Helper para generar URL de bandera
 export function getFlagUrl(flagCode: string): string {
   return `https://flagcdn.com/w80/${flagCode}.png`;
 }
 
-// Fallback estático
-const FALLBACK_SERVICES: ServicesData = {
+export const FALLBACK_SERVICES: ServicesData = {
   title: 'Tipos de Visa',
   subtitle: 'Escoge tu destino y agenda una asesoría personalizada con nuestros expertos.',
   items: [
@@ -45,21 +41,5 @@ const FALLBACK_SERVICES: ServicesData = {
   ],
 };
 
-/**
- * Obtiene Services desde Sanity con fallback
- */
-export async function getServices(): Promise<ServicesData> {
-  try {
-    const data = await sanityFetch<ServicesData | null>(SERVICES_QUERY);
-    
-    if (data?.items?.length) {
-      console.log('[Sanity] Services cargado desde CMS');
-      return data;
-    }
-    
-    return FALLBACK_SERVICES;
-  } catch (error) {
-    console.log('[Sanity] Services usando fallback');
-    return FALLBACK_SERVICES;
-  }
-}
+export const getServices = (): Promise<ServicesData> =>
+  withSanityFallback<ServicesData>(SERVICES_QUERY, FALLBACK_SERVICES, (d) => !!d?.items?.length);

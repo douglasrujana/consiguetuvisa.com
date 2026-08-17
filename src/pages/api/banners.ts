@@ -17,9 +17,40 @@ export interface PublicBanner {
 
 export const GET: APIRoute = async ({ request }) => {
   try {
-    // Obtener la página actual del header o query param
     const url = new URL(request.url);
     const currentPage = url.searchParams.get('page') || '/';
+    const systemBanners: PublicBanner[] = [];
+
+    // ── Banner 1: Entorno de pruebas ────────────────────────────────────────
+    const nodeEnv = import.meta.env.MODE || 'development';
+    const publicAppUrl = import.meta.env.PUBLIC_APP_URL || '';
+    const isProdDomain = publicAppUrl.includes('consiguetuvisa.com') &&
+      !publicAppUrl.includes('preview') && !publicAppUrl.includes('staging');
+
+    if (!isProdDomain) {
+      systemBanners.push({
+        id: 'env-testing',
+        type: 'environment',
+        message: `🧪 Entorno de Pruebas — ${nodeEnv.toUpperCase()}`,
+        dismissible: false,
+      });
+    }
+
+    // ── Banner 2: Sanity sin token (modo fallback) ───────────────────────────
+    const sanityToken = import.meta.env.SANITY_API_TOKEN;
+    const isDev = nodeEnv === 'development' || nodeEnv === 'preview';
+
+    if (!sanityToken && isDev) {
+      systemBanners.push({
+        id: 'sanity-fallback',
+        type: 'warning',
+        message: '⚠️ CMS Sanity sin token — el contenido se muestra desde datos locales de fallback.',
+        dismissible: true,
+      });
+    }
+
+    // ── Banners desde Base de Datos (configurados por el admin) ─────────────
+
     
     // Obtener banners de la BD
     const bannersConfig = await prisma.systemConfig.findUnique({
@@ -27,7 +58,7 @@ export const GET: APIRoute = async ({ request }) => {
     });
     
     if (!bannersConfig?.value) {
-      return new Response(JSON.stringify([]), {
+      return new Response(JSON.stringify(systemBanners), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -72,7 +103,9 @@ export const GET: APIRoute = async ({ request }) => {
         textColor: b.textColor,
       }));
     
-    return new Response(JSON.stringify(activeBanners), {
+    const combinedBanners = [...systemBanners, ...activeBanners];
+
+    return new Response(JSON.stringify(combinedBanners), {
       status: 200,
       headers: { 
         'Content-Type': 'application/json',
@@ -81,6 +114,6 @@ export const GET: APIRoute = async ({ request }) => {
     });
   } catch (error) {
     console.error('Error GET /api/banners:', error);
-    return new Response(JSON.stringify([]), { status: 200 });
+    return new Response(JSON.stringify(systemBanners), { status: 200 });
   }
 };

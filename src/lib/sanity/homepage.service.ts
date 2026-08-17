@@ -72,26 +72,8 @@ export interface HomepageData {
  * - maxAge: 5min → después de esto, fuerza recarga
  */
 export async function getHomepageData(): Promise<HomepageData> {
-  // Cargar todas las secciones en paralelo, cada una con su cache SWR
-  // Esto permite:
-  // 1. Paralelismo: todas las secciones se cargan al mismo tiempo
-  // 2. Cache granular: cada sección tiene su propio TTL
-  // 3. Revalidación independiente: si hero cambia, solo se recarga hero
-  
-  const [
-    hero,
-    benefits,
-    services,
-    testimonials,
-    steps,
-    trust,
-    trustLogos,
-    faq,
-    contact,
-    settings,
-  ] = await Promise.all([
-    // Cada llamada está envuelta en withSWR con una key única
-    // Key format: 'sanity:{seccion}' para fácil invalidación
+  // Promise.allSettled: si un servicio falla, los otros 9 siguen renderizando.
+  const results = await Promise.allSettled([
     withSWR('sanity:hero', getHero),
     withSWR('sanity:benefits', getBenefits),
     withSWR('sanity:services', getServices),
@@ -104,17 +86,25 @@ export async function getHomepageData(): Promise<HomepageData> {
     withSWR('sanity:settings', getSiteSettings),
   ]);
 
+  // Extraer valor o fallback por posición - cada servicio ya tiene su propio FALLBACK
+  const [hero, benefits, services, testimonials, steps, trust, trustLogos, faq, contact, settings] =
+    results.map((r, i) => {
+      if (r.status === 'fulfilled') return r.value;
+      console.warn(`[Homepage] Sección ${i} falló, usando fallback:`, (r as PromiseRejectedResult).reason);
+      return null;
+    });
+
   return {
-    hero,
-    benefits,
-    services,
-    testimonials,
-    steps,
-    trust,
-    trustLogos,
-    faq,
-    contact,
-    settings,
+    hero: hero ?? (await getHero()),
+    benefits: benefits ?? (await getBenefits()),
+    services: services ?? (await getServices()),
+    testimonials: testimonials ?? (await getTestimonials()),
+    steps: steps ?? (await getSteps()),
+    trust: trust ?? (await getTrust()),
+    trustLogos: trustLogos ?? (await getTrustLogos()),
+    faq: faq ?? (await getFAQ()),
+    contact: contact ?? (await getContact()),
+    settings: settings ?? (await getSiteSettings()),
   };
 }
 

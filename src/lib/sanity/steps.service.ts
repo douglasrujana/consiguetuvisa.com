@@ -1,9 +1,10 @@
 // src/lib/sanity/steps.service.ts
 /**
  * STEPS SERVICE - Carga "Nuestro Proceso" desde Sanity
+ * Usa withSanityFallback centralizado (DRY)
  */
 
-import { sanityFetch } from '@server/lib/adapters/cms/sanity.client';
+import { withSanityFallback } from '@server/lib/adapters/cms/sanity.client';
 
 export interface StepItem {
   _key?: string;
@@ -19,15 +20,11 @@ export interface StepsData {
   items: StepItem[];
 }
 
-// Query: busca la sección steps dentro de la página home
 const STEPS_QUERY = `*[_type == "page" && slug.current == "home"][0].sections[_type == "steps"][0]{
-  title,
-  subtitle,
-  items[]{ _key, number, title, description, icon }
+  title, subtitle, items[]{ _key, number, title, description, icon }
 }`;
 
-// Fallback estático
-const FALLBACK_STEPS: StepsData = {
+export const FALLBACK_STEPS: StepsData = {
   title: 'Nuestro Proceso',
   subtitle: 'Un proceso claro y estructurado para que obtengas tu visa sin complicaciones.',
   items: [
@@ -39,21 +36,5 @@ const FALLBACK_STEPS: StepsData = {
   ],
 };
 
-/**
- * Obtiene Steps desde Sanity con fallback
- */
-export async function getSteps(): Promise<StepsData> {
-  try {
-    const data = await sanityFetch<StepsData | null>(STEPS_QUERY);
-    
-    if (data?.items?.length) {
-      console.log('[Sanity] Steps cargado desde CMS');
-      return data;
-    }
-    
-    return FALLBACK_STEPS;
-  } catch (error) {
-    console.log('[Sanity] Steps usando fallback');
-    return FALLBACK_STEPS;
-  }
-}
+export const getSteps = (): Promise<StepsData> =>
+  withSanityFallback<StepsData>(STEPS_QUERY, FALLBACK_STEPS, (d) => !!d?.items?.length);

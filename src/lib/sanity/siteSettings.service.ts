@@ -1,9 +1,10 @@
 // src/lib/sanity/siteSettings.service.ts
 /**
  * SITE SETTINGS SERVICE - Carga configuración global desde Sanity
+ * Usa withSanityFallback centralizado (DRY)
  */
 
-import { sanityFetch } from '@server/lib/adapters/cms/sanity.client';
+import { withSanityFallback } from '@server/lib/adapters/cms/sanity.client';
 
 export interface FooterLink {
   _key?: string;
@@ -29,24 +30,14 @@ export interface SiteSettings {
 }
 
 const SETTINGS_QUERY = `*[_type == "siteSettings"][0]{
-  siteName,
-  tagline,
-  description,
-  location,
-  phone,
-  email,
-  whatsapp,
-  address,
-  facebook,
-  instagram,
-  tiktok,
+  siteName, tagline, description, location, phone, email, whatsapp, address,
+  facebook, instagram, tiktok,
   footerServices[]{ _key, label, href },
   footerCompany[]{ _key, label, href },
   footerLegal[]{ _key, label, href }
 }`;
 
-// Fallback
-const FALLBACK_SETTINGS: SiteSettings = {
+export const FALLBACK_SETTINGS: SiteSettings = {
   siteName: 'ConsigueTuVisa',
   tagline: 'Asesoría profesional para visas de turismo',
   description: 'Tu trámite en manos de expertos.',
@@ -70,25 +61,8 @@ const FALLBACK_SETTINGS: SiteSettings = {
   footerLegal: [
     { label: 'Términos y Condiciones', href: '#' },
     { label: 'Política de Privacidad', href: '#' },
-    { label: 'Aviso Legal', href: '#' },
   ],
 };
 
-/**
- * Obtiene configuración del sitio desde Sanity
- */
-export async function getSiteSettings(): Promise<SiteSettings> {
-  try {
-    const data = await sanityFetch<SiteSettings | null>(SETTINGS_QUERY);
-    
-    if (data?.siteName) {
-      console.log('[Sanity] SiteSettings cargado desde CMS');
-      return { ...FALLBACK_SETTINGS, ...data };
-    }
-    
-    return FALLBACK_SETTINGS;
-  } catch (error) {
-    console.log('[Sanity] SiteSettings usando fallback');
-    return FALLBACK_SETTINGS;
-  }
-}
+export const getSiteSettings = (): Promise<SiteSettings> =>
+  withSanityFallback<SiteSettings>(SETTINGS_QUERY, FALLBACK_SETTINGS, (d) => !!d?.siteName);

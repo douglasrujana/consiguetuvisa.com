@@ -1,0 +1,10 @@
+; BIND Zone File for consiguetuvisa.com
+; Importable into Cloudflare DNS (DNS -> Records -> Import DNS Records)
+$ORIGIN consiguetuvisa.com.
+$TTL 3600
+
+; Apex domain (consiguetuvisa.com) pointing to Vercel
+@ IN A 76.76.21.21
+
+; Subdomain (www.consiguetuvisa.com) pointing to Vercel
+www IN CNAME cname.vercel-dns.com.
