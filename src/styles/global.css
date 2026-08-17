@@ -1,22 +1,69 @@
 /* src/styles/global.css */
-/* 2. ESTILO BASE GLOBAL */
+/* SISTEMA DE DISEÑO UNIFICADO - CONSIGUETUVISA.COM */
 
 @import "tailwindcss";
-@import "../../design-system/global/tokens.css";
-@import "../../design-system/global/themes/light.css";
-@import "../../design-system/global/components.css";
-@import "../../design-system/global/utilities.css";
-@import "../../design-system/global/animations.css";
+@import "./tokens.css";
+@import "./animations.css";
 
-/* Establece Montserrat como la fuente base para todo el cuerpo del documento */
+/* === BASE ESTILOS GLOBALES === */
 body {
-    font-family: 'Montserrat', sans-serif;
-    /* El fondo limpio definido en tailwind.config.mjs */
-    @apply bg-white text-brand-primary;
+  font-family: var(--font-family-sans);
+  background-color: var(--color-surface-white);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* 3. TRANSICIONES GLOBALES SUTILES (Para la estética Jony Ive) */
-/* Hace que todas las transiciones sean suaves y agradables */
-* {
-    @apply transition-all duration-300 ease-in-out;
+/* === UTILIDADES SEMÁNTICAS LIMPIAS === */
+
+/* Contenedores y Secciones */
+@utility container-main {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  @variant sm {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  @variant lg {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Gradientes */
+@utility gradient-hero {
+  background: linear-gradient(135deg, var(--color-surface-light) 0%, var(--color-surface-white) 100%);
+}
+
+@utility gradient-brand {
+  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-secondary) 100%);
+}
+
+/* Tarjetas y Badges */
+@utility card-base {
+  background-color: var(--color-surface-white);
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@utility card-hover {
+  &:hover {
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-4px);
+  }
+}
+
+@utility badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
 }

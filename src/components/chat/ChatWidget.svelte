@@ -362,31 +362,31 @@
 {#if !isOpen}
   <button
     onclick={() => (isOpen = true)}
-    style="position: fixed; bottom: 80px; right: 24px; z-index: 9999; display: flex; height: 56px; width: 56px; align-items: center; justify-content: center; border-radius: 50%; background: #7c3aed; color: white; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"
+    class="fixed bottom-20 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-brand-secondary text-white shadow-xl hover:scale-105 hover:bg-brand-accent transition-all duration-300 border-none cursor-pointer"
     aria-label="Abrir chat"
   >
-    <MessageCircle style="width: 24px; height: 24px;" />
+    <MessageCircle class="w-6 h-6" />
   </button>
 {/if}
 
 <!-- Ventana de chat -->
 {#if isOpen}
   <div
-    style="position: fixed; bottom: 80px; right: 24px; z-index: 9999; display: flex; height: 500px; width: 380px; flex-direction: column; overflow: hidden; border-radius: 16px; border: 1px solid #e5e7eb; background: white; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);"
+    class="fixed bottom-20 right-6 z-50 flex h-[500px] w-[380px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all duration-300"
   >
     <!-- Header -->
-    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.2); background: #7c3aed; padding: 12px 16px; color: white;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <Bot style="width: 20px; height: 20px;" />
-        <span style="font-weight: 500;">{title}</span>
+    <div class="flex items-center justify-between border-b border-white/20 bg-brand-secondary px-4 py-3 text-white">
+      <div class="flex items-center gap-2">
+        <Bot class="w-5 h-5 text-white" />
+        <span class="font-medium text-sm">{title}</span>
       </div>
-      <div style="display: flex; align-items: center; gap: 4px;">
+      <div class="flex items-center gap-1">
         <button
           onclick={() => (isOpen = false)}
-          style="border-radius: 50%; padding: 4px; background: transparent; border: none; color: white; cursor: pointer;"
+          class="rounded-full p-1 text-white hover:bg-black/10 transition-colors border-none bg-transparent cursor-pointer"
           aria-label="Cerrar"
         >
-          <X style="width: 20px; height: 20px;" />
+          <X class="w-5 h-5" />
         </button>
       </div>
     </div>
@@ -394,29 +394,29 @@
     <!-- Messages -->
     <div
       bind:this={messagesContainer}
-      style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px;"
+      class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-slate-50/50"
     >
       {#each messages as message (message.id)}
-        <div style="display: flex; gap: 12px; {message.role === 'user' ? 'flex-direction: row-reverse;' : ''}">
+        <div class="flex gap-3 {message.role === 'user' ? 'flex-row-reverse' : ''}">
           <!-- Avatar -->
-          <div style="display: flex; height: 32px; width: 32px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 50%; {message.role === 'user' ? 'background: #7c3aed; color: white;' : 'background: #f3f4f6;'}">
+          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full {message.role === 'user' ? 'bg-brand-secondary text-white' : 'bg-slate-200 text-slate-700'}">
             {#if message.role === 'user'}
-              <User style="width: 16px; height: 16px;" />
+              <User class="w-4 h-4" />
             {:else}
-              <Bot style="width: 16px; height: 16px;" />
+              <Bot class="w-4 h-4" />
             {/if}
           </div>
 
           <!-- Bubble -->
-          <div style="max-width: 80%; border-radius: 16px; padding: 8px 16px; {message.role === 'user' ? 'background: #7c3aed; color: white;' : 'background: #f3f4f6; color: #1f2937;'}">
-            <p style="font-size: 14px; white-space: pre-wrap; margin: 0;">{message.content}</p>
+          <div class="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm {message.role === 'user' ? 'bg-brand-secondary text-white' : 'bg-white text-slate-800 border border-slate-100 shadow-sm'}">
+            <p class="whitespace-pre-wrap m-0 leading-relaxed">{message.content}</p>
 
             <!-- Sources -->
             {#if message.sources && message.sources.length > 0}
-              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.1);">
-                <p style="font-size: 11px; opacity: 0.7; margin: 0 0 4px 0;">Fuentes:</p>
+              <div class="mt-2 pt-2 border-t border-slate-100/30 text-xs">
+                <p class="opacity-75 font-semibold m-0 mb-1">Fuentes:</p>
                 {#each message.sources.slice(0, 2) as source}
-                  <p style="font-size: 11px; opacity: 0.6; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">• {source.source}</p>
+                  <p class="opacity-60 m-0 truncate text-[11px]">• {source.source}</p>
                 {/each}
               </div>
             {/if}
@@ -426,57 +426,50 @@
 
       <!-- Loading indicator (non-streaming) -->
       {#if isLoading}
-        <div style="display: flex; gap: 12px;">
-          <div style="display: flex; height: 32px; width: 32px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 50%; background: #f3f4f6;">
-            <Bot style="width: 16px; height: 16px;" />
+        <div class="flex gap-3">
+          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-700">
+            <Bot class="w-4 h-4" />
           </div>
-          <div style="display: flex; align-items: center; gap: 8px; border-radius: 16px; background: #f3f4f6; padding: 8px 16px;">
-            <Loader style="width: 16px; height: 16px; animation: spin 1s linear infinite;" />
-            <span style="font-size: 14px;">Pensando...</span>
+          <div class="flex items-center gap-2 rounded-2xl bg-white border border-slate-100 px-4 py-2.5 text-sm text-slate-600 shadow-sm">
+            <Loader class="w-4 h-4 animate-spin text-brand-secondary" />
+            <span>Pensando...</span>
           </div>
         </div>
       {/if}
     </div>
 
     <!-- Input -->
-    <div style="border-top: 1px solid #e5e7eb; padding: 12px;">
-      <div style="display: flex; align-items: center; gap: 8px;">
+    <div class="border-t border-slate-200 p-3 bg-white">
+      <div class="flex items-center gap-2">
         <input
           type="text"
           bind:value={inputValue}
           onkeydown={handleKeydown}
           {placeholder}
           disabled={isLoading || isStreaming}
-          style="flex: 1; border-radius: 24px; border: 1px solid #e5e7eb; background: #f9fafb; padding: 8px 16px; font-size: 14px; outline: none;"
+          class="flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm outline-none focus:border-brand-secondary focus:bg-white transition-colors"
         />
         {#if isStreaming}
           <!-- Cancel button during streaming -->
           <button
             onclick={cancelStreaming}
-            style="display: flex; height: 40px; width: 40px; align-items: center; justify-content: center; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer;"
+            class="flex h-9 w-9 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors border-none cursor-pointer shrink-0"
             aria-label="Cancelar"
           >
-            <X style="width: 16px; height: 16px;" />
+            <X class="w-4 h-4" />
           </button>
         {:else}
           <!-- Send button -->
           <button
             onclick={sendMessage}
             disabled={!inputValue.trim() || isLoading}
-            style="display: flex; height: 40px; width: 40px; align-items: center; justify-content: center; border-radius: 50%; background: #7c3aed; color: white; border: none; cursor: pointer; opacity: {!inputValue.trim() || isLoading ? '0.5' : '1'};"
+            class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-secondary text-white hover:bg-brand-accent disabled:opacity-40 transition-all border-none cursor-pointer shrink-0"
             aria-label="Enviar"
           >
-            <Send style="width: 16px; height: 16px;" />
+            <Send class="w-4 h-4" />
           </button>
         {/if}
       </div>
     </div>
   </div>
 {/if}
-
-<style>
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-</style>
