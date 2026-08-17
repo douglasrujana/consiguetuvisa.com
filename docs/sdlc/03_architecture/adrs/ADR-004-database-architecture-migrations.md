@@ -1,62 +1,95 @@
-# ADR-004: Arquitectura de Base de Datos PostgreSQL, Multi-Tenancy y Estrategia de Migraciones
+# ADR-004: Estrategia de Base de Datos — Turso/libSQL para Edge, PostgreSQL para In-Situ Enterprise
 
 | Metadato | Valor |
 | :--- | :--- |
-| **Estado** | **Aceptado / Regla de Oro de Ingeniería** |
-| **Fecha** | Agosto 2026 |
+| **Estado** | **Aceptado / Revisado — Agosto 2026** |
+| **Fecha de Revisión** | Agosto 2026 |
 | **Fase SDLC** | `03_architecture/adrs` |
-| **Contexto** | Base de Datos Relacional, Esquemas Multi-Tenant, Migraciones Prisma y Capa de Caché |
+| **Contexto** | Base de Datos Relacional, Multi-Tenancy, Migraciones Prisma y Capa de Caché |
 
 ---
 
-## 1. Contexto y Problema
-El ecosistema digital comprende dos componentes con naturalezas de persistencia distintas:
-1. **Front-Office (`consiguetuvisa.com`)**: Requiere persistencia ágil de sesiones, captura de leads, banners dinámicos, registros de auditoría y métricas del sitio web.
-2. **Back-Office Core ERP (`erp_worldclass_v2`)**: Requiere un modelo empresarial robusto (MDM, SD, FICO, MM, HCM) capaz de operar como solución SaaS multi-empresa (agencias de viajes, farmacias, clínicas, ferreterías) o standalone in-situ.
+## 1. Contexto y Decisión Actualizada
 
-Mantener SQLite/Turso para producción de gran escala presenta limitaciones para multi-tenancy formal, esquemas aislados y tipado avanzado (JSONB, índices GIN, transacciones ACID distribuidas).
+### 1.1 El Principio de Decisión: "No Rompas lo que Funciona"
+`consiguetuvisa.com` ya tiene clientes en producción corriendo sobre **Turso (libSQL)**. Forzar una migración a PostgreSQL para satisfacer un requisito arquitectónico teórico cuando Turso resuelve el problema real no es ingeniería, es sobreingeniería.
+
+Se adopta el principio: **la base de datos correcta es la que sirve al caso de uso real, no la que está de moda**.
 
 ---
 
-## 2. Decisión de Arquitectura
+## 2. Decisión de Arquitectura por Componente
 
-### 2.1 Motor de Base de Datos: PostgreSQL Serverless (Neon / Supabase)
-Se estandariza **PostgreSQL** como el motor relacional principal del ecosistema:
-* **Neon Serverless Postgres** como proveedor principal por su soporte nativo de **Instant Branching** (permite clonar esquemas y datos instantáneamente para `testing.consiguetuvisa.com`) y connection pooling optimizado para Vercel Serverless.
-* **Supabase PostgreSQL** como alternativa compatible gracias a la capa de abstracción de Prisma.
+### 2.1 `consiguetuvisa.com` → Turso (libSQL / Edge) — Permanente
 
-### 2.2 Estrategia de Aislamiento Multi-Tenant: Multi-Schema PostgreSQL
-Para garantizar el principio de **"juntos pero no revueltos"** y evitar fugas de datos entre empresas cliente del ERP:
-* Se rechaza el modelo de "todo en una tabla compartida con `tenantId`" por riesgo de seguridad.
-* Se adopta el modelo **Multi-Schema**: cada empresa cliente tiene su propio esquema lógico aislado dentro de PostgreSQL (`schema "tenant_consiguetuvisa"`, `schema "tenant_farmacia_central"`, `schema "tenant_clinica"`).
-* Los datos de una empresa jamás coexisten en las mismas tablas físicas que otra empresa.
+**Turso no es un SQLite de desarrollo. Es libSQL distribuido globalmente en el Edge.**
 
-### 2.3 Estrategia de Migraciones con Prisma ORM
-La configuración del datasource en `schema.prisma` adopta el estándar de doble URL (Pooling para serverless + Direct para migraciones):
+| Capacidad | Turso (libSQL) |
+| :--- | :--- |
+| **Latencia de lectura global** | ~6ms desde CDN Edge (inferior solo a caché L1) |
+| **Compatibilidad con Prisma ORM** | ✅ Nativa via `@prisma/adapter-libsql` |
+| **Branching para ambientes** | ✅ `turso db fork <db> --name <env>` (igual que Neon Postgres) |
+| **Bases de datos por cuenta** | Ilimitadas (perfecto para multi-tenancy) |
+| **Réplicas por región** | Automáticas (distribución global sin configuración extra) |
+| **Clientes en producción activos** | ✅ Migración innecesaria y contraproducente |
+
+**Conclusión**: La base de datos de `consiguetuvisa.com` **permanece en Turso sin modificación**. El escalamiento horizontal se activa automáticamente cuando el volumen lo exija mediante réplicas regionales de Turso.
+
+### 2.2 `erp_worldclass_v2` en Modo SaaS Headless → Turso Multi-DB por Tenant
+
+Turso soporta de forma nativa el patrón de **una base de datos libSQL por tenant**, que otorga aislamiento físico completo de datos sin la complejidad operativa del Multi-Schema de PostgreSQL:
+
+```bash
+# Onboarding de nuevo cliente del ERP en segundos:
+turso db fork erp_base_schema --name tenant_farmacia_central_ec
+turso db fork erp_base_schema --name tenant_clinica_salud_q
+```
+
+* Cada empresa cliente obtiene una base de datos libSQL aislada al 100%.
+* Las migraciones de schema se propagan mediante `prisma migrate deploy` apuntando al `DATABASE_URL` del tenant correspondiente.
+
+### 2.3 `erp_worldclass_v2` en Modo In-Situ Enterprise → PostgreSQL (Neon / Supabase)
+
+Cuando un cliente corporativo requiere:
+* Instalación física en servidores propios o cloud privada.
+* Compliance regulatorio (HIPAA para clínicas, SOC2, GDPR).
+* Integraciones con herramientas empresariales que requieren PostgreSQL nativo (Power BI, SAP, Oracle).
+
+En ese caso y **solo en ese caso**, el ERP se despliega sobre **PostgreSQL** (Neon Serverless o Supabase Self-Hosted). El motor del ERP es agnóstico al proveedor gracias a Prisma ORM.
+
+---
+
+## 3. Estrategia de Migraciones
 
 ```prisma
+// schema.prisma — Configuración universal compatible con Turso y PostgreSQL
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")   // Conexión con pooling (PgBouncer / Neon Pooling)
-  directUrl = env("DIRECT_URL")     // Conexión directa TCP para migraciones
+  provider = "sqlite"   // Para Turso/libSQL (cambia a "postgresql" para in-situ enterprise)
+  url      = env("DATABASE_URL")
 }
 ```
 
-* **Flujo Local (Desarrollo)**: `npx prisma migrate dev --name <nombre_migracion>`
-* **Flujo CI/CD (Testing / Producción)**: `npx prisma migrate deploy` (ejecución determinista de SQL sin bloqueo interactivo).
-
-### 2.4 Estrategia de Caché en 2 Capas
-1. **Capa L1 (En Memoria / Runtime SWR)**: Implementada mediante el wrapper `withSWR` para datos de CMS y configuraciones globales (latencia $0\text{ ms}$).
-2. **Capa L2 (Distribuida Serverless)**: **Upstash Redis** mediante REST API para invalidación global de sesiones, rate-limiting de API y respuestas de cotizaciones frecuentes (latencia $<10\text{ ms}$).
+* **Entorno de desarrollo**: `npx prisma migrate dev --name <nombre>`
+* **Testing / Staging**: `turso db fork <prod-db> --name <staging-db>` + `npx prisma migrate deploy`
+* **Producción**: `npx prisma migrate deploy` en CI/CD (Vercel Build Hook o GitHub Actions)
 
 ---
 
-## 3. Consecuencias
+## 4. Estrategia de Caché en 2 Capas
+
+1. **Capa L1 (Runtime SWR — En Memoria)**: Wrapper `withSWR` ya implementado. Latencia: **0ms** para datos CMS y configuraciones globales.
+2. **Capa L2 (Distribuida Serverless — Upstash Redis)**: Se implementará cuando el volumen de la API lo requiera para rate-limiting, invalidación de sesiones y respuestas de cotizaciones frecuentes. Latencia: **<10ms**.
+
+**Principio**: La Capa L2 se añade cuando el profiler identifique cuellos de botella reales. No se implementa anticipatoriamente.
+
+---
+
+## 5. Consecuencias
 
 ### Positivas:
-* **Aislamiento Seguro de Datos**: Cada cliente del ERP opera en un esquema hermético con posibilidad de exportar copias de seguridad individuales (`pg_dump -n <schema_name>`).
-* **Branching para Pruebas**: Crear entornos de testing (`testing.consiguetuvisa.com`) toma segundos mediante ramas de base de datos de Neon sin afectar los datos de producción.
-* **Cero Concurrency Bottlenecks**: El pooling nativo previene el agotamiento de conexiones en entornos serverless de alto tráfico.
+* **Continuidad de Servicio**: Los clientes actuales de `consiguetuvisa.com` no experimentan ninguna interrupción ni migración.
+* **Aislamiento Multi-Tenant Real**: Cada empresa cliente del ERP tiene su propia base de datos Turso — aislamiento físico sin complejidad de Multi-Schema Postgres.
+* **Flexibilidad**: El mismo motor del ERP puede correr sobre Turso (SaaS) o PostgreSQL (Enterprise in-situ) sin cambios en el código de negocio.
 
 ### Neutrales / Trade-offs:
-* Requiere aprovisionar `DATABASE_URL` y `DIRECT_URL` en las variables de entorno de Vercel y locales.
+* SQLite/libSQL no soporta algunas extensiones avanzadas de PostgreSQL (ej. `pg_vector` para embeddings de IA). Si el ERP requiere búsqueda vectorial en el futuro, se añade un servicio externo (Pinecone, Qdrant) o se evalúa migración del módulo de IA a Supabase pgvector.
