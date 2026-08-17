@@ -35,27 +35,36 @@ Se adopta el principio: **la base de datos correcta es la que sirve al caso de u
 
 **Conclusión**: La base de datos de `consiguetuvisa.com` **permanece en Turso sin modificación**. El escalamiento horizontal se activa automáticamente cuando el volumen lo exija mediante réplicas regionales de Turso.
 
-### 2.2 `erp_worldclass_v2` en Modo SaaS Headless → Turso Multi-DB por Tenant
+### 2.2 `erp_worldclass_v2` → PostgreSQL (Neon Serverless) — Siempre, sin excepción
 
-Turso soporta de forma nativa el patrón de **una base de datos libSQL por tenant**, que otorga aislamiento físico completo de datos sin la complejidad operativa del Multi-Schema de PostgreSQL:
+El ERP no usa Turso. Opera sobre **PostgreSQL en Neon Serverless** en todos sus modos de despliegue:
+
+| Modo de Despliegue | Base de Datos | Razón |
+| :--- | :--- | :--- |
+| **SaaS Headless** (agencias, farmacias, clínicas) | PostgreSQL Neon | Multi-Schema por tenant, migraciones formales, ACID |
+| **In-Situ Enterprise** (servidores propios) | PostgreSQL Neon Self-Hosted o Supabase | Compliance, acceso físico y control total |
+
+**¿Por qué PostgreSQL y no Turso para el ERP?**
+* El ERP maneja transacciones contables (`11_fico`), inventario (`08_mm`) y nómina (`07_hcm`): dominios donde las **transacciones ACID multi-tabla** y los **constraints relacionales** de PostgreSQL son no negociables.
+* PostgreSQL soporta **Multi-Schema nativo**: cada empresa cliente del ERP recibe su propio esquema aislado (`schema "tenant_consiguetuvisa"`, `schema "tenant_farmacia_central"`) dentro de una misma instancia Neon, con backups independientes por schema.
+* **Neon Instant Branching**: permite clonar el esquema completo de producción del ERP en segundos para crear ambientes de testing sin duplicar infraestructura.
 
 ```bash
-# Onboarding de nuevo cliente del ERP en segundos:
-turso db fork erp_base_schema --name tenant_farmacia_central_ec
-turso db fork erp_base_schema --name tenant_clinica_salud_q
+# Onboarding de nuevo cliente en el ERP (segundos):
+# Se crea el schema del tenant y se aplican migraciones
+psql $NEON_URL -c "CREATE SCHEMA tenant_farmacia_central;"
+npx prisma migrate deploy --schema=tenant_farmacia_central
 ```
 
-* Cada empresa cliente obtiene una base de datos libSQL aislada al 100%.
-* Las migraciones de schema se propagan mediante `prisma migrate deploy` apuntando al `DATABASE_URL` del tenant correspondiente.
+### 2.3 Separación Estricta: La Web Nunca Toca la DB del ERP y Viceversa
 
-### 2.3 `erp_worldclass_v2` en Modo In-Situ Enterprise → PostgreSQL (Neon / Supabase)
+```
+consiguetuvisa.com  ←──→  Turso/libSQL (Edge)
+                               ↕ (ninguna conexión directa)
+erp_worldclass_v2   ←──→  PostgreSQL / Neon Serverless
+```
 
-Cuando un cliente corporativo requiere:
-* Instalación física en servidores propios o cloud privada.
-* Compliance regulatorio (HIPAA para clínicas, SOC2, GDPR).
-* Integraciones con herramientas empresariales que requieren PostgreSQL nativo (Power BI, SAP, Oracle).
-
-En ese caso y **solo en ese caso**, el ERP se despliega sobre **PostgreSQL** (Neon Serverless o Supabase Self-Hosted). El motor del ERP es agnóstico al proveedor gracias a Prisma ORM.
+La comunicación entre ambos sistemas ocurre **únicamente vía API REST + Webhooks** (ver ADR-005). Jamás mediante consultas directas entre bases de datos.
 
 ---
 
