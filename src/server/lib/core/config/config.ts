@@ -6,6 +6,8 @@
  * Soporta: development, testing, staging, production
  */
 
+import { validateEnv } from './env.validator';
+
 export type Environment = 'development' | 'testing' | 'staging' | 'production';
 
 // ============================================

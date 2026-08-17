@@ -3,6 +3,8 @@
 
 import { clerkMiddleware, createRouteMatcher, clerkClient } from '@clerk/astro/server';
 import { prisma } from './server/db/prisma-singleton';
+import { validateEnv } from './server/lib/core/config/env.validator';
+import { handleMiddlewareError } from './server/lib/core/error/errorHandler';
 
 // Rutas que requieren autenticación
 const isProtectedRoute = createRouteMatcher([
@@ -118,7 +120,7 @@ async function findUserByClerkId(clerkId: string, clerkEmail?: string): Promise<
   return null;
 }
 
-export const onRequest = clerkMiddleware(async (auth, context, next) => {
+const clerkHandler = clerkMiddleware(async (auth, context, next) => {
   const authData = auth();
   const clerkId = authData.userId;
 
@@ -147,7 +149,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
           // Solo llamar a la API de Clerk si no tenemos email en claims
           if (!clerkEmail) {
             try {
-              const client = await clerkClient();
+              const client = typeof clerkClient === 'function' ? await (clerkClient as any)() : clerkClient;
               const clerkUser = await client.users.getUser(clerkId);
               clerkEmail = clerkUser.emailAddresses?.[0]?.emailAddress;
             } catch (e) {
@@ -218,3 +220,20 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
 
   return next();
 });
+
+export const onRequest = async (context: any, next: any) => {
+  // 0. VERIFICACIÓN CENTRALIZADA DEL ENTORNO (.env)
+  const envValidation = validateEnv();
+  if (envValidation.hasCriticalErrors) {
+    return handleMiddlewareError(
+      new Error('Variables de entorno críticas no configuradas o con valores no válidos.'),
+      context.request.url
+    );
+  }
+
+  try {
+    return await clerkHandler(context, next);
+  } catch (error) {
+    return handleMiddlewareError(error, context.request.url);
+  }
+};

@@ -78,6 +78,7 @@
         "@types/pdf-parse": "^1.1.5",
         "@types/supertest": "^6.0.3",
         "@vitest/coverage-v8": "^4.0.15",
+        "cross-env": "^10.1.0",
         "dotenv": "^17.2.3",
         "embla-carousel-svelte": "^8.6.0",
         "eslint": "^9.39.1",
