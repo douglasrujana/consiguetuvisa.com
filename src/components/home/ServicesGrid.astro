@@ -16,9 +16,9 @@ const data = propData ?? await getServices();
     <p class="text-xs font-medium text-text-muted tracking-[0.2em] uppercase mb-4">
       Nuestros Servicios
     </p>
-    <h2 class="heading-section mb-4">{data.title}</h2>
+    <h2 class="text-3xl md:text-4xl font-bold text-brand-primary mb-4">{data.title}</h2>
     {data.subtitle && (
-      <p class="text-body max-w-xl mx-auto">{data.subtitle}</p>
+      <p class="text-base text-text-secondary leading-relaxed max-w-xl mx-auto">{data.subtitle}</p>
     )}
   </div>
 

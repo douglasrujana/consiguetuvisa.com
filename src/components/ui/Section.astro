@@ -1,5 +1,6 @@
 ---
 // src/components/ui/Section.astro
+// Componente de sección — sin dependencias externas de CSS
 interface Props {
   id?: string;
   class?: string;
@@ -9,13 +10,13 @@ interface Props {
 const { id, class: className = '', background = 'white' } = Astro.props;
 
 const backgrounds = {
-  white: 'bg-surface-white',
+  white: 'bg-white',
   light: 'bg-surface-light',
   gradient: 'gradient-hero',
 };
 ---
 
-<section id={id} class={`section ${backgrounds[background]} ${className}`}>
+<section id={id} class={`py-16 md:py-24 ${backgrounds[background]} ${className}`}>
   <div class="container-main">
     <slot />
   </div>

@@ -1,11 +1,13 @@
 ---
 // src/components/ui/Button.astro
+// Componente unificado de botón — sin dependencias externas de CSS
 interface Props {
   variant?: 'primary' | 'secondary' | 'whatsapp';
   size?: 'sm' | 'md' | 'lg';
   href?: string;
   class?: string;
   target?: string;
+  rel?: string;
 }
 
 const { 
@@ -13,27 +15,30 @@ const {
   size = 'md', 
   href, 
   class: className = '',
-  target 
+  target,
+  rel,
 } = Astro.props;
 
+// Variantes de estilo completas en Tailwind — fuente única de verdad
 const variants = {
-  primary: 'btn-primary',
-  secondary: 'btn-secondary',
-  whatsapp: 'btn-whatsapp',
+  primary: 'bg-brand-secondary text-white hover:bg-brand-accent shadow-md hover:shadow-lg active:scale-95',
+  secondary: 'bg-white text-brand-primary border-2 border-brand-primary hover:bg-surface-light active:scale-95',
+  whatsapp: 'bg-whatsapp text-white hover:brightness-110 shadow-md hover:shadow-lg active:scale-95',
 };
 
 const sizes = {
-  sm: 'btn-sm',
-  md: '',
-  lg: 'btn-lg',
+  sm: 'px-4 py-2 text-sm rounded-lg',
+  md: 'px-6 py-3 text-base rounded-xl',
+  lg: 'px-8 py-4 text-lg rounded-xl',
 };
 
-const classes = `btn ${variants[variant]} ${sizes[size]} ${className}`;
+const base = 'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 cursor-pointer';
+const classes = `${base} ${variants[variant]} ${sizes[size]} ${className}`;
 const Tag = href ? 'a' : 'button';
 ---
 
 {href ? (
-  <a href={href} class={classes} target={target}>
+  <a href={href} class={classes} target={target} rel={rel}>
     <slot />
   </a>
 ) : (
